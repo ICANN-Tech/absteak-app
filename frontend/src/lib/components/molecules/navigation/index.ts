@@ -1,0 +1,1 @@
+export { default as MenuNavigation } from "./Menu.svelte"
