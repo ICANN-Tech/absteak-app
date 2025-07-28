@@ -8,39 +8,49 @@ import Menu from '$lib/components/organisms/section/menu/Index.svelte';
 import Booking from '$lib/components/organisms/section/booking/Index.svelte';
 import Footer from '$lib/components/organisms/section/footer/Index.svelte';
 
+export enum SectionId {
+    Hero = 'hero',
+    VideoHighlight = 'video-highlight',
+    Experience = 'experience',
+    Chef = 'chef',
+    Menu = 'menu',
+    Booking = 'booking',
+    Footer = 'footer'
+}
+
 export const sections: Sections = [
 	{
-		id: 'hero',
+		id: SectionId.Hero,
 		name: 'Hero',
 		component: Hero
 	},
 	{
-		id: 'video-highlight',
+		id: SectionId.VideoHighlight,
 		name: 'About',
 		component: VideoHighlight
 	},
 	{
-		id: 'experience',
+		id: SectionId.Experience,
 		name: 'Story',
 		component: Experience
 	},
 	{
-		id: 'chef',
+		id: SectionId.Chef,
 		name: 'Chef',
 		component: Chef
 	},
 	{
-		id: 'menu',
+		id: SectionId.Menu,
 		name: 'Menu',
 		component: Menu
 	},
 	{
-		id: 'booking',
+		id: SectionId.Booking,
 		name: 'Reserve',
 		component: Booking
 	},
     {
-        id: 'footer',
+        id: SectionId.Footer,
         name: 'Footer',
         component: Footer
     }

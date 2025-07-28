@@ -1,4 +1,5 @@
 import { viewportStore } from '$lib/stores/viewport';
+  import { useViewportNavigator } from '$lib/utils/viewport';
 import type { Section } from '$lib/stores/viewport';
 
 export interface ScrollObserverOptions {
@@ -95,7 +96,6 @@ export class ScrollObserver {
 
         // Callback untuk indicator
         this.options.indicatorCallback?.();
-
       } catch (error) {
         console.error('Error during section transition:', error);
         viewportStore.setTransitioning(false);

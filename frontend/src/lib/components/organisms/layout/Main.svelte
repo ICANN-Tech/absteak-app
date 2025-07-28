@@ -18,16 +18,20 @@
 	}}
 >
 	{#if $isVisible}
-		<header class="fixed top-0 left-0 z-20 w-full" transition:fly={{ y: -100, duration: 600 }}>
+		<header class="fixed left-0 top-0 z-20 w-full" transition:fly={{ y: -100, duration: 600 }}>
 			<nav
-				class="mx-auto flex max-w-4xl items-center justify-between rounded-b-3xl border-b border-white/20 bg-primary-950/80 px-4 py-4 shadow-lg backdrop-blur-lg"
+				class="bg-primary-950/80 mx-auto flex max-w-4xl items-center justify-between rounded-b-3xl border-b border-white/20 px-4 py-4 shadow-lg backdrop-blur-lg"
 			>
 				<LogoIcon />
 				<MenuNavigation items={navItems} />
 			</nav>
 		</header>
-		{/if}
-		<button on:click={() => visibilityHandler} class="fixed top-4 right-4 z-20 p-2 cursor-pointer text-white">
-			{$isVisible}
-		</button>
+	{/if}
+	
+	<button
+		on:click={() => visibilityHandler}
+		class="fixed right-4 top-4 z-20 cursor-pointer p-2 text-white"
+	>
+		{$isVisible}
+	</button>
 </div>

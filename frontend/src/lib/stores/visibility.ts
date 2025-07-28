@@ -15,10 +15,6 @@ function isLocked(id: string | null = null): boolean {
 	return lockMap.get(id)?.locked || false;
 }
 
-function getLockedValue(id: string | null = null): boolean {
-	return lockMap.get(id)?.lockedValue || false;
-}
-
 export function createVisibilityHandler(id: string | null = null) {
 	const store = getVisibilityStore(id);
 

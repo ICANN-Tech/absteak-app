@@ -6,6 +6,7 @@
   import ChatBotFAB from '$lib/components/ChatBotFAB.svelte';
   import SwitchLanguage from '$lib/components/SwitchLanguage.svelte';
   import Indicator from '$lib/components/atoms/indicator/Index.svelte';
+  
   import { modalStore } from '$lib/stores/modal';
   import { viewportStore } from '$lib/stores/viewport';
   import { useIndicatorSystem } from '$lib/utils/viewport';

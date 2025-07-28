@@ -7,6 +7,7 @@
   // import { anchors } from "$lib/const/anchors";
   import { sections } from '$lib/const/control/section';
   import Menu from '$lib/components/organisms/section/menu/Index.svelte';
+	import { useSectionMonitor } from '$lib/utils/viewport/monitor';
 
   // Override the Menu component to avoid circular dependency
   // const sections = anchors.map(anchor => {
@@ -27,17 +28,19 @@
       console.log('Scroll attempt:', direction);
     }
   });
-
+const { start, stop } = useSectionMonitor();
   onMount(() => {
     // Initialize viewport system
     viewport;
+
+start();
   });
 </script>
 
 <main class="bg-primary-700/5 min-h-screen">
   {#each sections as section, index}
     <div 
-      id="section-{index}" 
+      id={section.id} 
       class="section-container {index === $viewportStore.currentSectionIndex ? 'active' : ''}"
       style="opacity: {index === $viewportStore.currentSectionIndex ? '1' : '0'};"
     >
