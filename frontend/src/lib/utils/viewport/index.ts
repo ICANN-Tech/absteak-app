@@ -11,6 +11,7 @@ export * from './observer';
 export * from './navigator';
 export * from './loader';
 export * from './indicator';
+export * from "./visibility";
 export { viewportStore, currentSectionIndex, isTransitioning, scrollEnabled } from '$lib/stores/viewport';
 
 export interface ViewportSystemOptions {

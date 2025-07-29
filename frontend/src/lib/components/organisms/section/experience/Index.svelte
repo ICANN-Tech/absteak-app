@@ -1,10 +1,13 @@
 <script lang="ts">
   import { ScrollableImage } from '$lib/components/molecules/media';
+  import { createTranslationStore } from '$lib/utils/translation';
 
-  // Props untuk customization
-  export let title = 'EXPERIENCE GORDON RAMSAY ACROSS NORTH AMERICA';
-  export let description = 'Visit world-renowned, Michelin-starred Chef Gordon Ramsay\'s restaurants across North America. Whether you have a taste for gourmet burgers, a Chef-Ramsay-classic beef wellington, or a new twist on a local favorite, your experience will be excellent.';
-  export let subtitle = 'Join us on the Las Vegas Strip, Baltimore, Atlantic City, Southern Indiana, NYC, Naperville, D.C., OKC, Orlando, Tahoe, Kansas City, Southern California, Chicago, Miami, Reno, Vancouver, and Boston. We can\'t wait to serve you.';
+  const t = createTranslationStore();
+
+  // Props untuk customization - menggunakan translasi sebagai default
+  export let title: string = '';
+  export let description: string = '';
+  export let subtitle: string = '';
   export let backgroundImage = 'https://res.cloudinary.com/gordonramsay/image/upload/c_fill,w_1920,h_640,q_auto,f_auto/Gordon%20Ramsay%20Restaurants%20-%20NA/default-light-bg_dddsi4';
   
   export let leftColumnImages: string[] = [
@@ -38,13 +41,13 @@
     <!-- Left: Text -->
     <div class="md:w-1/2 flex flex-col justify-center p-10 md:p-16">
       <h2 class="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-        {title}
+        {title || $t('experience.title') || 'PENGALAMAN KULINER PREMIUM ABSTEAK'}
       </h2>
       <p class="text-gray-700 text-lg mb-4">
-        {description}
+        {description || $t('experience.description') || 'Nikmati pengalaman kuliner istimewa di ABSteak dengan hidangan steak premium yang disiapkan oleh chef berpengalaman. Setiap hidangan dibuat dengan dedikasi tinggi untuk memberikan cita rasa yang tak terlupakan dan pengalaman bersantap yang luar biasa.'}
       </p>
       <p class="text-gray-700 text-base mb-8">
-        {subtitle}
+        {subtitle || $t('experience.subtitle') || 'Bergabunglah dengan kami untuk merasakan kelezatan steak premium, teknik memasak terdepan, dan pelayanan berkelas dunia. Kami siap melayani Anda dengan pengalaman kuliner yang tak akan pernah Anda lupakan.'}
       </p>
     </div>
     

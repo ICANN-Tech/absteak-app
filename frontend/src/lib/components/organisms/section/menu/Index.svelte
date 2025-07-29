@@ -4,6 +4,10 @@
 	import { modalStore } from '$lib/stores/modal';
 	import { fade, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
+	import ClickOutsideDemo from '$lib/components/demo/ClickOutsideDemo.svelte';
+	import { createTranslationStore } from '$lib/utils/translation';
+
+	const t = createTranslationStore();
 
 	interface MenuItem {
 		name: string;
@@ -22,96 +26,120 @@
 		rightColumn: string[];
 	}
 
-	const menuCategories: MenuCategory[] = [
+	// Fallback menu data jika translasi tidak tersedia
+	const fallbackMenuCategories: MenuCategory[] = [
 		{
-			category: 'Starters',
+			category: 'Appetizer',
 			items: [
 				{
-					name: 'Lobster Bisque',
-					desc: 'Rich and creamy lobster soup with a hint of cognac',
-					price: '$18',
+					name: 'Wagyu Beef Tartare',
+					desc: 'Wagyu segar dipotong tangan dengan telur puyuh dan minyak truffle',
+					price: 'Rp 380.000',
 					img: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Wagyu Beef Tartare',
-					desc: 'Hand-cut wagyu with quail egg and truffle oil',
-					price: '$24',
+					name: 'Foie Gras Pan-Seared',
+					desc: 'Disajikan dengan apel karamel dan reduksi wine port',
+					price: 'Rp 420.000',
 					img: 'https://images.pexels.com/photos/361184/asparagus-steak-veal-steak-veal-361184.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Pan-Seared Foie Gras',
-					desc: 'Served with caramelized apple and port wine reduction',
-					price: '$28',
+					name: 'Tuna Sashimi Premium',
+					desc: 'Tuna bluefin segar dengan wasabi dan jahe acar',
+					price: 'Rp 320.000',
 					img: 'https://images.pexels.com/photos/1639562/pexels-photo-1639562.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Tuna Sashimi',
-					desc: 'Fresh bluefin tuna with wasabi and pickled ginger',
-					price: '$22',
+					name: 'Lobster Bisque',
+					desc: 'Sup lobster kaya dan creamy dengan sentuhan cognac',
+					price: 'Rp 280.000',
 					img: 'https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=400'
 				}
 			]
 		},
 		{
-			category: 'Mains',
+			category: 'Steak Premium',
 			items: [
 				{
-					name: 'Dry-Aged Ribeye',
-					desc: '28-day aged prime ribeye with roasted bone marrow',
-					price: '$65',
+					name: 'Dry-Aged Ribeye A5',
+					desc: 'Ribeye premium aged 28 hari dengan bone marrow panggang',
+					price: 'Rp 980.000',
 					img: 'https://images.pexels.com/photos/769289/pexels-photo-769289.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Lobster Thermidor',
-					desc: 'Whole lobster with cognac cream sauce and gruyere',
-					price: '$58',
+					name: 'Wagyu Tenderloin',
+					desc: 'Tenderloin wagyu dengan saus truffle dan kentang fondant',
+					price: 'Rp 1.200.000',
 					img: 'https://images.pexels.com/photos/725991/pexels-photo-725991.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Duck Confit',
-					desc: 'Slow-cooked duck leg with cherry gastrique',
-					price: '$42',
+					name: 'Tomahawk Steak',
+					desc: 'Steak tomahawk 800gr dengan herb butter dan sayuran panggang',
+					price: 'Rp 1.500.000',
 					img: 'https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Seafood Risotto',
-					desc: 'Arborio rice with fresh seafood and saffron',
-					price: '$38',
+					name: 'Surf & Turf',
+					desc: 'Kombinasi steak tenderloin dan lobster thermidor',
+					price: 'Rp 1.800.000',
 					img: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=400'
 				}
 			]
 		},
 		{
-			category: 'Desserts',
+			category: 'Dessert',
 			items: [
 				{
 					name: 'Chocolate Soufflé',
-					desc: 'Dark chocolate soufflé with vanilla ice cream',
-					price: '$16',
+					desc: 'Soufflé cokelat hitam dengan es krim vanilla',
+					price: 'Rp 180.000',
 					img: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
 					name: 'Crème Brûlée',
-					desc: 'Classic vanilla custard with caramelized sugar',
-					price: '$14',
+					desc: 'Custard vanilla klasik dengan gula karamel',
+					price: 'Rp 160.000',
 					img: 'https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400'
 				},
 				{
-					name: 'Tiramisu',
-					desc: 'Traditional Italian dessert with espresso and mascarpone',
-					price: '$15',
+					name: 'Tiramisu Premium',
+					desc: 'Tiramisu Italia tradisional dengan espresso dan mascarpone',
+					price: 'Rp 170.000',
 					img: 'https://images.pexels.com/photos/6880219/pexels-photo-6880219.jpeg?auto=compress&cs=tinysrgb&w=400'
 				}
 			]
 		}
 	];
 
+	// Reactive statement untuk mendapatkan menu dari translasi atau fallback
+	$: menuCategories = (() => {
+		const translatedCategories = $t('menu.categories');
+		if (Array.isArray(translatedCategories) && translatedCategories.length > 0) {
+			return translatedCategories.map((category: any, categoryIndex: number) => ({
+				category: category.name,
+				items: Array.isArray(category.items) ? category.items.map((item: any, itemIndex: number) => ({
+					name: item.name,
+					desc: item.description,
+					price: item.price,
+					img: fallbackMenuCategories[categoryIndex]?.items[itemIndex]?.img || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'
+				})) : []
+			}));
+		}
+		return fallbackMenuCategories;
+	})();
+
 	let activeCategory = 0;
-	let selectedCategory = menuCategories[0];
+	
+	// Reactive statement untuk selectedCategory dengan pengecekan yang lebih robust
+	$: selectedCategory = menuCategories && menuCategories.length > 0 ? menuCategories[activeCategory] || menuCategories[0] : {
+		category: 'Loading...',
+		items: []
+	};
 
 	function selectCategory(index: number) {
-		activeCategory = index;
-		selectedCategory = menuCategories[index];
+		if (menuCategories && menuCategories.length > 0 && index >= 0 && index < menuCategories.length) {
+			activeCategory = index;
+		}
 	}
 
 	function openItemDetail(item: MenuItem) {
@@ -191,28 +219,33 @@
 	const rightColumnHeights = ['h-64', 'h-52', 'h-76', 'h-68', 'h-56', 'h-72'];
 
 	// Reactive statement untuk mendapatkan images berdasarkan kategori aktif
-	$: currentImages = categoryImages[activeCategory];
+	$: currentImages = categoryImages[activeCategory] || {
+		leftColumn: ['https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400'],
+		rightColumn: ['https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400']
+	};
 </script>
 
 <section
 	class="relative h-screen w-full overflow-hidden"
-	style="background-image: url('{backgroundImages[
-		activeCategory
-	]}'); background-size: cover; background-position: center;"
+	style="background-image: url('{backgroundImages[activeCategory] || backgroundImages[0] || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1920'}'); background-size: cover; background-position: center;"
 >
 	<!-- Enhanced overlay untuk readability yang lebih baik -->
 	<div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/75 to-black/65"></div>
 	<div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70"></div>
 
+	<!-- Hover Freeze Demo -->
+	<div class="absolute top-4 right-4 z-20">
+		<ClickOutsideDemo />
+	</div>
+
 	<div class="relative z-10 mx-auto flex h-full flex-col md:flex-row">
 		<!-- Left: Menu Content -->
 		<div class="flex flex-col justify-center bg-black/30 p-10 backdrop-blur-sm md:w-1/2 md:p-16">
 			<h2 class="mb-6 text-3xl leading-tight font-extrabold text-white drop-shadow-2xl md:text-5xl">
-				OUR SIGNATURE <span class="text-amber-400 drop-shadow-lg">MENU</span>
+				{$t('menu.title') || 'MENU SIGNATURE KAMI'}
 			</h2>
 			<p class="mb-8 text-lg leading-relaxed text-gray-100 drop-shadow-lg">
-				Experience culinary excellence with our carefully curated selection of dishes, crafted by
-				world-class chefs using the finest ingredients.
+				{$t('menu.subtitle') || 'Rasakan keunggulan kuliner dengan pilihan hidangan yang dikurasi dengan cermat, dibuat oleh chef kelas dunia menggunakan bahan-bahan terbaik.'}
 			</p>
 
 			<!-- Category Tabs -->

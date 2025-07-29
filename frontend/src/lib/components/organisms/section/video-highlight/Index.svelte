@@ -3,16 +3,15 @@
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { flip } from 'svelte/animate';
 	import { ThumbnailMedia, VideoOverlay } from '$lib/components/molecules';
+	import { createTranslationStore } from '$lib/utils/translation';
 
-	// Props untuk kustomisasi konten
-	export let title: string = 'Voluptatem dignissimos provident quasi corporis voluptates sit assumenda.';
-	export let subtitle: string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
-	export let description: string = 'Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident';
-	export let items: string[] = [
-		'Ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-		'Duis aute irure dolor in reprehenderit in voluptate velit.',
-		'Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate trideta storacalaperda mastiro dolore eu fugiat nulla pariatur.'
-	];
+	const t = createTranslationStore();
+
+	// Props untuk kustomisasi konten - menggunakan translasi sebagai default
+	export let title: string = '';
+	export let subtitle: string = '';
+	export let description: string = '';
+	export let items: string[] = [];
 
 	// Props untuk media
 	export let thumbnailUrl: string = '/assets/thumbnail.png';
@@ -80,20 +79,20 @@
 		<div class="w-full md:w-1/2 {contentClass}">
 			<!-- Title -->
 			<h2 class="font-cursive text-primary mb-2 text-2xl md:text-3xl">
-				{title}
+				{title || $t('videoHighlight.title') || 'ABSteak Culinary Excellence'}
 			</h2>
 
 			<!-- Subtitle -->
-			{#if subtitle}
+			{#if subtitle || $t('videoHighlight.subtitle')}
 				<p class="mb-4 text-gray-700 italic">
-					{subtitle}
+					{subtitle || $t('videoHighlight.subtitle') || 'Discover the secrets behind our exceptional premium steak flavors'}
 				</p>
 			{/if}
 
 			<!-- Items List -->
-			{#if items && items.length > 0}
+			{#if (items && items.length > 0) || (Array.isArray($t('videoHighlight.items')) && $t('videoHighlight.items').length > 0)}
 				<ul class="mb-4 space-y-2">
-					{#each items as item, i (item)}
+					{#each (items.length > 0 ? items : (Array.isArray($t('videoHighlight.items')) ? $t('videoHighlight.items') : [])) as item, i (`${i}-${item}`)}
 						<li class="flex items-start gap-2" animate:flip>
 							<span class="text-primary mt-1">
 								<svg
@@ -113,9 +112,9 @@
 			{/if}
 
 			<!-- Description -->
-			{#if description}
+			{#if description || $t('videoHighlight.description')}
 				<p class="text-gray-700">
-					{description}
+					{description || $t('videoHighlight.description') || 'With high dedication to quality and innovation, we deliver an unforgettable culinary experience through every dish we serve.'}
 				</p>
 			{/if}
 

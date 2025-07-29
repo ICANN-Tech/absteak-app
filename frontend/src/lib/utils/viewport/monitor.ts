@@ -7,7 +7,7 @@
  */
 
 import { viewportStore } from '$lib/stores/viewport';
-import { lockVisibility, unlockVisibility } from '$lib/stores/visibility';
+import { lockVisibility, unlockVisibility } from '$lib/stores/viewport/visibility';
 import { SectionId } from '$lib/const/control/section';
 
 export interface SectionMonitorOptions {
@@ -75,8 +75,8 @@ export class SectionMonitor {
       console.log('Visibility locked - Footer section active');
     } else {
       // Unlock visibility for other sections
-      unlockVisibility();
       console.log('Visibility unlocked - Non-footer section active');
+      unlockVisibility();
     }
   }
 

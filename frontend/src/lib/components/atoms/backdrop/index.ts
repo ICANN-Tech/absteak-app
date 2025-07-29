@@ -1,0 +1,1 @@
+export { default as DiningBackdrop } from './Dining.svelte';

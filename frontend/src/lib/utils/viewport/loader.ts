@@ -39,8 +39,8 @@ export async function loadComponent(sectionPath: string, cache?: ComponentCache)
 
     // Dynamic import berdasarkan path
     switch (sectionPath) {
-      case '$lib/components/Hero.svelte':
-        component = (await import('$lib/components/Hero.svelte')).default;
+      case '$lib/components/organisms/section/hero/Index.svelte':
+        component = (await import('$lib/components/organisms/section/hero/Index.svelte')).default;
         break;
       case '$lib/components/organisms/section/video-highlight/Index.svelte':
         component = (await import('$lib/components/organisms/section/video-highlight/Index.svelte')).default;
@@ -55,7 +55,7 @@ export async function loadComponent(sectionPath: string, cache?: ComponentCache)
         component = (await import('$lib/components/organisms/section/menu/Index.svelte')).default;
         break;
       case '$lib/components/organisms/section/booking/Index.svelte':
-        component = (await import('$lib/components/organisms/section/booking/Index.svelte')).default;
+        component = (await import('$lib/components/organisms/section/reservation/Index.svelte')).default;
         break;
       case '$lib/components/CustomPartiesSlider.svelte':
         component = (await import('$lib/components/CustomPartiesSlider.svelte')).default;

@@ -1,6 +1,6 @@
 # Viewport Management System
 
-Sistem manajemen viewport yang lengkap untuk aplikasi Svelte dengan fitur scroll-based section navigation.
+Sistem manajemen viewport yang lengkap untuk aplikasi Svelte dengan fitur scroll-based section navigation dan position-based auto show/hide utilities.
 
 ## 📁 Struktur File
 
@@ -11,8 +11,45 @@ src/lib/utils/viewport/
 ├── navigator.ts       # Navigation control dan scroll management
 ├── loader.ts          # Component loading dan caching
 ├── indicator.ts       # Indicator management
+├── position.ts        # Position-based auto show/hide utilities ⭐ NEW
+├── USAGE.md          # Detailed usage guide untuk position utilities
+├── Demo.svelte       # Interactive demo untuk position utilities
 └── example-page.svelte # Contoh implementasi
 ```
+
+## 🆕 Position-Based Auto Show/Hide Utilities
+
+Utility baru untuk mengatur visibility komponen dengan berbagai mode:
+
+### 🕐 Time-Based Auto Show/Hide
+```typescript
+import { createTimeBasedPosition } from '$lib/utils/viewport/position';
+
+const timeControl = createTimeBasedPosition({
+  hideDelay: 3000,  // Hide setelah 3 detik
+  showDelay: 2000   // Show setelah 2 detik
+});
+```
+
+### 📍 Area-Based Auto Show/Hide  
+```typescript
+import { createAreaBasedPosition } from '$lib/utils/viewport/position';
+
+const areaControl = createAreaBasedPosition(
+  { x: 200, y: 300 }, // posisi komponen
+  { proximityRadius: 150 } // radius 150px
+);
+```
+
+### 🎮 Trigger-Based Show/Hide
+```typescript
+import { createTriggerBasedPosition } from '$lib/utils/viewport/position';
+
+const triggerControl = createTriggerBasedPosition();
+triggerControl.show(); // Manual control
+```
+
+**Lihat `USAGE.md` untuk dokumentasi lengkap dan `Demo.svelte` untuk contoh interaktif.**
 
 ## 🚀 Quick Start
 

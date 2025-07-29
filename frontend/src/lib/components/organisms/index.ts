@@ -6,6 +6,7 @@ export { default as ChefSection } from './section/chef/Index.svelte';
 export { default as ReservationSummary } from './reservation/Summary.svelte';
 export * from './modal'
 export * from "./layout"
+export * from "./reservation"
 
 // Export types
 export type { MessageType, BotAvatarConfig } from './section/chat/Index.svelte';

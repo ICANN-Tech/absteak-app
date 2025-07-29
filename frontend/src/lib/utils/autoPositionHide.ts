@@ -9,16 +9,20 @@ export interface AutoHideConfig {
   positionSide?: 'left' | 'right' | 'top' | 'bottom';
   /** Initial visibility state (default: true) */
   initialVisible?: boolean;
+  /** Manual trigger mode - requires manual activation before auto-hide works (default: false) */
+  manualTrigger?: boolean;
 }
 
 export interface AutoHideState {
-  visible: Writable<boolean>;
-  show: () => void;
-  hide: () => void;
-  toggle: () => void;
-  startHideTimer: () => void;
-  clearHideTimer: () => void;
-  destroy: () => void;
+	visible: Writable<boolean>;
+	show: () => void;
+	hide: () => void;
+	toggle: () => void;
+	startHideTimer: () => void;
+	clearHideTimer: () => void;
+	activate: () => void;
+	hasBeenActivated: Writable<boolean>;
+	destroy: () => void;
 }
 
 /**
@@ -31,17 +35,34 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
     hideDelay = 3000,
     positionThreshold = 0.8,
     positionSide = 'right',
-    initialVisible = true
+    initialVisible = true,
+    manualTrigger = false
   } = config;
 
   const visible = writable(initialVisible);
+  const hasBeenActivated = writable(!manualTrigger); // Track if activated
   let hideTimeout: ReturnType<typeof setTimeout> | null = null;
   let mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
+  let isActivated = !manualTrigger; // If manual trigger is enabled, start as not activated
+
+  /**
+   * Activates the auto-hide functionality (for manual trigger mode)
+   */
+  function activate() {
+    if (manualTrigger && !isActivated) {
+      isActivated = true;
+      hasBeenActivated.set(true);
+      visible.set(true);
+      initMouseTracking();
+      startHideTimer();
+    }
+  }
 
   /**
    * Shows the element and starts the auto-hide timer
    */
   function show() {
+    if (!isActivated && manualTrigger) return;
     visible.set(true);
     startHideTimer();
   }
@@ -58,6 +79,11 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
    * Toggles visibility state
    */
   function toggle() {
+    if (!isActivated && manualTrigger) {
+      activate();
+      return;
+    }
+    
     visible.update(v => {
       if (!v) {
         startHideTimer();
@@ -72,6 +98,7 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
    * Starts or restarts the auto-hide timer
    */
   function startHideTimer() {
+    if (!isActivated && manualTrigger) return;
     clearHideTimer();
     visible.set(true);
     
@@ -115,6 +142,7 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
    * Handles mouse move events for position-based visibility
    */
   function handleMouseMove(e: MouseEvent) {
+    if (!isActivated && manualTrigger) return;
     if (checkMousePosition(e)) {
       show();
     }
@@ -124,7 +152,7 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
    * Initializes mouse tracking for position-based auto-show
    */
   function initMouseTracking() {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !mouseMoveHandler) {
       mouseMoveHandler = handleMouseMove;
       window.addEventListener('mousemove', mouseMoveHandler);
     }
@@ -148,11 +176,13 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
     removeMouseTracking();
   }
 
-  // Initialize mouse tracking
-  initMouseTracking();
+  // Initialize mouse tracking only if not in manual trigger mode
+  if (!manualTrigger) {
+    initMouseTracking();
+  }
 
-  // Start initial timer if visible
-  if (initialVisible) {
+  // Start initial timer if visible and not in manual trigger mode
+  if (initialVisible && !manualTrigger) {
     startHideTimer();
   }
 
@@ -163,6 +193,8 @@ export function createAutoPositionHide(config: AutoHideConfig = {}): AutoHideSta
     toggle,
     startHideTimer,
     clearHideTimer,
+    activate,
+    hasBeenActivated,
     destroy
   };
 }

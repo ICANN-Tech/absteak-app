@@ -4,16 +4,19 @@
 	import { Input, Button } from '$lib/components/atoms';
 	import { createEventDispatcher } from 'svelte';
 	import { LogoIcon } from '$lib/components/atoms';
+	import { createTranslationStore } from '$lib/utils/translation';
 
-	// Props untuk kustomisasi konten
+	const t = createTranslationStore('footer');
+
+	// Props untuk kustomisasi konten dengan fallback dari translasi
 	export let restaurantName: string = 'AB STEAK';
-	export let tagline: string = 'Experience Culinary Excellence';
-	export let description: string = 'Join us for an unforgettable dining experience where passion meets perfection. From our signature steaks to innovative culinary creations, every dish tells a story.';
+	export let tagline: string = '';
+	export let description: string = '';
 	
-	// Props untuk kontak
-	export let address: string = 'Senayan City Mall, Jakarta';
-	export let phone: string = '+62 21 5555 0123';
-	export let email: string = 'info@absteak.com';
+	// Props untuk kontak dengan fallback dari translasi
+	export let address: string = '';
+	export let phone: string = '';
+	export let email: string = '';
 	
 	// Props untuk social media
 	export let socialLinks = {
@@ -23,15 +26,26 @@
 		youtube: 'https://youtube.com/absteak'
 	};
 
-	// Props untuk newsletter
-	export let newsletterTitle: string = 'Stay Updated';
-	export let newsletterDescription: string = 'Subscribe to our newsletter for exclusive offers, new menu updates, and special events.';
+	// Props untuk newsletter dengan fallback dari translasi
+	export let newsletterTitle: string = '';
+	export let newsletterDescription: string = '';
 
-	// Props untuk map
-	export let mapTitle: string = 'Find Us';
-	export let mapDescription: string = 'Located in the heart of Jakarta, we\'re easily accessible and ready to serve you.';
+	// Props untuk map dengan fallback dari translasi
+	export let mapTitle: string = '';
+	export let mapDescription: string = '';
 	export let latitude: number = -6.2088;
 	export let longitude: number = 106.8456;
+
+	// Reactive statements untuk menggunakan translasi dengan fallback
+	$: finalTagline = tagline || $t('tagline') || 'Experience Culinary Excellence';
+	$: finalDescription = description || $t('description') || 'Join us for an unforgettable dining experience where passion meets perfection. From our signature steaks to innovative culinary creations, every dish tells a story.';
+	$: finalAddress = address || $t('address') || 'Senayan City Mall, Jakarta';
+	$: finalPhone = phone || $t('phone') || '+62 21 5555 0123';
+	$: finalEmail = email || $t('email') || 'info@absteak.com';
+	$: finalNewsletterTitle = newsletterTitle || $t('newsletterTitle') || 'Stay Updated';
+	$: finalNewsletterDescription = newsletterDescription || $t('newsletterDescription') || 'Subscribe to our newsletter for exclusive offers, new menu updates, and special events.';
+	$: finalMapTitle = mapTitle || $t('mapTitle') || 'Find Us';
+	$: finalMapDescription = mapDescription || $t('mapDescription') || 'Located in the heart of Jakarta, we\'re easily accessible and ready to serve you.';
 
 	// Newsletter state
 	let email_subscription = '';
@@ -46,7 +60,7 @@
 		event.preventDefault();
 		
 		if (!email_subscription) {
-			subscriptionError = 'Please enter your email address';
+			subscriptionError = $t('emailRequired') || 'Please enter your email address';
 			return;
 		}
 
@@ -69,7 +83,7 @@
 				subscriptionSuccess = false;
 			}, 3000);
 		} catch (error) {
-			subscriptionError = 'Failed to subscribe. Please try again.';
+			subscriptionError = $t('subscriptionError') || 'Failed to subscribe. Please try again.';
 		} finally {
 			isSubscribing = false;
 		}
@@ -95,10 +109,10 @@
 					<div class="space-y-6">
 						<div>
 							<h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
-								{mapTitle}
+								{finalMapTitle}
 							</h2>
 							<p class="text-gray-300 text-lg leading-relaxed mb-6">
-								{mapDescription}
+								{finalMapDescription}
 							</p>
 						</div>
 
@@ -111,8 +125,8 @@
 									</svg>
 								</div>
 								<div>
-									<h3 class="text-white font-semibold mb-1">Address</h3>
-									<p class="text-gray-300">{address}</p>
+									<h3 class="text-white font-semibold mb-1">{$t('addressLabel') || 'Address'}</h3>
+									<p class="text-gray-300">{finalAddress}</p>
 								</div>
 							</div>
 
@@ -123,9 +137,9 @@
 									</svg>
 								</div>
 								<div>
-									<h3 class="text-white font-semibold mb-1">Reservations</h3>
-									<p class="text-gray-300">{phone}</p>
-									<p class="text-amber-400 text-sm mt-1">Call for reservations</p>
+									<h3 class="text-white font-semibold mb-1">{$t('reservationsLabel') || 'Reservations'}</h3>
+									<p class="text-gray-300">{finalPhone}</p>
+									<p class="text-amber-400 text-sm mt-1">{$t('callForReservations') || 'Call for reservations'}</p>
 								</div>
 							</div>
 						</div>
@@ -178,14 +192,14 @@
 							<div class="p-4 bg-gray-800/80 border-t border-gray-700/50">
 								<div class="flex justify-between items-center">
 									<div class="text-sm text-gray-300">
-										<span class="text-amber-400">📍</span> Senayan City Mall, Jakarta
+										<span class="text-amber-400">📍</span> {finalAddress}
 									</div>
 									<div class="flex space-x-2">
 										<button class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors duration-300">
-											Get Directions
+											{$t('getDirections') || 'Get Directions'}
 										</button>
-										<button class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors duration-300">
-											View Larger
+										<button class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors duration-300">
+											{$t('viewLarger') || 'View Larger'}
 										</button>
 									</div>
 								</div>
@@ -205,10 +219,10 @@
 						<div>
 							<LogoIcon size="lg" />
 							<p class="text-amber-400 text-lg font-semibold mb-4">
-								{tagline}
+								{finalTagline}
 							</p>
 							<p class="text-gray-300 text-base leading-relaxed">
-								{description}
+								{finalDescription}
 							</p>
 						</div>
 
@@ -220,7 +234,7 @@
 										<path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
 									</svg>
 								</div>
-								<span class="text-gray-300">{address}</span>
+								<span class="text-gray-300">{finalAddress}</span>
 							</div>
 							<div class="flex items-center space-x-3">
 								<div class="w-5 h-5 text-amber-400">
@@ -228,7 +242,7 @@
 										<path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
 									</svg>
 								</div>
-								<span class="text-gray-300">{phone}</span>
+								<span class="text-gray-300">{finalPhone}</span>
 							</div>
 							<div class="flex items-center space-x-3">
 								<div class="w-5 h-5 text-amber-400">
@@ -237,44 +251,44 @@
 										<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
 									</svg>
 								</div>
-								<span class="text-gray-300">{email}</span>
+								<span class="text-gray-300">{finalEmail}</span>
 							</div>
 						</div>
 					</div>
 
 					<!-- Quick Links -->
-					<div class="space-y-6">
-						<h3 class="text-xl font-bold text-white">Quick Links</h3>
-						<nav class="space-y-3">
-							<a href="#hero" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">Home</a>
-							<a href="#video-highlight" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">About</a>
-							<a href="#experience" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">Experience</a>
-							<a href="#chef" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">Our Chef</a>
-							<a href="#menu" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">Menu</a>
-							<a href="#booking" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">Reservations</a>
-						</nav>
-					</div>
+					<div class="space-y-4">
+							<h3 class="text-xl font-bold text-white">{$t('quickLinks') || 'Quick Links'}</h3>
+							<div class="space-y-2">
+								<a href="#hero" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('home') || 'Home'}</a>
+								<a href="#video-highlight" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('about') || 'About'}</a>
+								<a href="#experience" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('experience') || 'Experience'}</a>
+								<a href="#chef" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('ourChef') || 'Our Chef'}</a>
+								<a href="#menu" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('menu') || 'Menu'}</a>
+								<a href="#booking" class="block text-gray-300 hover:text-amber-400 transition-colors duration-300">{$t('reservations') || 'Reservations'}</a>
+							</div>
+						</div>
 
 					<!-- Newsletter Subscription -->
 					<div class="space-y-6">
 						<div>
-							<h3 class="text-xl font-bold text-white mb-2">{newsletterTitle}</h3>
+							<h3 class="text-xl font-bold text-white mb-2">{finalNewsletterTitle}</h3>
 							<p class="text-gray-300 text-sm leading-relaxed">
-								{newsletterDescription}
+								{finalNewsletterDescription}
 							</p>
 						</div>
 
 						<form on:submit={handleNewsletterSubmit} class="space-y-4">
 							<Input
 								type="email"
-								placeholder="Enter your email"
+								placeholder={$t('enterEmail') || 'Enter your email'}
 								bind:value={email_subscription}
 								variant="elegant"
 								size="md"
 								required
 								disabled={isSubscribing}
 								error={subscriptionError}
-								success={subscriptionSuccess ? 'Successfully subscribed!' : ''}
+								success={subscriptionSuccess ? ($t('subscriptionSuccess') || 'Successfully subscribed!') : ''}
 								class="bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-amber-400"
 							/>
 							
@@ -285,13 +299,13 @@
 								disabled={isSubscribing || !email_subscription}
 								className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0 font-semibold transition-all duration-300 hover:scale-105"
 							>
-								{isSubscribing ? 'Subscribing...' : 'Subscribe'}
+								{isSubscribing ? ($t('subscribing') || 'Subscribing...') : ($t('subscribe') || 'Subscribe')}
 							</Button>
 						</form>
 
 						<!-- Social Media Links -->
 						<div class="space-y-4">
-							<h4 class="text-lg font-semibold text-white">Follow Us</h4>
+							<h4 class="text-lg font-semibold text-white">{$t('followUs') || 'Follow Us'}</h4>
 							<div class="flex space-x-4">
 								<a 
 									href={socialLinks.instagram} 
@@ -342,12 +356,12 @@
 				<div class="border-t h-full border-gray-700 pt-8">
 					<div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
 						<div class="text-gray-400 text-sm">
-							© {currentYear} {restaurantName}. All rights reserved.
+							{$t('copyright', { year: currentYear, name: restaurantName }) || `© ${currentYear} ${restaurantName}. All rights reserved.`}
 						</div>
 						<div class="flex space-x-6 text-sm">
-							<a href="/privacy" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">Privacy Policy</a>
-							<a href="/terms" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">Terms of Service</a>
-							<a href="/contact" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">Contact</a>
+							<a href="/privacy" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">{$t('privacyPolicy') || 'Privacy Policy'}</a>
+							<a href="/terms" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">{$t('termsOfService') || 'Terms of Service'}</a>
+							<a href="/contact" class="text-gray-400 hover:text-amber-400 transition-colors duration-300">{$t('contact') || 'Contact'}</a>
 						</div>
 					</div>
 				</div>

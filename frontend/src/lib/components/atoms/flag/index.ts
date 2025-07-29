@@ -1,0 +1,1 @@
+export { default as JapanFlag } from "./Japan.svelte"

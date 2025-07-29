@@ -2,11 +2,9 @@
   import HeroCarousel from '$lib/components/organisms/carousel/hero/Index.svelte';
   import { Button } from '$lib/components/atoms';
   import {LogoIcon} from '$lib/components/atoms';
+  import { createTranslationStore } from '$lib/utils/translation';
   
-  function scrollToMenu() {
-    const menu = document.getElementById('menu');
-    if (menu) menu.scrollIntoView({ behavior: 'smooth' });
-  }
+  const t = createTranslationStore();
 
   const images: { url: string }[] = [
     {
@@ -22,10 +20,12 @@
   <div class="relative z-20 flex flex-col gap-8 justify-center items-center">
     <LogoIcon className="ml-10" size="2xl" />
     
-    <p class="text-white text-base md:text-lg max-w-2xl font-cursive mb-8 font-medium">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+    <p class="text-white text-base md:text-lg max-w-2xl font-cursive mb-8 font-medium">
+      {$t('hero.description', 'Experience the finest culinary journey with premium steaks grilled to perfection.')}
+    </p>
     <div class="flex gap-4 justify-center">
-      <Button href="#menu" color="yellow" pill outline>Menu</Button>
-      <Button href="#reservation" variant="warning" pill outline>Book</Button>
+      <Button href="#menu" color="yellow" pill outline>{$t('hero.menuButton', 'Menu')}</Button>
+      <Button href="#reservation" variant="warning" pill outline>{$t('hero.bookButton', 'Book')}</Button>
     </div>
   </div>
 </HeroCarousel> 

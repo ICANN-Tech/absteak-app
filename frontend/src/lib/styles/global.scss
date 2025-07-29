@@ -1,0 +1,7 @@
+@forward 'variables';
+@use 'variables' as vars;
+@use 'scrollbar';
+
+:global(*) {
+  transition: all vars.$transition-duration vars.$transition-easing;
+}

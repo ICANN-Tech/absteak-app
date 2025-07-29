@@ -2,11 +2,14 @@
 	import { layout } from '$lib/const';
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { Image } from "$lib/components/atoms";
+	import { createTranslationStore } from '$lib/utils/translation';
 
-	// Props untuk kustomisasi konten
-	export let chefName: string = 'AKIRA BACK';
-	export let chefQuote: string = '"I love Jakarta." It is an amazing city that is a melting pot of culture just like my food. It\'s always been a place near and dear to me that I personally relate good with."';
-	export let chefDescription: string = 'Hailing from the picturesque landscapes of Korea and nurtured amid the scenic beauty of Aspen, Colorado, Chef Akira Back infuses his culinary endeavours with a spirit of exploration and innovation. Originally a professional snowboarder, Back transitioned seamlessly into the culinary world, making his mark as the youngest executive chef for Nobu Matsuhisa.';
+	const t = createTranslationStore();
+
+	// Props untuk kustomisasi konten - menggunakan translasi sebagai default
+	export let chefName: string = '';
+	export let chefQuote: string = '';
+	export let chefDescription: string = '';
 	
 	// Props untuk media
 	export let chefImageUrl: string = 'https://absteakjkt.com/wp-content/uploads/2024/01/ACR07440-683x1024.jpg';
@@ -67,20 +70,20 @@
 			<div class="md:w-1/2 flex flex-col justify-center p-10 md:p-16 {contentClass}">
 				<!-- Chef Name -->
 				<h2 class="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-					{chefName}
+					{chefName || $t('chef.name') || 'CHEF ABSTEAK'}
 				</h2>
 
 				<!-- Chef Quote -->
-				{#if chefQuote}
+				{#if chefQuote || $t('chef.quote')}
 					<p class="text-gray-700 text-lg mb-4 italic">
-						{chefQuote}
+						{chefQuote || $t('chef.quote') || '"Kami berkomitmen untuk menghadirkan pengalaman kuliner terbaik dengan steak premium berkualitas tinggi. Setiap hidangan adalah karya seni yang dibuat dengan passion dan dedikasi untuk kepuasan tamu."'}
 					</p>
 				{/if}
 
 				<!-- Chef Description -->
-				{#if chefDescription}
+				{#if chefDescription || $t('chef.description')}
 					<p class="text-gray-700 text-lg">
-						{chefDescription}
+						{chefDescription || $t('chef.description') || 'Tim chef berpengalaman di ABSteak menggabungkan teknik memasak modern dengan cita rasa autentik untuk menciptakan hidangan steak yang sempurna. Dengan pengalaman bertahun-tahun di industri kuliner, kami menghadirkan standar kualitas tertinggi dalam setiap sajian.'}
 					</p>
 				{/if}
 

@@ -4,3 +4,4 @@ export { createCarousel } from './carousel';
 export { MediaManager, createMediaManager, mediaUtils } from './mediaManager';
 export { ModalManager, createModalManager } from './modalManager';
 export { autoHideWithModal } from './autoHideModal';
+export * from './payment';

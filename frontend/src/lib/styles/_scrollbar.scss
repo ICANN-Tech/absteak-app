@@ -1,0 +1,77 @@
+/* src/lib/styles/_scrollbar.scss */
+
+// Variabel SCSS khusus untuk warna scrollbar
+// Sebaiknya variabel ini didefinisikan secara global di _variables.scss
+// Tapi untuk contoh ini, kita definisikan di sini
+$orange-500: #f97316;
+$orange-600: #ea580c;
+$orange-400: #fb923c;
+$orange-700: #c2410c;
+
+$gray-800-alpha: rgba(31, 41, 55, 0.8);
+$gray-700-alpha: rgba(75, 85, 99, 0.3);
+$black-40-alpha: rgba(0, 0, 0, 0.4);
+$black-60-alpha: rgba(0, 0, 0, 0.6);
+$orange-glow-alpha: rgba(249, 115, 22, 0.6);
+$orange-glow-active-alpha: rgba(249, 115, 22, 0.8);
+
+/* Enhanced custom scrollbar untuk payment method list - lebih terlihat */
+.enhanced-scrollbar {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
+  /* Firefox scrollbar styling */
+  scrollbar-width: thick;
+  scrollbar-color: $orange-500 $gray-800-alpha; // thumb color, track color
+
+  /* WebKit (Chrome, Safari, Edge) scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $gray-800-alpha;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    border: 1px solid $gray-700-alpha;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, $orange-500, $orange-600);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px $black-40-alpha;
+    border: 2px solid $gray-800-alpha;
+    min-height: 40px;
+
+    &:hover {
+      background: linear-gradient(180deg, $orange-400, $orange-500);
+      box-shadow: 0 4px 12px $orange-glow-alpha;
+      // transform: scale(1.05); // Transisi ini mungkin tidak didukung di semua browser untuk scrollbar thumb
+    }
+
+    &:active {
+      background: linear-gradient(180deg, $orange-600, $orange-700);
+      box-shadow: 0 2px 6px $orange-glow-active-alpha;
+    }
+  }
+
+  /* Focus state untuk container */
+  &:focus {
+    outline: 2px solid rgba(249, 115, 22, 0.5);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Prevent body scroll when scrolling payment method list */
+  &:hover {
+    overscroll-behavior: contain;
+  }
+
+  /* Scrollbar thumb muncul/berubah saat hover pada container */
+  /* Ini menargetkan thumb ketika container di-hover */
+  &:hover::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, $orange-400, $orange-500); // Pastikan konsisten dengan hover normal thumb
+    box-shadow: 0 4px 12px $orange-glow-alpha;
+  }
+}
