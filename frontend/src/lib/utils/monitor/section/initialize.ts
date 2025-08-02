@@ -732,15 +732,4 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
     (window as any).hideComponents = hideComponents;
     (window as any).getVisibleComponents = getVisibleComponents;
     (window as any).getHiddenComponents = getHiddenComponents;
-    console.log('🛠️ Development helpers available:');
-    console.log('  - switchInitializationMode("minimal"|"hero"|"full"|"default")');
-    console.log('  - showAllComponents()');
-    console.log('  - hideAllComponents()');
-    console.log('  - showOnlyComponent(ComponentId)');
-    console.log('  - hideOnlyComponent(ComponentId)');
-    console.log('  - toggleComponent(ComponentId)');
-    console.log('  - showComponents([ComponentId])');
-    console.log('  - hideComponents([ComponentId])');
-    console.log('  - getVisibleComponents()');
-    console.log('  - getHiddenComponents()');
 }

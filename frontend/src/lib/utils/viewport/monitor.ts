@@ -77,10 +77,13 @@ export class SectionMonitor {
       // For Hero section, only lock Navigation but let Hero functions handle Highlight
       lockVisibility([ComponentId.Navigation], false);
     } else {
+      // For other sections, unlock visibility but don't automatically show components
+      // Let the section-specific logic handle component visibility
       unlockVisibility();
-
-      // Show navigation component
-      showComponent([ComponentId.Highlight, ComponentId.LanguageSwitch, ComponentId.Operation, ComponentId.Schedule, ComponentId.Navigation]);
+      
+      // Only show LanguageSwitch as it should always be visible
+      // Don't automatically show other components - let initialization config control this
+      showComponent([ComponentId.LanguageSwitch]);
     }
   }
 

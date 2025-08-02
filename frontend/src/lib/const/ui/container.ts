@@ -151,7 +151,7 @@ export const CONTAINER_SECTION = {
     content: {
       base: `relative z-10 mx-auto flex h-full ${CONTAINER_LAYOUTS.flex.col} md:${CONTAINER_LAYOUTS.flex.row}`,
       left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center`,
-      right: `md:w-1/2 flex h-full ${CONTAINER_OVERFLOW.hidden} ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg}`
+      right: `md:w-1/2 flex h-full ${CONTAINER_OVERFLOW.hidden} ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg} ${UI_LAYOUT.padding.lg}`
     },
     text: {
       base: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.title}`,
@@ -175,7 +175,7 @@ export const CONTAINER_SECTION = {
     flex: `flex flex-col h-full justify-center space-y-4 ${UI_LAYOUT.padding.lg} ${CONTAINER_GAPS.md} ${CONTAINER_SIZES.md}`,
     content: {
       base: `relative z-10 mx-auto flex h-full ${CONTAINER_LAYOUTS.flex.col} md:${CONTAINER_LAYOUTS.flex.row}`,
-      left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg}`,
+      left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg} ${UI_LAYOUT.padding.lg}`,
       right: `md:w-1/2 flex h-full ${CONTAINER_OVERFLOW.hidden}`
     },
     text: {
@@ -217,10 +217,10 @@ export const CONTAINER_SECTION = {
       first: 'absolute inset-0 bg-gradient-to-r from-black/85 via-black/75 to-black/65',
       second: 'absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70'
     },
-    flex: 'flex flex-col md:flex-row h-full',
+    flex: `flex flex-col h-full justify-center space-y-4 ${UI_LAYOUT.padding.lg} ${CONTAINER_GAPS.md} ${CONTAINER_SIZES.md}`,
     content: {
       base: `relative z-10 mx-auto flex h-full ${CONTAINER_LAYOUTS.flex.col} md:${CONTAINER_LAYOUTS.flex.row}`,
-      left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg}`,
+      left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg} ${UI_LAYOUT.padding.lg}`,
       right: `md:w-1/2 flex h-full ${CONTAINER_OVERFLOW.hidden}`
     },
     text: {

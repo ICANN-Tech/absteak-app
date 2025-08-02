@@ -45,6 +45,9 @@
       // Use unified initialization - handles component visibility and sections in correct order
       await initializeApp();
       
+      // Small delay to ensure initialization settings are properly applied
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Start section monitor (which also starts video highlight monitor internally)
       start();
       
