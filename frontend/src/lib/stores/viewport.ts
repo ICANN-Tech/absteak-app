@@ -1,9 +1,5 @@
 import { writable, derived, type Readable } from 'svelte/store';
-
-export interface Section {
-  id: string;
-  path: string;
-}
+import type { Section } from '$lib/types';
 
 export interface ViewportState {
   currentSectionIndex: number;

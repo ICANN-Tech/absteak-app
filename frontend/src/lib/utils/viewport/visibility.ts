@@ -58,7 +58,7 @@ export function createViewportPosition(config: ViewportPositionConfig = {}): Vie
     areaBasedMode = false,
     triggerMode = false,
     autoStart = false,
-    showComponent = null
+    showComponent = false
   } = config;
 
   // Stores

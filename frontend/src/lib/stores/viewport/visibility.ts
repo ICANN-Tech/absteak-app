@@ -1,3 +1,39 @@
+/**
+ * Viewport Visibility Management System
+ * 
+ * This module provides comprehensive visibility management for UI components with support for:
+ * - Single component or multiple components (array) operations
+ * - Area-based detection (mouse proximity)
+ * - Time-based visibility cycles
+ * - Trigger-based manual control
+ * - Lock/unlock mechanisms for preventing visibility changes
+ * 
+ * @example Single component usage:
+ * ```typescript
+ * import { showComponent, hideComponent, ComponentId } from '$lib/stores/viewport/visibility';
+ * 
+ * // Show single component
+ * showComponent(ComponentId.Navigation);
+ * 
+ * // Hide single component
+ * hideComponent(ComponentId.Highlight);
+ * ```
+ * 
+ * @example Multiple components usage:
+ * ```typescript
+ * import { showComponent, hideComponent, toggleComponentVisibility, ComponentId } from '$lib/stores/viewport/visibility';
+ * 
+ * // Show multiple components at once
+ * showComponent([ComponentId.Navigation, ComponentId.Highlight]);
+ * 
+ * // Hide multiple components at once
+ * hideComponent([ComponentId.Navigation, ComponentId.Highlight, ComponentId.ChatBot]);
+ * 
+ * // Toggle multiple components
+ * toggleComponentVisibility([ComponentId.Locale, ComponentId.Operation]);
+ * ```
+ */
+
 import { writable, derived, type Writable, type Readable } from 'svelte/store';
 import { 
   createViewportPosition, 
@@ -9,6 +45,7 @@ import {
   type ViewportPositionConfig,
   type ViewportPositionState
 } from '$lib/utils/viewport/visibility.js';
+import { ComponentId } from '$lib/enums';
 
 // Global viewport visibility state
 interface GlobalViewportState {
@@ -35,6 +72,172 @@ const globalState = writable<GlobalViewportState>({
 
 // Lock management
 const lockMap = new Map<string, LockState>();
+
+/**
+ * Set component visibility state directly (showComponent)
+ * This function directly changes the showComponent state without modifying configuration
+ * @param componentId - Component ID or array of Component IDs to modify
+ * @param show - true to force show, false to force hide, null to use normal visibility logic
+ */
+export function setComponentVisibility(componentId: ComponentId | ComponentId[], show: boolean | null) {
+  if (Array.isArray(componentId)) {
+    const results = componentId.map(id => {
+      const component = viewportVisibilityStore.getComponent(id);
+      
+      if (!component) {
+        console.warn(`Component with ID "${id}" not found. Cannot set visibility.`);
+        return false;
+      }
+
+      // Check if component is locked
+      if (isLocked(id)) {
+        console.warn(`Component with ID "${id}" is locked. Cannot change visibility.`);
+        return false;
+      }
+
+      // Set the showComponent state
+      component.setShowComponent(show);
+      return true;
+    });
+    return results.every(result => result); // Return true only if all succeeded
+  }
+
+  const component = viewportVisibilityStore.getComponent(componentId);
+  
+  if (!component) {
+    console.warn(`Component with ID "${componentId}" not found. Cannot set visibility.`);
+    return false;
+  }
+
+  // Check if component is locked
+  if (isLocked(componentId)) {
+    console.warn(`Component with ID "${componentId}" is locked. Cannot change visibility.`);
+    return false;
+  }
+
+  // Set the showComponent state
+  component.setShowComponent(show);
+  return true;
+}
+
+/**
+ * Show component immediately
+ * @param componentId - Component ID or array of Component IDs to show
+ */
+export function showComponent(componentId: ComponentId | ComponentId[]) {
+  if (Array.isArray(componentId)) {
+    const results = componentId.map(id => setComponentVisibility(id, true));
+    return results.every(result => result); // Return true only if all succeeded
+  }
+  return setComponentVisibility(componentId, true);
+}
+
+/**
+ * Hide component immediately
+ * @param componentId - Component ID or array of Component IDs to hide
+ */
+export function hideComponent(componentId: ComponentId | ComponentId[]) {
+  if (Array.isArray(componentId)) {
+    const results = componentId.map(id => setComponentVisibility(id, false));
+    return results.every(result => result); // Return true only if all succeeded
+  }
+  return setComponentVisibility(componentId, false);
+}
+
+/**
+ * Reset component to use normal visibility logic
+ * @param componentId - Component ID or array of Component IDs to reset
+ */
+export function resetComponentVisibility(componentId: ComponentId | ComponentId[]) {
+  if (Array.isArray(componentId)) {
+    const results = componentId.map(id => setComponentVisibility(id, null));
+    return results.every(result => result); // Return true only if all succeeded
+  }
+  return setComponentVisibility(componentId, null);
+}
+
+/**
+ * Toggle component visibility
+ * @param componentId - Component ID or array of Component IDs to toggle
+ */
+export function toggleComponentVisibility(componentId: ComponentId | ComponentId[]) {
+  if (Array.isArray(componentId)) {
+    const results = componentId.map(id => {
+      const component = viewportVisibilityStore.getComponent(id);
+      
+      if (!component) {
+        console.warn(`Component with ID "${id}" not found. Cannot toggle visibility.`);
+        return false;
+      }
+
+      // Check if component is locked
+      if (isLocked(id)) {
+        console.warn(`Component with ID "${id}" is locked. Cannot toggle visibility.`);
+        return false;
+      }
+
+      // Get current showComponent state
+      let currentShowComponent: boolean | null = null;
+      component.showComponent.subscribe(value => {
+        currentShowComponent = value;
+      })();
+
+      // Toggle logic
+      if (currentShowComponent === true) {
+        component.setShowComponent(false);
+      } else if (currentShowComponent === false) {
+        component.setShowComponent(true);
+      } else {
+        // If null, check current visible state to decide
+        let currentVisible: boolean = false;
+        component.visible.subscribe(value => {
+          currentVisible = value;
+        })();
+        
+        component.setShowComponent(!currentVisible);
+      }
+
+      return true;
+    });
+    return results.every(result => result); // Return true only if all succeeded
+  }
+
+  const component = viewportVisibilityStore.getComponent(componentId);
+  
+  if (!component) {
+    console.warn(`Component with ID "${componentId}" not found. Cannot toggle visibility.`);
+    return false;
+  }
+
+  // Check if component is locked
+  if (isLocked(componentId)) {
+    console.warn(`Component with ID "${componentId}" is locked. Cannot toggle visibility.`);
+    return false;
+  }
+
+  // Get current showComponent state
+  let currentShowComponent: boolean | null = null;
+  component.showComponent.subscribe(value => {
+    currentShowComponent = value;
+  })();
+
+  // Toggle logic
+  if (currentShowComponent === true) {
+    component.setShowComponent(false);
+  } else if (currentShowComponent === false) {
+    component.setShowComponent(true);
+  } else {
+    // If null, check current visible state to decide
+    let currentVisible: boolean = false;
+    component.visible.subscribe(value => {
+      currentVisible = value;
+    })();
+    
+    component.setShowComponent(!currentVisible);
+  }
+
+  return true;
+}
 
 /**
  * Check if a component is locked
@@ -615,13 +818,13 @@ export function useViewportVisibility(
 }
 
 /**
- * Lock visibility for specific component or all components
+ * Lock visibility for specific component(s) or all components
  * When locked, showComponent will be forced to the locked value regardless of other settings
- * @param componentId - Component ID to lock, or undefined to lock all components
+ * @param selectedComponent - Component ID(s) to lock: undefined for all components, string for single component, or array for multiple components
  * @param lockedValue - Value to lock showComponent to (true/false/null)
  */
-export function lockVisibility(componentId?: string, lockedValue: boolean | null = false) {
-  if (componentId === undefined) {
+export function lockVisibility(selectedComponent?: ComponentId | ComponentId[], lockedValue: boolean | null = false) {
+  if (selectedComponent === undefined) {
     // Lock all components
     globalState.update(state => {
       state.activeComponents.forEach((component, id) => {
@@ -636,9 +839,28 @@ export function lockVisibility(componentId?: string, lockedValue: boolean | null
       });
       return state;
     });
+  } else if (Array.isArray(selectedComponent)) {
+    // Lock multiple specific components
+    selectedComponent.forEach(id => {
+      const component = viewportVisibilityStore.getComponent(id);
+      let originalValue: boolean | null = null;
+      
+      if (component) {
+        // Get current showComponent value as original value
+        component.showComponent.subscribe(value => {
+          originalValue = value;
+        })();
+        
+        lockMap.set(id, { locked: true, lockedValue, originalValue });
+        component.setShowComponent(lockedValue);
+      } else {
+        // If component doesn't exist yet, set with null original value
+        lockMap.set(id, { locked: true, lockedValue, originalValue: null });
+      }
+    });
   } else {
-    // Lock specific component
-    const component = viewportVisibilityStore.getComponent(componentId);
+    // Lock single specific component
+    const component = viewportVisibilityStore.getComponent(selectedComponent);
     let originalValue: boolean | null = null;
     
     if (component) {
@@ -647,55 +869,270 @@ export function lockVisibility(componentId?: string, lockedValue: boolean | null
         originalValue = value;
       })();
       
-      lockMap.set(componentId, { locked: true, lockedValue, originalValue });
+      lockMap.set(selectedComponent, { locked: true, lockedValue, originalValue });
       component.setShowComponent(lockedValue);
     } else {
       // If component doesn't exist yet, set with null original value
-      lockMap.set(componentId, { locked: true, lockedValue, originalValue: null });
+      lockMap.set(selectedComponent, { locked: true, lockedValue, originalValue: null });
     }
   }
 }
 
 /**
- * Unlock visibility for specific component or all components
- * @param componentId - Component ID to unlock, or undefined to unlock all components
+ * Unlock visibility for specific component(s) or all components
+ * @param selectedComponent - Component ID(s) to unlock: undefined for all components, string for single component, or array for multiple components
+ * @param lockedValue - Value to set showComponent to when unlocking (true/false/null). If not provided, restores original value
  */
-export function unlockVisibility(componentId?: string) {
-  if (componentId === undefined) {
+export function unlockVisibility(selectedComponent?: ComponentId | ComponentId[], lockedValue?: boolean | null) {
+  if (selectedComponent === undefined) {
     // Unlock all components
     globalState.update(state => {
       state.activeComponents.forEach((component, id) => {
         const lockState = lockMap.get(id);
-        const originalValue = lockState?.originalValue ?? null;
+        const valueToSet = lockedValue !== undefined ? lockedValue : (lockState?.originalValue ?? null);
         
         lockMap.set(id, { locked: false, lockedValue: null, originalValue: null });
-        // Restore original value instead of resetting to null
-        component.setShowComponent(originalValue);
+        // Set to specified lockedValue or restore original value
+        component.setShowComponent(valueToSet);
       });
       return state;
     });
+  } else if (Array.isArray(selectedComponent)) {
+    // Unlock multiple specific components
+    selectedComponent.forEach(id => {
+      const lockState = lockMap.get(id);
+      const valueToSet = lockedValue !== undefined ? lockedValue : (lockState?.originalValue ?? null);
+      
+      lockMap.set(id, { locked: false, lockedValue: null, originalValue: null });
+      
+      // Set to specified lockedValue or restore original value
+      const component = viewportVisibilityStore.getComponent(id);
+      if (component) {
+        component.setShowComponent(valueToSet);
+      }
+    });
   } else {
-    // Unlock specific component
-    const lockState = lockMap.get(componentId);
-    const originalValue = lockState?.originalValue ?? null;
+    // Unlock single specific component
+    const lockState = lockMap.get(selectedComponent);
+    const valueToSet = lockedValue !== undefined ? lockedValue : (lockState?.originalValue ?? null);
     
-    lockMap.set(componentId, { locked: false, lockedValue: null, originalValue: null });
+    lockMap.set(selectedComponent, { locked: false, lockedValue: null, originalValue: null });
     
-    // Restore original value instead of resetting to null
-    const component = viewportVisibilityStore.getComponent(componentId);
+    // Set to specified lockedValue or restore original value
+    const component = viewportVisibilityStore.getComponent(selectedComponent);
     if (component) {
-      component.setShowComponent(originalValue);
+      component.setShowComponent(valueToSet);
     }
   }
 }
 
 /**
- * Check if visibility is locked for specific component or all components
- * @param componentId - Component ID to check, or undefined to check if all components are locked
- * @returns true if locked, false if not locked
+ * Modify visibility configuration for a specific component
+ * This function allows you to update the configuration of an existing component
+ * @param componentId - Component ID to modify
+ * @param config - New configuration to apply
+ * @param options - Additional options for modification
  */
-export function isVisibilityLocked(componentId?: string): boolean {
-  if (componentId === undefined) {
+export function modifyVisibility(
+  componentId: ComponentId, 
+  config: Partial<ViewportPositionConfig>,
+  options: {
+    preserveCurrentState?: boolean; // Whether to preserve current visibility state
+    applyImmediately?: boolean; // Whether to apply changes immediately
+  } = {}
+) {
+  const { preserveCurrentState = true, applyImmediately = true } = options;
+  
+  // Get the existing component
+  const existingComponent = viewportVisibilityStore.getComponent(componentId);
+  
+  if (!existingComponent) {
+    console.warn(`Component with ID "${componentId}" not found. Cannot modify visibility.`);
+    return null;
+  }
+
+  // Store current state if needed
+  let currentVisibleState: boolean = false;
+  let currentShowComponentState: boolean | null = null;
+  
+  if (preserveCurrentState) {
+    existingComponent.visible.subscribe(value => {
+      currentVisibleState = value;
+    })();
+    
+    existingComponent.showComponent.subscribe(value => {
+      currentShowComponentState = value;
+    })();
+  }
+
+  // Get current lock state
+  const lockState = lockMap.get(componentId);
+  const isCurrentlyLocked = lockState?.locked ?? false;
+  const lockedValue = lockState?.lockedValue ?? null;
+  const originalValue = lockState?.originalValue ?? null;
+
+  // Remove the existing component from global state
+  globalState.update(state => {
+    const component = state.activeComponents.get(componentId);
+    if (component) {
+      component.destroy();
+      state.activeComponents.delete(componentId);
+    }
+    return state;
+  });
+
+  // Create new component with updated config
+  const newComponent = createViewportPosition(config);
+  
+  // Register the new component in global state
+  globalState.update(state => {
+    state.activeComponents.set(componentId, newComponent);
+    return state;
+  });
+
+  // Restore lock state if it was locked
+  if (isCurrentlyLocked) {
+    lockMap.set(componentId, { 
+      locked: true, 
+      lockedValue, 
+      originalValue: preserveCurrentState ? currentShowComponentState : originalValue 
+    });
+  }
+
+  // Apply changes immediately if requested
+  if (applyImmediately) {
+    if (isCurrentlyLocked) {
+      // If locked, apply the locked value
+      newComponent.setShowComponent(lockedValue);
+    } else if (preserveCurrentState) {
+      // Restore previous states
+      if (currentVisibleState) {
+        newComponent.show();
+      } else {
+        newComponent.hide();
+      }
+      newComponent.setShowComponent(currentShowComponentState);
+    }
+  }
+
+  return {
+    component: newComponent,
+    previousState: preserveCurrentState ? {
+      visible: currentVisibleState,
+      showComponent: currentShowComponentState
+    } : null,
+    wasLocked: isCurrentlyLocked
+  };
+}
+
+/**
+ * Helper function to modify component to time-based mode
+ * @param componentId - Component ID to modify
+ * @param timeConfig - Time-based configuration
+ */
+export function setTimeBasedVisibility(
+  componentId: ComponentId,
+  timeConfig: {
+    showDelay?: number;
+    hideDelay?: number;
+    autoStart?: boolean;
+  } = {}
+) {
+  return modifyVisibility(componentId, {
+    timeBasedMode: true,
+    showDelay: timeConfig.showDelay ?? 2000,
+    hideDelay: timeConfig.hideDelay ?? 2000,
+    autoStart: timeConfig.autoStart ?? true
+  });
+}
+
+/**
+ * Helper function to modify component to area-based mode
+ * @param componentId - Component ID to modify
+ * @param areaConfig - Area-based configuration
+ */
+export function setAreaBasedVisibility(
+  componentId: ComponentId,
+  areaConfig: {
+    componentPosition?: { x: number; y: number };
+    proximityRadius?: number;
+    hideDelay?: number;
+    autoStart?: boolean;
+  } = {}
+) {
+  return modifyVisibility(componentId, {
+    areaBasedMode: true,
+    componentPosition: areaConfig.componentPosition ?? { x: 0, y: 0 },
+    proximityRadius: areaConfig.proximityRadius ?? 100,
+    hideDelay: areaConfig.hideDelay ?? 2000,
+    autoStart: areaConfig.autoStart ?? true
+  });
+}
+
+/**
+ * Helper function to modify component to trigger-based mode
+ * @param componentId - Component ID to modify
+ * @param triggerConfig - Trigger-based configuration
+ */
+export function setTriggerBasedVisibility(
+  componentId: ComponentId,
+  triggerConfig: {
+    initialVisible?: boolean;
+  } = {}
+) {
+  return modifyVisibility(componentId, {
+    triggerMode: true,
+    initialVisible: triggerConfig.initialVisible ?? false
+  });
+}
+
+/**
+ * Get current configuration of a component (read-only)
+ * @param componentId - Component ID to get configuration for
+ */
+export function getVisibilityConfig(componentId: ComponentId) {
+  const component = viewportVisibilityStore.getComponent(componentId);
+  
+  if (!component) {
+    console.warn(`Component with ID "${componentId}" not found.`);
+    return null;
+  }
+
+  // Get current states
+  let visible: boolean = false;
+  let showComponent: boolean | null = null;
+  
+  component.visible.subscribe(value => {
+    visible = value;
+  })();
+  
+  component.showComponent.subscribe(value => {
+    showComponent = value;
+  })();
+
+  // Get lock state
+  const lockState = lockMap.get(componentId);
+  
+  return {
+    currentState: {
+      visible,
+      showComponent
+    },
+    lockState: {
+      isLocked: lockState?.locked ?? false,
+      lockedValue: lockState?.lockedValue ?? null,
+      originalValue: lockState?.originalValue ?? null
+    }
+  };
+}
+
+/**
+ * Check if visibility is locked for specific component(s) or all components
+ * @param selectedComponent - Component ID(s) to check: undefined to check if all components are locked, string for single component, or array for multiple components
+ * @returns true if locked, false if not locked. For arrays, returns true only if ALL specified components are locked
+ */
+export function isVisibilityLocked(selectedComponent?: ComponentId | ComponentId[]): boolean {
+  if (selectedComponent === undefined) {
     // Check if all components are locked
     let hasComponents = false;
     globalState.subscribe(state => {
@@ -707,9 +1144,13 @@ export function isVisibilityLocked(componentId?: string): boolean {
       }
     })();
     return hasComponents; // Return true only if there are components and all are locked
+  } else if (Array.isArray(selectedComponent)) {
+    // Check if all specified components are locked
+    if (selectedComponent.length === 0) return false;
+    return selectedComponent.every(id => isLocked(id));
   } else {
-    // Check specific component
-    return isLocked(componentId);
+    // Check single specific component
+    return isLocked(selectedComponent);
   }
 }
 

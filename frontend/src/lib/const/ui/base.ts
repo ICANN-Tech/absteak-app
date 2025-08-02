@@ -77,6 +77,27 @@ export const UI_CONTAINER = {
   minimal: 'bg-primary-700/20 backdrop-blur-md border-primary-600'
 }
 
+export const UI_TEXTS = {
+  base: {
+    title: 'text-primary-900',
+    subtitle: 'text-primary-900',
+    item: 'text-primary-900',
+    description: 'text-primary-900'
+  },
+  elegant: {
+    title: 'text-white',
+    subtitle: 'text-white',
+    item: 'text-white',
+    description: 'text-white'
+  },
+  minimal: {
+    title: 'text-primary-200',
+    subtitle: 'text-primary-200',
+    item: 'text-primary-200',
+    description: 'text-primary-200'
+  }
+}
+
 // Component-specific variant configurations
 export const UI_COMPONENT_VARIANTS = {
   // Labels

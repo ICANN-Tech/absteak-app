@@ -4,7 +4,9 @@ import { useScrollObserver } from './observer';
 import { useViewportNavigator } from './navigator';
 import { useComponentLoader } from './loader';
 import { useIndicatorSystem } from './indicator';
-import type { Section } from '$lib/stores/viewport';
+import { useScrolling, type ScrollConfig } from './scrolling';
+
+import type { Section } from '$lib/types';
 
 // Re-export all utilities
 export * from './observer';
@@ -12,6 +14,9 @@ export * from './navigator';
 export * from './loader';
 export * from './indicator';
 export * from "./visibility";
+// export * from './monitor';
+export * from "./instantiate";
+export * from './scrolling';
 export { viewportStore, currentSectionIndex, isTransitioning, scrollEnabled } from '$lib/stores/viewport';
 
 export interface ViewportSystemOptions {
@@ -23,6 +28,9 @@ export interface ViewportSystemOptions {
   onNavigate?: (fromIndex: number, toIndex: number) => void;
   indicatorCallback?: () => void;
   autoStart?: boolean;
+  // Scroll configuration
+  scrollConfig?: ScrollConfig;
+  enableScrollListener?: boolean;
 }
 
 export interface ViewportSystemReturn {
@@ -57,11 +65,16 @@ export interface ViewportSystemReturn {
   updateOptions: (options: Partial<ViewportSystemOptions>) => void;
   setSections: (sections: Section[]) => void;
   setScrollDelay: (delay: number) => void;
+  
+  // Scroll utilities
+  scrolling: ReturnType<typeof useScrolling>;
+  startScrollListener: () => void;
+  stopScrollListener: () => void;
 }
 
 /**
  * Comprehensive viewport system utility yang mengintegrasikan
- * store, observer, dan navigator dalam satu interface
+ * store, observer, navigator, dan scrolling dalam satu interface
  */
 export function useViewportSystem(options: ViewportSystemOptions): ViewportSystemReturn {
   const {
@@ -72,12 +85,22 @@ export function useViewportSystem(options: ViewportSystemOptions): ViewportSyste
     onScrollAttempt,
     onNavigate,
     indicatorCallback,
-    autoStart = true
+    autoStart = true,
+    scrollConfig = {},
+    enableScrollListener = true
   } = options;
 
   // Initialize viewport store
   viewportStore.setSections(sections);
   viewportStore.setScrollDelay(scrollDelay);
+
+  // Create scrolling utilities
+  const scrolling = useScrolling({
+    enabled: true,
+    delay: scrollDelay,
+    preventNativeScroll: true,
+    ...scrollConfig
+  });
 
   // Create navigator
   const navigator = useViewportNavigator({
@@ -94,13 +117,33 @@ export function useViewportSystem(options: ViewportSystemOptions): ViewportSyste
     indicatorCallback
   });
 
-  // Auto start observer if enabled
+  // Setup scroll event handling
+  if (enableScrollListener) {
+    scrolling.onScroll((direction, fromIndex, toIndex) => {
+      // Handle navigation based on scroll direction
+      if (direction === 'down') {
+        navigator.nextSection();
+      } else if (direction === 'up') {
+        navigator.previousSection();
+      }
+      
+      // Call scroll attempt callback
+      onScrollAttempt?.(direction);
+    });
+  }
+
+  // Auto start observer and scroll listener if enabled
   if (autoStart) {
     onMount(() => {
       scrollObserver.start();
       
+      if (enableScrollListener) {
+        scrolling.startListener();
+      }
+      
       return () => {
         scrollObserver.stop();
+        scrolling.stopListener();
       };
     });
   }
@@ -140,6 +183,12 @@ export function useViewportSystem(options: ViewportSystemOptions): ViewportSyste
       }
       if (newOptions.scrollDelay !== undefined) {
         viewportStore.setScrollDelay(newOptions.scrollDelay);
+        scrolling.setDelay(newOptions.scrollDelay);
+      }
+      
+      // Update scroll config
+      if (newOptions.scrollConfig) {
+        scrolling.updateConfig(newOptions.scrollConfig);
       }
       
       // Update navigator options
@@ -164,7 +213,13 @@ export function useViewportSystem(options: ViewportSystemOptions): ViewportSyste
 
     setScrollDelay: (delay: number) => {
       viewportStore.setScrollDelay(delay);
-    }
+      scrolling.setDelay(delay);
+    },
+
+    // Scroll utilities
+    scrolling,
+    startScrollListener: scrolling.startListener,
+    stopScrollListener: scrolling.stopListener
   };
 }
 

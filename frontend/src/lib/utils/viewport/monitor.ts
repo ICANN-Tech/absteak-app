@@ -7,18 +7,19 @@
  */
 
 import { viewportStore } from '$lib/stores/viewport';
-import { lockVisibility, unlockVisibility } from '$lib/stores/viewport/visibility';
-import { SectionId } from '$lib/const/control/section';
+import { lockVisibility, unlockVisibility, showComponent } from '$lib/stores/viewport/visibility';
+import { ComponentId, SectionId } from '$lib/enums';
+import type { Section } from '$lib/types';
 
 export interface SectionMonitorOptions {
-  onSectionChange?: (sectionId: string, sectionIndex: number) => void;
+  onSectionChange?: (section: SectionId, sectionIndex: number) => void;
   enableVisibilityControl?: boolean;
 }
 
 export class SectionMonitor {
   private options: SectionMonitorOptions;
   private unsubscribe?: () => void;
-  private currentSectionId: string | null = null;
+  private currentSection: SectionId | null = null;
 
   constructor(options: SectionMonitorOptions = {}) {
     this.options = {
@@ -38,19 +39,19 @@ export class SectionMonitor {
     this.unsubscribe = viewportStore.subscribe(state => {
       const currentSection = state.sections[state.currentSectionIndex];
       
-      if (currentSection && currentSection.id !== this.currentSectionId) {
-        const previousSectionId = this.currentSectionId;
-        this.currentSectionId = currentSection.id;
+      if (currentSection && currentSection.id !== this.currentSection) {
+        const previousSection = this.currentSection;
+        this.currentSection = currentSection.id as SectionId;
 
         // Handle visibility control
         if (this.options.enableVisibilityControl) {
-          this.handleVisibilityControl(currentSection.id);
+          this.handleVisibilityControl(currentSection);
         }
 
         // Call custom callback if provided
-        this.options.onSectionChange?.(currentSection.id, state.currentSectionIndex);
+        this.options.onSectionChange?.(currentSection.id as SectionId, state.currentSectionIndex);
 
-        console.log(`Section changed: ${previousSectionId} -> ${currentSection.id}`);
+        console.log(`Section changed: ${previousSection} -> ${currentSection.id}`);
       }
     });
   }
@@ -68,23 +69,26 @@ export class SectionMonitor {
   /**
    * Handle visibility control based on current section
    */
-  private handleVisibilityControl(sectionId: string): void {
-    if ([SectionId.Footer, SectionId.Hero].includes(sectionId as SectionId)) {
+  private handleVisibilityControl(section: Section): void {
+    if (section.id === SectionId.Footer) {
       // Lock visibility when on footer section
-      lockVisibility(undefined, false);
-      console.log('Visibility locked - Footer section active');
+      lockVisibility([ComponentId.Highlight, ComponentId.Navigation], false);
+    } else if (section.id === SectionId.Hero) {
+      // For Hero section, only lock Navigation but let Hero functions handle Highlight
+      lockVisibility([ComponentId.Navigation], false);
     } else {
-      // Unlock visibility for other sections
-      console.log('Visibility unlocked - Non-footer section active');
       unlockVisibility();
+
+      // Show navigation component
+      showComponent([ComponentId.Highlight, ComponentId.LanguageSwitch, ComponentId.Operation, ComponentId.Schedule, ComponentId.Navigation]);
     }
   }
 
   /**
    * Get current section ID
    */
-  getCurrentSectionId(): string | null {
-    return this.currentSectionId;
+  getCurrentSectionId(): SectionId | null {
+    return this.currentSection;
   }
 
   /**

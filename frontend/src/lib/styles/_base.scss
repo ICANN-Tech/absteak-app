@@ -1,0 +1,21 @@
+// src/lib/styles/_base.scss
+
+// Import variables if not already accessible via @use from global.scss
+// If _base.scss is only @imported, it needs its own @use 'variables'
+@use 'variables' as vars;
+
+:global(html, body) {
+  margin: 0;
+  padding: 0;
+  // Apply a default font for the whole app
+  font-family: vars.$font-sans; 
+  line-height: 1.6;
+  color: #333;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+}
+
+// Global utility class for the Pacifico font
+:global(.font-pacifico) {
+  font-family: vars.$font-cursive; 
+}

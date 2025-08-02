@@ -1,4 +1,5 @@
-import { localeStore, type Locale } from '$lib/stores/locale';
+import { localeStore } from '$lib/stores/locale';
+import type { Locale } from '$lib/types';
 import { get } from 'svelte/store';
 
 // Locale labels untuk display

@@ -1,0 +1,1 @@
+export { default as MapLocation } from './Map.svelte';

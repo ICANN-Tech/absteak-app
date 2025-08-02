@@ -1,17 +1,17 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-
-export type Locale = 'id' | 'en' | 'ja';
+import type { Locales } from '$lib/types';
+import { Locale } from '$lib/enums';
 
 export interface LocaleState {
 	current: Locale;
-	available: Locale[];
+	available: Locales;
 }
 
 // Default locale state
 const defaultLocale: LocaleState = {
-	current: 'id',
-	available: ['id', 'en', 'ja']
+	current: Locale.Id,
+	available: [Locale.Id, Locale.En, Locale.Ja]
 };
 
 // Get initial locale from localStorage or default
@@ -49,7 +49,7 @@ if (browser) {
 
 // Helper to get current locale
 export const getCurrentLocale = (): Locale => {
-	let current: Locale = 'id';
+	let current: Locale = Locale.Id;
 	localeStore.subscribe((state) => {
 		current = state.current;
 	})();

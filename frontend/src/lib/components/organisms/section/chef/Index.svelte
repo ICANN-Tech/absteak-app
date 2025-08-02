@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { layout } from '$lib/const';
+	import { CONTAINER_SECTION, CONTAINER_RESPONSIVE, CONTAINER_GAPS, UI_LAYOUT } from '$lib/const';
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { Image } from "$lib/components/atoms";
 	import { createTranslationStore } from '$lib/utils/translation';
@@ -12,7 +12,7 @@
 	export let chefDescription: string = '';
 	
 	// Props untuk media
-	export let chefImageUrl: string = 'https://absteakjkt.com/wp-content/uploads/2024/01/ACR07440-683x1024.jpg';
+	export let chefImageUrl: string = CONTAINER_SECTION.chef.imageUrl.chef;
 	export let chefImageAlt: string = 'Chef Akira Back';
 
 	// Props untuk overlay
@@ -37,18 +37,21 @@
 	export let enableHoverEffect: boolean = true;
 	export let hoverScale: string = 'hover:scale-110';
 
-	// Computed classes
+	// Computed classes dengan struktur 2 kolom responsive
 	$: flexDirection = layout_direction === 'reverse' ? 'md:flex-row-reverse' : 'md:flex-row';
-	$: sectionClasses = `flex h-screen w-full flex-col items-center gap-10 rounded-xl ${flexDirection} ${layout.margin.section} ${containerClass}`;
+	$: sectionClasses = `${CONTAINER_SECTION.chef.base} ${containerClass}`;
 	$: sectionStyle = `background-color: ${backgroundColor};`;
-	$: imageContainerClasses = `group relative w-full h-full overflow-hidden md:w-1/2`;
-	$: imageClasses = `h-full w-full object-cover object-center transition-transform duration-300 ${enableHoverEffect ? `group-hover:scale-105` : ''} ${imageClass}`;
+	$: contentContainerClasses = `${CONTAINER_SECTION.chef.content.base} ${flexDirection}`;
+	$: imageContainerClasses = `${CONTAINER_SECTION.chef.content.left} group relative overflow-hidden`;
+	$: textContainerClasses = `${CONTAINER_SECTION.chef.content.right} ${CONTAINER_RESPONSIVE.text.base}`;
+	$: imageClasses = `${CONTAINER_SECTION.chef.image.base} ${enableHoverEffect ? hoverScale : ''} ${imageClass}`;
 </script>
 
 <AnimateOnScroll animation={animationType} y={animationY} duration={animationDuration}>
 	<section class={sectionClasses} style={sectionStyle}>
-		<div class="mx-auto flex flex-col md:flex-row h-full">
-			<!-- Image Container with Overlay -->
+		<!-- Container dengan 2 kolom responsive -->
+		<div class={contentContainerClasses}>
+			<!-- Image Container (Kolom Kiri) -->
 			<div class={imageContainerClasses}>
 				<Image 
 					class={imageClasses} 
@@ -66,33 +69,27 @@
 				{/if}
 			</div>
 
-			<!-- Content Container -->
-			<div class="md:w-1/2 flex flex-col justify-center p-10 md:p-16 {contentClass}">
-				<!-- Chef Name -->
-				<h2 class="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-					{chefName || $t('chef.name') || 'CHEF ABSTEAK'}
-				</h2>
+			<!-- Text Content Container (Kolom Kanan) -->
+			<div class={`${CONTAINER_SECTION.chef.content.right} ${textContainerClasses} ${contentClass}`}>
+				<!-- Content dalam 1 baris vertikal ke bawah -->
+				<div class={`${CONTAINER_SECTION.chef.flex}`}>
+					<!-- Chef Name -->
+					<h2 class={CONTAINER_SECTION.chef.text.title}>
+						{chefName || $t('chef.name') || 'CHEF ABSTEAK'}
+					</h2>
 
-				<!-- Chef Quote -->
-				{#if chefQuote || $t('chef.quote')}
-					<p class="text-gray-700 text-lg mb-4 italic">
-						{chefQuote || $t('chef.quote') || '"Kami berkomitmen untuk menghadirkan pengalaman kuliner terbaik dengan steak premium berkualitas tinggi. Setiap hidangan adalah karya seni yang dibuat dengan passion dan dedikasi untuk kepuasan tamu."'}
+					<!-- Chef Quote/Description dalam satu paragraf -->
+					<p class={CONTAINER_SECTION.chef.text.description}>
+						{chefQuote || $t('chef.quote') || chefDescription || $t('chef.description') || '"Kami berkomitmen untuk menghadirkan pengalaman kuliner terbaik dengan steak premium berkualitas tinggi. Tim chef berpengalaman di ABSteak menggabungkan teknik memasak modern dengan cita rasa autentik untuk menciptakan hidangan steak yang sempurna."'}
 					</p>
-				{/if}
-
-				<!-- Chef Description -->
-				{#if chefDescription || $t('chef.description')}
-					<p class="text-gray-700 text-lg">
-						{chefDescription || $t('chef.description') || 'Tim chef berpengalaman di ABSteak menggabungkan teknik memasak modern dengan cita rasa autentik untuk menciptakan hidangan steak yang sempurna. Dengan pengalaman bertahun-tahun di industri kuliner, kami menghadirkan standar kualitas tertinggi dalam setiap sajian.'}
-					</p>
-				{/if}
+				</div>
 
 				<!-- Slot untuk konten tambahan -->
 				<slot name="additional-content" />
 			</div>
-
-			<!-- Slot untuk konten custom di luar layout standar -->
-			<slot />
 		</div>
+
+		<!-- Slot untuk konten custom di luar layout standar -->
+		<slot />
 	</section>
 </AnimateOnScroll>

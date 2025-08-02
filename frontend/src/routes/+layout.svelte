@@ -1,11 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import { HeaderLayout as Header } from '$lib/components/organisms';
-	import Login from '$lib/components/Login.svelte';
-	import Schedule from '$lib/components/atoms/operation/Index.svelte';
-	import ChatBotFAB from '$lib/components/ChatBotFAB.svelte';
-	import {Locale, Operation} from '$lib/components/atoms';
-	import Indicator from '$lib/components/atoms/indicator/Index.svelte';
+	import { NavBarLayout, ScheduleLayout } from '$lib/components/organisms';
+	import { ChatBot } from '$lib/components/organisms';
 
 	import { modalStore } from '$lib/stores/modal';
 	import { viewportStore } from '$lib/stores/viewport';
@@ -34,7 +30,7 @@
 	const sectionsForIndicator = getIndicatorSections(allSections); // Only specific sections for indicator
 
 	// Setup sections in viewport store (all sections for scrolling)
-	viewportStore.setSections(sectionsForScrolling.map((s) => ({ id: s.id, path: '' })));
+	viewportStore.setSections(sectionsForScrolling);
 
 	// Setup indicator system
 	const indicator = useIndicatorSystem({
@@ -85,25 +81,37 @@
 		}
 		return -1;
 	})();
+
+	import { HighlightLayout, LanguageSwitcherLayout } from '$lib/components/organisms';
+	import ScrollIndicator from '$lib/components/organisms/layout/ScrollIndicator.svelte';
+	import BackToTop from '$lib/components/organisms/layout/BackToTop.svelte';
 </script>
 
-<Header />
+<NavBarLayout />
 <!-- <Login /> -->
-<Operation />
-<Locale />
+<ScheduleLayout />
+<LanguageSwitcherLayout />
 
 <slot />
 
-<ChatBotFAB />
+<ChatBot />
 
-<!-- Section indicator menggunakan komponen terpisah -->
-<Indicator
-	sections={sectionsForIndicator?.map((s: any) => ({ id: s.id, path: '' })) || []}
-	currentSectionIndex={currentIndicatorIndex >= 0 ? currentIndicatorIndex : 0}
-	visible={$indicatorVisible}
-	onSectionClick={jumpToSection}
-/>
+<HighlightLayout />
+
+<!-- Scroll Indicators -->
+<!-- Down arrow for hero section -->
+<!-- <ScrollIndicator direction="down" /> -->
+<!-- Up arrow for footer section -->
+<ScrollIndicator direction="up" targetSection="hero" />
+
+<!-- Back to Top Button -->
+<BackToTop />
+
+<!-- Global styles are imported in app.css -->
+
 
 <style lang="scss">
-	@import '$lib/styles/global.scss';
+  // Import your global SCSS file here
+  // The path is relative to the +layout.svelte file.
+  @import '$lib/styles/global.scss';
 </style>

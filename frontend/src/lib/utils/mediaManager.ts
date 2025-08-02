@@ -1,4 +1,7 @@
+import { ComponentId } from '$lib/enums';
+import { lockVisibility, unlockVisibility, showComponent } from '$lib/stores/viewport/visibility';
 import { writable, type Writable } from 'svelte/store';
+import { scrollUtils } from './viewport';
 
 export interface VideoOverlayState {
 	show: boolean;
@@ -85,11 +88,12 @@ export class MediaManager {
 
 	// Handle overlay open
 	private handleOpen() {
+
 		// Browser check untuk SSR safety
 		if (typeof document !== 'undefined') {
 			document.body.style.overflow = 'hidden';
 		}
-		
+
 		if (this.config.autoPlay && this.config.autoPlayDelay && this.config.autoPlayDelay > 0) {
 			setTimeout(() => {
 				this.playVideo();
@@ -97,19 +101,57 @@ export class MediaManager {
 		} else if (this.config.autoPlay) {
 			this.playVideo();
 		}
+
+		this.lockVideo();
 	}
 
 	// Handle overlay close
 	private handleClose() {
+		
 		// Browser check untuk SSR safety
 		if (typeof document !== 'undefined') {
 			document.body.style.overflow = 'auto';
 		}
-		
+
 		if (this.videoElement) {
 			this.videoElement.pause();
 			this.videoElement.currentTime = 0;
 		}
+
+		this.unlockVideo();
+	}
+
+	// Lock visibility component to false and disable scroll
+	private lockVideo() {
+		scrollUtils.disable();
+		lockVisibility([
+			ComponentId.Highlight,
+			ComponentId.LanguageSwitch,
+			ComponentId.Operation,
+			ComponentId.Schedule,
+			ComponentId.Navigation
+		], false);
+	}
+
+	// Unlock visibility component and enable scroll
+	private unlockVideo() {
+		scrollUtils.enable();
+		unlockVisibility([
+			ComponentId.Highlight,
+			ComponentId.LanguageSwitch,
+			ComponentId.Operation,
+			ComponentId.Schedule,
+			ComponentId.Navigation
+		]);
+
+		// Show navigation component
+		showComponent([
+			ComponentId.Highlight,
+			ComponentId.LanguageSwitch,
+			ComponentId.Operation,
+			ComponentId.Schedule,
+			ComponentId.Navigation
+		]);
 	}
 
 	// Play video
@@ -230,26 +272,26 @@ export const mediaUtils = {
 
 			const canvas = document.createElement('canvas');
 			const ctx = canvas.getContext('2d');
-			
+
 			if (!ctx) {
 				reject(new Error('Canvas context not available'));
 				return;
 			}
 
 			const originalTime = videoElement.currentTime;
-			
+
 			videoElement.currentTime = time;
 			videoElement.addEventListener('seeked', function onSeeked() {
 				videoElement.removeEventListener('seeked', onSeeked);
-				
+
 				canvas.width = videoElement.videoWidth;
 				canvas.height = videoElement.videoHeight;
-				
+
 				ctx.drawImage(videoElement, 0, 0);
-				
+
 				const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
 				videoElement.currentTime = originalTime;
-				
+
 				resolve(thumbnail);
 			});
 		});

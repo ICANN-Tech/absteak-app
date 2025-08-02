@@ -10,10 +10,13 @@
 	"/demo/payment": [],
 	"/form-demo": [],
 	"/hero-examples": [],
+	"/icons-demo": [],
+	"/modal-test": [],
 	"/sverdle": [
 		"src/routes/sverdle/+page.server.ts"
 	],
 	"/sverdle/how-to-play": [
 		"src/routes/sverdle/how-to-play/+page.ts"
-	]
+	],
+	"/translation-demo": []
 }

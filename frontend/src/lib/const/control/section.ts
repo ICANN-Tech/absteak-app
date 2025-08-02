@@ -1,57 +1,40 @@
 import type { Sections } from "$lib/types";
-
-import Hero from '$lib/components/organisms/section/hero/Index.svelte';
-import VideoHighlight from '$lib/components/organisms/section/video-highlight/Index.svelte';
-import Experience from '$lib/components/organisms/section/experience/Index.svelte';
-import Chef from '$lib/components/organisms/section/chef/Index.svelte';
-import Menu from '$lib/components/organisms/section/menu/Index.svelte';
-import Booking from '$lib/components/organisms/section/reservation/Index.svelte';
-import Footer from '$lib/components/organisms/section/footer/Index.svelte';
-
-export enum SectionId {
-    Hero = 'hero',
-    VideoHighlight = 'video-highlight',
-    Experience = 'experience',
-    Chef = 'chef',
-    Menu = 'menu',
-    Booking = 'booking',
-    Footer = 'footer'
-}
+import { SectionId } from "$lib/enums";
 
 export const sections: Sections = [
 	{
 		id: SectionId.Hero,
 		name: 'Hero',
-		component: Hero
+		component: null as any // Will be loaded lazily
 	},
 	{
 		id: SectionId.VideoHighlight,
 		name: 'About',
-		component: VideoHighlight
+		component: null as any // Will be loaded lazily
 	},
 	{
 		id: SectionId.Experience,
 		name: 'Story',
-		component: Experience
+		component: null as any // Will be loaded lazily
 	},
 	{
 		id: SectionId.Chef,
 		name: 'Chef',
-		component: Chef
+		component: null as any // Will be loaded lazily
 	},
 	{
 		id: SectionId.Menu,
 		name: 'Menu',
-		component: Menu
+		component: null as any // Will be loaded lazily
 	},
 	{
 		id: SectionId.Booking,
 		name: 'Reserve',
-		component: Booking
+		component: null as any // Will be loaded lazily
 	},
     {
         id: SectionId.Footer,
         name: 'Footer',
-        component: Footer
+        component: null as any // Will be loaded lazily
     }
 ];

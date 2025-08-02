@@ -11,6 +11,9 @@ importers:
       '@inlang/paraglide-js':
         specifier: ^2.0.0
         version: 2.2.0
+      svelte-video-player:
+        specifier: ^1.2.5
+        version: 1.2.5
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.5
@@ -1740,6 +1743,9 @@ packages:
       svelte:
         optional: true
 
+  svelte-video-player@1.2.5:
+    resolution: {integrity: sha512-iImQY6qnEEE0fngq9aANKMKDD2knTBcsyTLKHc3hyZ/nj/ZExwBAJ7MbxlOnyLpSKzZA1KaSSaqKXeTRWZOOlw==}
+
   svelte@5.36.13:
     resolution: {integrity: sha512-LnSywHHQM/nJekC65d84T1Yo85IeCYN4AryWYPhTokSvcEAFdYFCfbMhX1mc0zHizT736QQj0nalUk+SXaWrEQ==}
     engines: {node: '>=18'}
@@ -3424,6 +3430,8 @@ snapshots:
       postcss-selector-parser: 7.1.0
     optionalDependencies:
       svelte: 5.36.13
+
+  svelte-video-player@1.2.5: {}
 
   svelte@5.36.13:
     dependencies:

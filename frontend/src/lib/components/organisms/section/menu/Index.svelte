@@ -1,11 +1,11 @@
 <script lang="ts">
 	import ScrollableImage from '$lib/components/molecules/media/ScrollableImage.svelte';
 	import { DetailModal } from '$lib/components/organisms';
-	import { modalStore } from '$lib/stores/modal';
+	import type { ModalItem } from '$lib/utils/modal/data';
 	import { fade, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
-	import ClickOutsideDemo from '$lib/components/demo/ClickOutsideDemo.svelte';
 	import { createTranslationStore } from '$lib/utils/translation';
+	import { CONTAINER_SECTION } from '$lib/const';
 
 	const t = createTranslationStore();
 
@@ -129,6 +129,7 @@
 	})();
 
 	let activeCategory = 0;
+	let showModal = false;
 	
 	// Reactive statement untuk selectedCategory dengan pengecekan yang lebih robust
 	$: selectedCategory = menuCategories && menuCategories.length > 0 ? menuCategories[activeCategory] || menuCategories[0] : {
@@ -143,8 +144,37 @@
 	}
 
 	function openItemDetail(item: MenuItem) {
-		modalStore.open(item);
+		// Create enhanced item with additional properties
+		const enhancedItem: ModalItem = {
+			...item,
+			category: selectedCategory.category,
+			ingredients: [], // Add if available in your data
+			allergens: [], // Add if available in your data
+			nutritionInfo: {
+				calories: 0,
+				protein: '0g',
+				carbs: '0g', 
+				fat: '0g'
+			} // Add if available in your data
+		};
+		
+		// Set the modal item and show the modal
+		currentModalItem = enhancedItem;
+		showModal = true;
 	}
+
+	function handleModalClose() {
+		showModal = false;
+		currentModalItem = null;
+	}
+
+	function handleOrderNow(event: CustomEvent<ModalItem>) {
+		console.log('Order now:', event.detail);
+		// Handle order logic here
+		showModal = false;
+	}
+
+	let currentModalItem: ModalItem | null = null;
 
 	// Background images untuk setiap kategori
 	const backgroundImages: string[] = [
@@ -226,36 +256,31 @@
 </script>
 
 <section
-	class="relative h-screen w-full overflow-hidden"
-	style="background-image: url('{backgroundImages[activeCategory] || backgroundImages[0] || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1920'}'); background-size: cover; background-position: center;"
+	class={`${CONTAINER_SECTION.menu.base} bg-cover bg-center`}
+	style="background-image: url('{backgroundImages[activeCategory] || backgroundImages[0] || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1920'}');"
 >
-	<!-- Enhanced overlay untuk readability yang lebih baik -->
-	<div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/75 to-black/65"></div>
-	<div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70"></div>
+	<!-- Overlay for better readability -->
+	<div class={`${CONTAINER_SECTION.menu.overlay.first}`}></div>
+	<div class={`${CONTAINER_SECTION.menu.overlay.second}`}></div>
 
-	<!-- Hover Freeze Demo -->
-	<div class="absolute top-4 right-4 z-20">
-		<ClickOutsideDemo />
-	</div>
-
-	<div class="relative z-10 mx-auto flex h-full flex-col md:flex-row">
+	<div class={`${CONTAINER_SECTION.menu.content.base}`}>
 		<!-- Left: Menu Content -->
-		<div class="flex flex-col justify-center bg-black/30 p-10 backdrop-blur-sm md:w-1/2 md:p-16">
-			<h2 class="mb-6 text-3xl leading-tight font-extrabold text-white drop-shadow-2xl md:text-5xl">
+		<div class={`${CONTAINER_SECTION.menu.content.left} ${CONTAINER_SECTION.menu.text.base}`}>
+			<h2 class={`${CONTAINER_SECTION.menu.text.title} drop-shadow-2xl`}>
 				{$t('menu.title') || 'MENU SIGNATURE KAMI'}
 			</h2>
-			<p class="mb-8 text-lg leading-relaxed text-gray-100 drop-shadow-lg">
+			<p class={`${CONTAINER_SECTION.menu.text.description} drop-shadow-lg`}>
 				{$t('menu.subtitle') || 'Rasakan keunggulan kuliner dengan pilihan hidangan yang dikurasi dengan cermat, dibuat oleh chef kelas dunia menggunakan bahan-bahan terbaik.'}
 			</p>
 
 			<!-- Category Tabs -->
-			<div class="mb-8 flex flex-wrap gap-3">
+			<div class={`${CONTAINER_SECTION.menu.category.base}`}>
 				{#each menuCategories as category, index}
 					<button
-						class="rounded-full px-6 py-3 font-semibold shadow-lg transition-all duration-300 {activeCategory ===
+						class={`${CONTAINER_SECTION.menu.category.tab} transition-all duration-300 ${activeCategory ===
 						index
-							? 'scale-105 bg-amber-400 text-gray-900 shadow-amber-400/50'
-							: 'border border-gray-600/50 bg-gray-900/80 text-white hover:border-amber-400/50 hover:bg-gray-800/90'}"
+							? 'scale-105 bg-amber-400 text-gray-900 shadow-lg shadow-amber-400/50'
+							: 'border border-gray-600/50 bg-gray-900/80 text-white hover:border-amber-400/50 hover:bg-gray-800/90 hover:scale-105'}`}
 						on:click={() => selectCategory(index)}
 					>
 						{category.category}
@@ -263,29 +288,28 @@
 				{/each}
 			</div>
 
-			<!-- Menu Items -->
+			<!-- Menu Items with Menu Scrollbar -->
 			<div
-				class="custom-scrollbar max-h-96 space-y-4 overflow-y-auto"
+				class={`menu-scrollbar max-h-80 md:max-h-96 space-y-3 md:space-y-4 overflow-y-auto`}
 				on:wheel|stopPropagation
 				on:touchmove|stopPropagation
-				tabindex="0"
 				role="region"
 				aria-label="Menu items"
 			>
 				{#each selectedCategory.items as item, itemIndex}
 					<button
-						class="w-full cursor-pointer rounded-xl border border-gray-700/50 bg-gray-900/60 p-5 text-left shadow-xl backdrop-blur-sm transition-all duration-300 hover:border-amber-400/30 hover:bg-gray-800/70 hover:shadow-2xl"
+						class={`${CONTAINER_SECTION.menu.item.list.base} transition-all duration-300 hover:scale-[1.02]`}
 						in:slide={{ duration: 400, delay: itemIndex * 100, easing: quintOut }}
 						out:slide={{ duration: 400 }}
 						on:click={() => openItemDetail(item)}
 					>
 						<div class="flex items-center justify-between">
 							<div class="flex-1">
-								<h3 class="mb-2 text-xl font-bold text-white drop-shadow-lg">{item.name}</h3>
-								<p class="mb-2 text-sm leading-relaxed text-gray-200 drop-shadow-sm">{item.desc}</p>
+								<h3 class={`${CONTAINER_SECTION.menu.item.list.title} drop-shadow-lg`}>{item.name}</h3>
+								<p class={`${CONTAINER_SECTION.menu.item.list.description} drop-shadow-sm`}>{item.desc}</p>
 							</div>
 							<div class="ml-4 text-right">
-								<span class="text-2xl font-bold text-amber-400 drop-shadow-lg">{item.price}</span>
+								<span class={`${CONTAINER_SECTION.menu.item.list.price} drop-shadow-lg`}>{item.price}</span>
 							</div>
 						</div>
 					</button>
@@ -294,18 +318,11 @@
 		</div>
 
 		<!-- Right: Infinite scrolling image columns -->
-		<div class="relative flex h-full overflow-hidden md:w-1/2">
-			<!-- Enhanced overlay untuk smooth transition -->
-			<div
-				class="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-black/20 to-black/40 transition-opacity duration-500"
-				class:opacity-100={activeCategory !== activeCategory}
-				class:opacity-0={activeCategory === activeCategory}
-			></div>
-
+		<div class={`${CONTAINER_SECTION.menu.content.right}`}>
 			<!-- Left column - scrolling up -->
-			<div class="relative w-1/2 h-full">
+			<div class={`${CONTAINER_SECTION.menu.scrollableImage.left}`}>
 				{#key activeCategory}
-					<div class="h-full bg-rose-600" in:fade={{ duration: 600, delay: 200 }} out:fade={{ duration: 400 }}>
+					<div class="h-full" in:fade={{ duration: 600, delay: 200 }} out:fade={{ duration: 400 }}>
 						<ScrollableImage
 							images={currentImages.leftColumn}
 							heights={leftColumnHeights}
@@ -316,7 +333,7 @@
 			</div>
 
 			<!-- Right column - scrolling down -->
-			<div class="relative w-1/2 h-full">
+			<div class={`${CONTAINER_SECTION.menu.scrollableImage.right}`}>
 				{#key activeCategory}
 					<div class="h-full" in:fade={{ duration: 600, delay: 400 }} out:fade={{ duration: 400 }}>
 						<ScrollableImage
@@ -332,82 +349,12 @@
 </section>
 
 <!-- Detail Modal -->
-<DetailModal position="center" size="lg" />
-
-<style>
-	/* Enhanced custom scrollbar untuk menu items */
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 6px;
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-track {
-		background: rgba(0, 0, 0, 0.3);
-		border-radius: 3px;
-		backdrop-filter: blur(4px);
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: linear-gradient(180deg, #f59e0b, #d97706);
-		border-radius: 3px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: linear-gradient(180deg, #fbbf24, #f59e0b);
-		box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
-	}
-
-	/* Enhanced scroll behavior untuk menu items container */
-	.custom-scrollbar {
-		scroll-behavior: smooth;
-		overscroll-behavior: contain;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	.custom-scrollbar:focus {
-		outline: 2px solid rgba(245, 158, 11, 0.5);
-		outline-offset: 2px;
-		border-radius: 8px;
-	}
-
-	/* Enhanced text shadows untuk better readability */
-	.drop-shadow-2xl {
-		filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(0, 0, 0, 0.6));
-	}
-
-	.drop-shadow-lg {
-		filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));
-	}
-
-	.drop-shadow-sm {
-		filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-	}
-
-	/* Smooth transitions untuk semua elemen */
-	* {
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	/* Enhanced backdrop blur effect */
-	.backdrop-blur-sm {
-		backdrop-filter: blur(4px) saturate(1.2);
-	}
-
-	/* Custom gradient overlay untuk better visual hierarchy */
-	section::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: radial-gradient(circle at 30% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
-		pointer-events: none;
-		z-index: 1;
-	}
-
-	/* Prevent body scroll when scrolling menu items */
-	.custom-scrollbar:hover {
-		overscroll-behavior: contain;
-	}
-</style>
+<DetailModal 
+	bind:show={showModal}
+	modalItem={currentModalItem}
+	position="center" 
+	size="lg"
+	on:close={handleModalClose}
+	on:modalClosed={handleModalClose}
+	on:orderNow={handleOrderNow}
+/>

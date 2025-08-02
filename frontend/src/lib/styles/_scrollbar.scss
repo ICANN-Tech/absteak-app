@@ -47,7 +47,6 @@ $orange-glow-active-alpha: rgba(249, 115, 22, 0.8);
     &:hover {
       background: linear-gradient(180deg, $orange-400, $orange-500);
       box-shadow: 0 4px 12px $orange-glow-alpha;
-      // transform: scale(1.05); // Transisi ini mungkin tidak didukung di semua browser untuk scrollbar thumb
     }
 
     &:active {
@@ -63,15 +62,63 @@ $orange-glow-active-alpha: rgba(249, 115, 22, 0.8);
     border-radius: 8px;
   }
 
-  /* Prevent body scroll when scrolling payment method list */
+  /* Prevent body scroll when scrolling */
   &:hover {
     overscroll-behavior: contain;
   }
 
   /* Scrollbar thumb muncul/berubah saat hover pada container */
-  /* Ini menargetkan thumb ketika container di-hover */
   &:hover::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, $orange-400, $orange-500); // Pastikan konsisten dengan hover normal thumb
+    background: linear-gradient(180deg, $orange-400, $orange-500);
     box-shadow: 0 4px 12px $orange-glow-alpha;
+  }
+}
+
+/* Menu-specific scrollbar - thinner and more elegant */
+.menu-scrollbar {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
+  /* Firefox scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: $orange-500 rgba(0, 0, 0, 0.3);
+
+  /* WebKit (Chrome, Safari, Edge) scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, $orange-500, $orange-600);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      background: linear-gradient(180deg, $orange-400, $orange-500);
+      box-shadow: 0 4px 8px $orange-glow-alpha;
+    }
+
+    &:active {
+      background: linear-gradient(180deg, $orange-600, $orange-700);
+      box-shadow: 0 2px 6px $orange-glow-active-alpha;
+    }
+  }
+
+  /* Focus state */
+  &:focus {
+    outline: 2px solid rgba(249, 115, 22, 0.5);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Prevent body scroll when scrolling menu items */
+  &:hover {
+    overscroll-behavior: contain;
   }
 }

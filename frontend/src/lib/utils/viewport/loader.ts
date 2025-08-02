@@ -1,4 +1,4 @@
-import type { Section } from '$lib/stores/viewport';
+import type { Section, ComponentType } from '$lib/types';
 
 export interface ComponentCache {
   get: (path: string) => any;
@@ -28,62 +28,13 @@ export function createComponentCache(): ComponentCache {
 /**
  * Dynamic component loader berdasarkan path
  */
-export async function loadComponent(sectionPath: string, cache?: ComponentCache): Promise<any> {
+export async function loadComponent(sectionComponent: ComponentType, cache?: ComponentCache): Promise<any> {
   // Cek cache terlebih dahulu jika ada
-  if (cache && cache.has(sectionPath)) {
-    return cache.get(sectionPath);
+  if (cache && cache.has(sectionComponent.name)) {
+    return cache.get(sectionComponent.name);
   }
 
-  try {
-    let component: any;
-
-    // Dynamic import berdasarkan path
-    switch (sectionPath) {
-      case '$lib/components/organisms/section/hero/Index.svelte':
-        component = (await import('$lib/components/organisms/section/hero/Index.svelte')).default;
-        break;
-      case '$lib/components/organisms/section/video-highlight/Index.svelte':
-        component = (await import('$lib/components/organisms/section/video-highlight/Index.svelte')).default;
-        break;
-      case '$lib/components/organisms/section/experience/Index.svelte':
-        component = (await import('$lib/components/organisms/section/experience/Index.svelte')).default;
-        break;
-      case '$lib/components/organisms/section/chef/Index.svelte':
-        component = (await import('$lib/components/organisms/section/chef/Index.svelte')).default;
-        break;
-      case '$lib/components/organisms/section/menu/Index.svelte':
-        component = (await import('$lib/components/organisms/section/menu/Index.svelte')).default;
-        break;
-      case '$lib/components/organisms/section/booking/Index.svelte':
-        component = (await import('$lib/components/organisms/section/reservation/Index.svelte')).default;
-        break;
-      case '$lib/components/CustomPartiesSlider.svelte':
-        component = (await import('$lib/components/CustomPartiesSlider.svelte')).default;
-        break;
-      case '$lib/components/Footer.svelte':
-        component = (await import('$lib/components/Footer.svelte')).default;
-        break;
-      default:
-        // Fallback untuk path yang tidak dikenal
-        try {
-          const module = await import(/* @vite-ignore */ sectionPath);
-          component = module.default;
-        } catch (fallbackError) {
-          console.error(`Failed to load component with fallback: ${sectionPath}`, fallbackError);
-          return null;
-        }
-    }
-
-    // Simpan ke cache jika ada
-    if (cache && component) {
-      cache.set(sectionPath, component);
-    }
-
-    return component;
-  } catch (error) {
-    console.error(`Failed to load component: ${sectionPath}`, error);
-    return null;
-  }
+  return sectionComponent;
 }
 
 /**
@@ -105,7 +56,7 @@ export async function preloadComponents(
     if (!loadedComponents[index]) {
       const section = sections[index];
       if (section) {
-        const component = await loadComponent(section.path, cache);
+        const component = await loadComponent(section.component, cache);
         if (component) {
           loadedComponents[index] = component;
         }
@@ -129,7 +80,7 @@ export async function preloadAllComponents(
   const loadedComponents: LoadedComponents = {};
 
   const loadPromises = sections.map(async (section, index) => {
-    const component = await loadComponent(section.path, cache);
+    const component = await loadComponent(section.component, cache);
     if (component) {
       loadedComponents[index] = component;
     }

@@ -1,202 +1,198 @@
 <script lang="ts">
-	import { fade, scale } from 'svelte/transition';
-	import { CloseOutline } from 'flowbite-svelte-icons';
-	import { createEventDispatcher, onDestroy } from 'svelte';
-	import { createMediaManager, type MediaManagerConfig } from '$lib/utils/mediaManager';
-
+	import { derived } from 'svelte/store';
+	import { modalStore } from '$lib/stores/modal';
+	import { Modal } from '$lib/components/atoms';
+	import Video from '$lib/components/atoms/media/Video.svelte';
+	
 	// Props
 	export let show = false;
 	export let videoUrl: string;
 	export let captionUrl: string = '';
 	export let captionLanguage: string = 'en';
 	export let captionLabel: string = 'English captions';
-	export let showEscHint = true;
-	
-	// Media Manager Config Props
+
+	// Video behavior props
 	export let autoPlay = true;
-	export let autoPlayDelay = 300;
-	export let closeOnVideoEnd = true;
 	export let closeOnBackdropClick = true;
 	export let closeOnEscape = true;
 	export let preload: 'none' | 'metadata' | 'auto' = 'metadata';
-	
-	// Styling props
-	export let backdropClass = 'fixed inset-0 z-50 flex items-center justify-center bg-primary-700/10 backdrop-blur-sm';
-	export let closeButtonClass = 'focus:ring-opacity-50 absolute top-4 right-4 z-10 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white transition-all duration-300 hover:bg-rose-600/80 focus:ring-2 focus:ring-white focus:outline-none';
-	export let videoContainerClass = 'relative mx-4 flex h-full max-h-[85vh] w-full max-w-5xl items-center';
-	export let videoClass = 'h-fit w-full rounded-2xl object-contain shadow-2xl';
-	export let escHintClass = 'absolute bottom-4 left-4 flex items-center gap-2 rounded-lg bg-black/60 px-3 py-2 text-sm text-white backdrop-blur-sm';
-	
+
 	// Animation props
-	export let fadeInDuration = 300;
-	export let scaleInDuration = 400;
-	export let scaleInStart = 0.8;
-	export let closeButtonScaleDuration = 200;
-	export let closeButtonScaleDelay = 100;
+	export let animationDuration = 300;
 
-	// Event dispatcher
-	const dispatch = createEventDispatcher<{
-		open: void;
-		close: void;
-		videoEnded: void;
-		videoPlay: void;
-		videoPause: void;
-		videoError: Event;
-	}>();
+	// Event callback props (Svelte 5 approach)
+	export let onopen: (() => void) | undefined = undefined;
+	export let onclose: (() => void) | undefined = undefined;
+	export let onvideoended: (() => void) | undefined = undefined;
+	export let onvideoplay: (() => void) | undefined = undefined;
+	export let onvideoPause: (() => void) | undefined = undefined;
+	export let onvideoerror: ((event: Event) => void) | undefined = undefined;
 
-	// Create media manager instance
-	const mediaManager = createMediaManager({
-		autoPlay,
-		autoPlayDelay,
-		closeOnVideoEnd,
-		closeOnBackdropClick,
-		closeOnEscape,
-		preload
-	});
+	// Modal ID for centralized state management
+	const modalId = 'video-overlay-modal';
 
-	let videoElement: HTMLVideoElement | undefined;
+	let videoComponent: any;
 
-	// Reactive statements
+	// Create derived store to watch modal state
+	const modalState = derived(modalStore, ($store) => $store[modalId] || { isOpen: false });
+	const isModalOpen = derived(modalState, ($state) => $state.isOpen);
+
+	// Watch for modal state changes to dispatch events
+	let previousModalState = false;
+	$: {
+		if ($isModalOpen !== previousModalState) {
+			if ($isModalOpen) {
+				onopen?.();
+			} else {
+				// Stop video when modal closes
+				if (videoComponent) {
+					videoComponent.pause();
+				}
+				onclose?.();
+			}
+			previousModalState = $isModalOpen;
+		}
+	}
+
+	// Reactive statement to handle show/hide using centralized modal store
 	$: if (show) {
-		handleOpen();
-	} else {
-		handleClose();
-	}
-
-	$: if (videoElement) {
-		mediaManager.setVideoElement(videoElement);
-	}
-
-	function handleOpen() {
-		mediaManager.openVideo(videoUrl, {
-			captionUrl,
-			captionLanguage,
-			captionLabel
+		modalStore.open(modalId, {
+			title: 'Video Player',
+			content: '',
+			type: 'video',
+			data: {
+				videoUrl,
+				captionUrl,
+				captionLanguage,
+				captionLabel
+			}
 		});
-		dispatch('open');
-	}
-
-	function handleClose() {
-		mediaManager.closeVideo();
-		dispatch('close');
 	}
 
 	function closeOverlay() {
-		show = false;
-	}
-
-	function handleVideoEnded() {
-		dispatch('videoEnded');
-		mediaManager.handleVideoEnded();
-		if (closeOnVideoEnd) {
-			closeOverlay();
+		// Stop video immediately
+		if (videoComponent) {
+			videoComponent.pause();
 		}
+		// Close modal immediately
+		modalStore.close(modalId);
 	}
 
 	function handleVideoPlay() {
-		dispatch('videoPlay');
+		onvideoplay?.();
 	}
 
 	function handleVideoPause() {
-		dispatch('videoPause');
+		onvideoPause?.();
+	}
+
+	function handleVideoEnded() {
+		onvideoended?.();
 	}
 
 	function handleVideoError(event: Event) {
-		dispatch('videoError', event);
+		onvideoerror?.(event);
 	}
-
-	function handleBackdropClick(event: KeyboardEvent | MouseEvent) {
-		if (closeOnBackdropClick) {
-			mediaManager.handleBackdropClick(event);
-			if (event.target === event.currentTarget) {
-				closeOverlay();
-			}
-		}
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (closeOnEscape && event.key === 'Escape' && show) {
-			mediaManager.handleKeydown(event);
-			closeOverlay();
-		}
-	}
-
-	// Cleanup on destroy
-	onDestroy(() => {
-		mediaManager.destroy();
-	});
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<Modal
+	id={modalId}
+	onClose={closeOverlay}
+	closeOnBackdrop={closeOnBackdropClick}
+	closeOnEscape={closeOnEscape}
+	preventScroll={true}
+	trapFocus={false}
+	{animationDuration}
+	modalClass="video-overlay-modal"
+	backdropClass="video-overlay-backdrop"
+	contentClass="w-[80vw]"
+	showHeader={false}
+	showCloseButton={false}
+	showFooter={false}
+>
+	<Video
+		bind:this={videoComponent}
+		src={videoUrl}
+		{autoPlay}
+		{preload}
+		muted={false}
+		loop={false}
+		containerClass=""
+		size="full"
+		aspectRatio="16:9"
+		rounded="md"
+		shadow="xl"
+		onplay={handleVideoPlay}
+		onpause={handleVideoPause}
+		onended={handleVideoEnded}
+		onerror={handleVideoError}
+	/>
+</Modal>
 
-{#if show}
-	<div
-		class={backdropClass}
-		tabindex="0"
-		role="button"
-		aria-label="Close overlay"
-		on:click={handleBackdropClick}
-		on:keydown={(e) => {
-			if (e.key === 'Enter' || e.key === ' ') handleBackdropClick(e);
-		}}
-		transition:fade={{ duration: fadeInDuration }}
-	>
-		<!-- Close button -->
-		<button
-			class={closeButtonClass}
-			on:click={closeOverlay}
-			aria-label="Close video"
-			transition:scale={{ duration: closeButtonScaleDuration, delay: closeButtonScaleDelay }}
-		>
-			<CloseOutline />
-		</button>
 
-		<!-- ESC Hint -->
-		{#if showEscHint}
-			<div 
-				class={escHintClass}
-				in:fade={{ duration: fadeInDuration, delay: 200 }}
-			>
-				<kbd class="rounded bg-white/20 px-1.5 py-0.5 text-xs font-mono">ESC</kbd>
-				<span>to close</span>
-			</div>
-		{/if}
 
-		<!-- Video container -->
-		<div
-			class={videoContainerClass}
-			transition:scale={{ duration: scaleInDuration, start: scaleInStart }}
-		>
-			<video
-				bind:this={videoElement}
-				class={videoClass}
-				controls
-				{preload}
-				on:ended={handleVideoEnded}
-				on:play={handleVideoPlay}
-				on:pause={handleVideoPause}
-				on:error={handleVideoError}
-			>
-				<source src={videoUrl} type="video/mp4" />
-				{#if captionUrl}
-					<track
-						kind="captions"
-						src={captionUrl}
-						srclang={captionLanguage}
-						label={captionLabel}
-						default
-					/>
-				{/if}
-				<p>
-					Your browser doesn't support HTML5 video. Here is a <a
-						href={videoUrl}
-						class="text-blue-400 underline">link to the video</a
-					> instead.
-				</p>
-			</video>
-		</div>
+<style>
+	:global(.video-overlay-modal) {
+		padding: 0 !important;
+		border: none !important;
+		background: transparent !important;
+		max-width: 100vw !important;
+		max-height: 100vh !important;
+		width: 100% !important;
+		height: 100% !important;
+		overflow: hidden !important;
+		outline: none !important;
+		box-shadow: none !important;
+	}
 
-		<!-- Slot for additional content -->
-		<slot />
-	</div>
-{/if}
+	:global(.video-overlay-backdrop) {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		width: 100% !important;
+		height: 100% !important;
+		padding: 0 !important;
+		background: rgba(0, 0, 0, 0.3) !important;
+		backdrop-filter: none !important;
+		border: none !important;
+		outline: none !important;
+	}
+
+	:global(.video-overlay-content) {
+		background: transparent !important;
+		border-radius: 0 !important;
+		box-shadow: none !important;
+		max-width: none !important;
+		width: 100% !important;
+		max-height: 100vh !important;
+		height: 100% !important;
+		overflow: hidden !important;
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+		justify-content: center !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		position: relative !important;
+		border: none !important;
+		outline: none !important;
+	}
+
+	:global(.video-full) {
+		width: 90vw !important;
+		height: 50.625vw !important; /* 16:9 aspect ratio (90vw * 9/16) */
+		max-width: 90vw !important;
+		max-height: 90vh !important;
+		min-width: 80vw !important;
+		min-height: 45vw !important; /* 16:9 aspect ratio (80vw * 9/16) */
+		object-fit: cover !important;
+		border-radius: 8px !important;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+		background: #000 !important;
+		border: none !important;
+		outline: none !important;
+		aspect-ratio: 16/9 !important;
+	}
+
+
+</style>
