@@ -1,11 +1,12 @@
 <script context="module" lang="ts">
     import { CONTAINER_SECTION } from '$lib/const';
     import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
-    import LeftContainer from './components/containers/Left.svelte';
-    import RightContainer from './components/containers/Right.svelte';
 </script>
 
 <script lang="ts">
+    import LeftContainer from './components/containers/Left.svelte';
+    import RightContainer from './components/containers/Right.svelte';
+	
 	// Props for media
 	export let thumbnailUrl: string = '/assets/thumbnail.png';
 	export let thumbnailAlt: string = 'Video thumbnail';

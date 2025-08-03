@@ -97,6 +97,34 @@ export function getModalStore(id: string = 'default') {
   return modalInstances.get(id)!;
 }
 
+// Video modal state tracking - separate from main modal
+const videoModalStates = new Map<string, boolean>();
+let videoModalActiveState = false;
+
+export function openVideoModal(modalId: string) {
+  videoModalStates.set(modalId, true);
+  videoModalActiveState = true;
+  modalStore.updateSettings({ isOpen: true });
+}
+
+export function closeVideoModal(modalId: string) {
+  videoModalStates.set(modalId, false);
+  // Check if any video modal is still open
+  const anyVideoModalOpen = Array.from(videoModalStates.values()).some(isOpen => isOpen);
+  if (!anyVideoModalOpen) {
+    videoModalActiveState = false;
+    modalStore.close();
+  }
+}
+
+export function isVideoModalOpen(modalId: string) {
+  return videoModalStates.get(modalId) || false;
+}
+
+export function isVideoModalActive() {
+  return videoModalActiveState;
+}
+
 // Helper functions
 export function openModal(item: ModalItem, options?: Partial<ModalState>) {
   modalStore.open(item, options);

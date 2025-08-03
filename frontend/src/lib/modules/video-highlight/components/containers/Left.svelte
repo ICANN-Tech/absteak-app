@@ -1,5 +1,4 @@
 <script context="module" lang="ts">
-	import { ThumbnailMedia, VideoOverlay } from '$lib/components/molecules';
 	import { CONTAINER_SECTION } from '$lib/const';
 
 	let pingDelay1: number = 0.5;
@@ -8,6 +7,8 @@
 </script>
 
 <script lang="ts">
+	import { ThumbnailMedia, VideoOverlay } from '$lib/components/molecules';
+	
 	export let thumbnailUrl: string;
 	export let thumbnailAlt: string;
 	export let mediaClass: string;

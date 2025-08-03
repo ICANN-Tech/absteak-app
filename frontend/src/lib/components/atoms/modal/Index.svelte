@@ -30,15 +30,25 @@
 	// Modal element reference
 	let modalElement: HTMLDivElement;
 
-	// Create derived stores from centralized modal store (sama seperti LanguageSwitcher pattern)
-	const modalState = derived(modalStore, ($store) => $store[id] || { isOpen: false });
-	const isOpen = derived(modalState, ($state) => $state.isOpen);
-	const modalData = derived(modalState, ($state) => ({
-		item: $state.item,
-		title: $state.title,
-		content: $state.content,
-		type: $state.type,
-		data: $state.data
+	// Create derived stores from modal store - only show if this is not a video modal
+	import { isVideoModalActive } from '$lib/stores/modal';
+	
+	const isOpen = derived(modalStore, ($store) => {
+		// If this is a video modal (id contains 'video'), check video modal state
+		if (id && id.includes('video')) {
+			return $store.isOpen && isVideoModalActive();
+		} else {
+			// For regular modals, only show if no video modal is active
+			return $store.isOpen && !isVideoModalActive();
+		}
+	});
+	
+	const modalData = derived(modalStore, ($store) => ({
+		item: $store.item,
+		title: $store.item?.name || '',
+		content: $store.item?.desc || '',
+		type: 'default',
+		data: $store.item
 	}));
 
 	// Handle ESC key globally but only close if closeOnEscape is true
@@ -50,7 +60,7 @@
 
 	// Close modal using centralized store
 	function closeModal() {
-		modalStore.close(id);
+		modalStore.close();
 		onClose?.(); // Call the callback if provided
 	}
 

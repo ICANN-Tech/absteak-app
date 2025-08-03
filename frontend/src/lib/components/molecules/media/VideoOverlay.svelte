@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { derived } from 'svelte/store';
-	import { modalStore } from '$lib/stores/modal';
+	import { modalStore, openVideoModal, closeVideoModal, isVideoModalOpen } from '$lib/stores/modal';
 	import { Modal } from '$lib/components/atoms';
 	import Video from '$lib/components/atoms/media/Video.svelte';
 	
@@ -33,9 +33,8 @@
 
 	let videoComponent: any;
 
-	// Create derived store to watch modal state
-	const modalState = derived(modalStore, ($store) => $store[modalId] || { isOpen: false });
-	const isModalOpen = derived(modalState, ($state) => $state.isOpen);
+	// Create derived store to watch video modal state specifically
+	const isModalOpen = derived(modalStore, () => isVideoModalOpen(modalId) && show);
 
 	// Watch for modal state changes to dispatch events
 	let previousModalState = false;
@@ -54,19 +53,11 @@
 		}
 	}
 
-	// Reactive statement to handle show/hide using centralized modal store
+	// Reactive statement to handle show/hide using video modal functions
 	$: if (show) {
-		modalStore.open(modalId, {
-			title: 'Video Player',
-			content: '',
-			type: 'video',
-			data: {
-				videoUrl,
-				captionUrl,
-				captionLanguage,
-				captionLabel
-			}
-		});
+		openVideoModal(modalId);
+	} else {
+		closeVideoModal(modalId);
 	}
 
 	function closeOverlay() {
@@ -75,7 +66,7 @@
 			videoComponent.pause();
 		}
 		// Close modal immediately
-		modalStore.close(modalId);
+		closeVideoModal(modalId);
 	}
 
 	function handleVideoPlay() {
