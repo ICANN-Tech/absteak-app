@@ -13,7 +13,7 @@
 	export let thumbnailAlt: string;
 	export let mediaClass: string;
 	export let videoUrl: string =
-		'https://absteakjkt.com/wp-content/uploads/2024/01/Profile-Chef-Akira-Back-prev-3.mp4';
+		'assets/videos/highlight.webm';
 
 	let showOverlay: boolean = false;
     

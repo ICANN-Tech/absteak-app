@@ -17,6 +17,7 @@
   export let variant: 'default' | 'elegant' | 'minimal' = 'elegant';
   export let icon: string = '';
   export let readonly: boolean = false;
+  export let className: string = '';
 
   // Generate unique id if not provided
   onMount(() => {
@@ -65,7 +66,7 @@
       {required}
       {disabled}
       {readonly}
-      class="{inputClasses} {variant === 'elegant' ? 'elegant-variant' : ''}"
+      class="{inputClasses} {className} {variant === 'elegant' ? 'elegant-variant' : ''}"
       style={icon ? 'padding-left: 2.5rem;' : ''}
       {...$$restProps}
     />

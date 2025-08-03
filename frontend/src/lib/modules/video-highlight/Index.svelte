@@ -8,7 +8,7 @@
     import RightContainer from './components/containers/Right.svelte';
 	
 	// Props for media
-	export let thumbnailUrl: string = '/assets/thumbnail.png';
+	export let thumbnailUrl: string = '/assets/thumbnail.webp';
 	export let thumbnailAlt: string = 'Video thumbnail';
 
 	// Props for layout and styling

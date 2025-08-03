@@ -16,36 +16,19 @@
 	import { ChevronLeftOutline } from 'flowbite-svelte-icons';
 
 	// Props
-	export let branches: Branch[] = [
-		{
-			id: 'branch-1',
-			name: 'ABSteak Jakarta Pusat',
-			address: 'Jl. Sudirman No. 123, Jakarta Pusat',
-			phone: '+62 21 1234 5678',
-			available: true
-		},
-		{
-			id: 'branch-2',
-			name: 'ABSteak Bandung',
-			address: 'Jl. Braga No. 45, Bandung',
-			phone: '+62 22 8765 4321',
-			available: true
-		},
-		{
-			id: 'branch-3',
-			name: 'ABSteak Surabaya',
-			address: 'Jl. Pemuda No. 67, Surabaya',
-			phone: '+62 31 9876 5432',
-			available: false
-		}
-	];
+	export let branches: Branch[] = [];
 	export let selectedBranch: Branch | null = null;
 	export let disabled: boolean = false;
+	export let title: string = 'Pilih Cabang';
+	export let subtitle: string = 'Pilih cabang ABSteak yang ingin Anda kunjungi';
+	export let showBackButton: boolean = true;
+	export let loading: boolean = false;
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
 		branchSelected: Branch;
 		branchDeselected: void;
+		back: void;
 	}>();
 
 	// Functions
@@ -85,39 +68,57 @@
 	}
 </script>
 
-<Container variant="elegant" size="full" padding="xl" class="col-span-3 w-full h-full">
+<Container variant="elegant" size="full" padding="xl" scrollable={true} class="w-full h-full">
 	<div 
-		class="enhanced-scrollbar space-y-6 h-full max-h-[65vh] overflow-y-auto pr-3 pb-4"
-		on:wheel|stopPropagation
-		on:touchmove|stopPropagation
-		tabindex="0"
-		role="region"
-		aria-label="Branch selection"
+				class="space-y-6"
+				on:wheel|stopPropagation
+				on:touchmove|stopPropagation
+				aria-label="Branch selection"
 	>
 		<!-- Header -->
 		<div class="relative mb-8 flex items-center p-4 text-white">
-			<button
-				class="z-10 flex cursor-pointer items-center gap-1 text-yellow-600 hover:text-yellow-700"
-			>
-				<ChevronLeftOutline size="xl" />Back
-			</button>
+			{#if showBackButton}
+				<button
+					class="z-10 flex cursor-pointer items-center gap-1 text-yellow-600 hover:text-yellow-700"
+					on:click={() => dispatch('back')}
+				>
+					<ChevronLeftOutline size="xl" />Back
+				</button>
+			{/if}
 
 			<div class="absolute inset-x-0 text-center text-lg font-bold">
-				<h3 class="mb-2 text-xl font-bold text-white">Pilih Cabang</h3>
-				<p class="text-sm text-gray-300">Pilih cabang ABSteak yang ingin Anda kunjungi</p>
+				<h3 class="mb-2 text-xl font-bold text-white">{title}</h3>
+				<p class="text-sm text-gray-300">{subtitle}</p>
 			</div>
 		</div>
 
-		<!-- Branch List -->
-		<div class="grid grid-cols-2 gap-4 space-y-4">
-			{#each branches as branch (branch.id)}
-				<div
-					class={getBranchClasses(branch)}
-					on:click={() => selectBranch(branch)}
-					on:keydown={(e) => e.key === 'Enter' && selectBranch(branch)}
-					role="button"
-					tabindex={disabled || !branch.available ? -1 : 0}
-				>
+		<!-- Loading State -->
+		{#if loading}
+			<div class="flex items-center justify-center py-12">
+				<div class="text-center">
+					<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+					<p class="text-gray-300">Loading branches...</p>
+				</div>
+			</div>
+		{:else if branches.length === 0}
+			<!-- Empty State -->
+			<div class="flex items-center justify-center py-12">
+				<div class="text-center">
+					<p class="text-gray-300 mb-2">No branches available</p>
+					<p class="text-sm text-gray-400">Please try again later</p>
+				</div>
+			</div>
+		{:else}
+			<!-- Branch List -->
+			<div class="flex flex-col gap-4 space-y-4">
+				{#each branches as branch (branch.id)}
+					<div
+						class={getBranchClasses(branch)}
+						on:click={() => selectBranch(branch)}
+						on:keydown={(e) => e.key === 'Enter' && selectBranch(branch)}
+						role="button"
+						tabindex={disabled || !branch.available ? -1 : 0}
+					>
 					<!-- Selection Indicator -->
 					{#if isSelected(branch)}
 						<div class="absolute right-4 top-4">
@@ -170,6 +171,7 @@
 				</div>
 			{/each}
 		</div>
+		{/if}
 
 		<!-- Selected Branch Summary -->
 		{#if selectedBranch}
@@ -183,7 +185,7 @@
 				</div>
 			</div>
 		{/if}
-	</div>
+		</div>
 </Container>
 
 <style>

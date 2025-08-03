@@ -96,7 +96,11 @@
 		return `${displayHour}:${minutes} ${ampm}`;
 	}
 
-	// Computed
+	// Computed - UI TESTING: Always true for testing
+	$: isComplete = true; // Bypass validation for UI testing
+	
+	// Original validation logic (commented out for UI testing)
+	/*
 	$: isComplete =
 		selectedBranch &&
 		selectedOutlet &&
@@ -105,6 +109,13 @@
 		customerName &&
 		customerEmail &&
 		customerPhone;
+	*/
+	
+	// Handler for next step - UI testing
+	function handleNextStep() {
+		console.log('Review: Moving to next step for UI testing');
+		dispatch('confirmReservation');
+	}
 </script>
 
 <Container variant="elegant" size="full" padding="xl" class="col-span-3 h-full w-full">
@@ -368,10 +379,11 @@
 				</div>
 
 				<button
-					class="w-full cursor-not-allowed rounded-lg bg-gray-600 px-6 py-4 font-semibold text-gray-400"
-					disabled
+					class="flex w-full items-center justify-center gap-3 rounded-lg bg-orange-500 px-6 py-4 font-semibold text-white transition-colors duration-300 hover:bg-orange-600"
+					on:click={handleNextStep}
 				>
-					Lengkapi Informasi Terlebih Dahulu
+					<CheckCircleSolid class="h-5 w-5" />
+					Lanjutkan ke Step Berikutnya (UI Testing)
 				</button>
 			{/if}
 		</div>
