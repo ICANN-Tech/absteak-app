@@ -1,1 +1,1 @@
-export { default as DetailModal } from './detail/Index.svelte'
+export { default as DetailModal } from '../../../modules/menu/components/modal/detail/Index.svelte'

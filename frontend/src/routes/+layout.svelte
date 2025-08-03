@@ -15,7 +15,7 @@
 	import { browser } from '$app/environment';
 
 	// Import komponen secara langsung untuk menghindari loading issues
-	import Menu from '$lib/components/organisms/section/menu/Index.svelte';
+	import Menu from '$lib/modules/menu/Index.svelte';
 
 	// Override the Menu component to avoid circular dependency
 	const allSections = anchors.map((anchor) => {

@@ -53,6 +53,7 @@ declare module '$env/static/private' {
 	export const npm_execpath: string;
 	export const PAGER: string;
 	export const PATH: string;
+	export const LaunchInstanceID: string;
 	export const npm_package_json: string;
 	export const __CFBundleIdentifier: string;
 	export const USER_ZDOTDIR: string;
@@ -85,6 +86,7 @@ declare module '$env/static/private' {
 	export const GIT_ASKPASS: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const GIT_PAGER: string;
+	export const SECURITYSESSIONID: string;
 	export const COLORTERM: string;
 	export const npm_config_prefix: string;
 	export const npm_node_execpath: string;
@@ -147,6 +149,7 @@ declare module '$env/dynamic/private' {
 		npm_execpath: string;
 		PAGER: string;
 		PATH: string;
+		LaunchInstanceID: string;
 		npm_package_json: string;
 		__CFBundleIdentifier: string;
 		USER_ZDOTDIR: string;
@@ -179,6 +182,7 @@ declare module '$env/dynamic/private' {
 		GIT_ASKPASS: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		GIT_PAGER: string;
+		SECURITYSESSIONID: string;
 		COLORTERM: string;
 		npm_config_prefix: string;
 		npm_node_execpath: string;

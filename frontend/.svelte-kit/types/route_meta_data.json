@@ -18,5 +18,6 @@
 	"/sverdle/how-to-play": [
 		"src/routes/sverdle/how-to-play/+page.ts"
 	],
+	"/toast-demo": [],
 	"/translation-demo": []
 }

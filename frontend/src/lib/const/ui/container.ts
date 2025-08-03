@@ -324,7 +324,7 @@ export const CONTAINER_SECTION = {
         form: `space-y-4 gap-8`,
         input: `bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-amber-400`,
         button: `w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0 font-semibold transition-all duration-300 hover:scale-105`,
-        social: `flex justify-center items-center space-x-4`
+        social: `flex justify-start items-start space-x-4`
       }
     }
   }

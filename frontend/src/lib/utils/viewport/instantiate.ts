@@ -31,11 +31,11 @@ const loadComponent = async (componentName: string) => {
       case 'ChefSection':
         return (await import('$lib/components/organisms/section/chef/Index.svelte')).default;
       case 'MenuSection':
-        return (await import('$lib/components/organisms/section/menu/Index.svelte')).default;
+        return (await import('$lib/modules/menu/Index.svelte')).default;
       case 'ReservationSection':
         return (await import('$lib/components/organisms/section/reservation/Index.svelte')).default;
       case 'FooterSection':
-        return (await import('$lib/components/organisms/section/footer/Index.svelte')).default;
+        return (await import('$lib/modules/footer/Index.svelte')).default;
       default:
         return null;
     }

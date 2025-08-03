@@ -24,10 +24,16 @@
     onSectionChange: (index) => {
       console.log('Section changed to:', index);
       
-      // Sync highlight dengan section change
+      // Handle highlight component based on section
       const section = sections[index];
       if (section) {
-        highlightStore.syncWithSectionChange(section.id);
+        if (section.id === 'footer') {
+          // For footer, let the footer section monitor handle hiding
+          // Don't sync highlight to avoid conflicts
+        } else {
+          // For non-footer sections, sync highlight
+          highlightStore.syncWithSectionChange(section.id);
+        }
       }
     },
     onScrollAttempt: (direction) => {

@@ -5,11 +5,11 @@
 
 	const t = createTranslationStore('footer');
 
-	$: address = $t('address');
-	$: phone = '021-123-4567';
-	$: email = 'info@absteak.com';
-	$: title = $t('title');
-	$: description = $t('description');
+	export let address: string;
+	export let phone: string;
+	export let email: string;
+	export let title: string;
+	export let description: string;
 </script>
 
 <div class="mx-auto {UI_LAYOUT.maxWidth.content}">

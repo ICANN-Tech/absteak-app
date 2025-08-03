@@ -17,6 +17,35 @@
   "experience": "Experience",
   "ourChef": "Our Chef",
   "menu": "Menu",
+  "newsletter": {
+    "title": "Stay Updated",
+    "description": "Subscribe to our newsletter for exclusive offers, new menu updates, and special events.",
+    "tagline": {
+      "title": "Subscribe to our newsletter",
+      "description": "Get the latest news, exclusive offers, and special events straight to your inbox."
+    },
+    "restaurant": {
+      "title": "AB STEAK",
+      "description": "AB Steak offers an unparalleled fine dining experience, specializing in premium quality steak dishes with a distinctive Korean innovative touch. Each dish is prepared with precise cooking techniques, such as dry-aging, to ensure rich flavors and a perfect texture in every bite. With an elegant ambiance, exceptional service, and a unique menu, AB Steak is the perfect destination for an unforgettable culinary moment."
+    },
+    "forms": {
+      "email": {
+        "placeholder": "Enter your email",
+        "validation": {
+          "required": "Please enter your email address",
+          "email": "Invalid email address"
+        }
+      },
+      "submit": {
+        "label": "Subscribe",
+        "loadingLabel": "Subscribing..."
+      },
+      "message": {
+        "success": "Successfully subscribed!",
+        "error": "Failed to subscribe. Please try again."
+      }
+    }
+  },
   "reservations": "Reservations",
   "newsletterTitle": "Stay Updated",
   "newsletterDescription": "Subscribe to our newsletter for exclusive offers, new menu updates, and special events.",

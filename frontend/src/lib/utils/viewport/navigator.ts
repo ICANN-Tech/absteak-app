@@ -1,5 +1,6 @@
 import { viewportStore } from '$lib/stores/viewport';
-import type { Section } from '$lib/stores/viewport';
+import type { Section } from '$lib/types';
+import { SectionId } from '$lib/enums';
 
 export interface NavigatorOptions {
   preloadCallback?: (index: number) => Promise<void>;
@@ -62,6 +63,9 @@ export class ViewportNavigator {
       setTimeout(() => {
         viewportStore.setCurrentSection(targetIndex);
 
+        // Sync highlight dengan section yang baru
+        this.syncHighlightWithSection(targetIndex);
+
         // Fade in new section
         setTimeout(() => {
           const newSection = typeof document !== 'undefined' ? document.getElementById(`section-${targetIndex}`) : null;
@@ -102,6 +106,14 @@ export class ViewportNavigator {
     if (targetIndex === -1) {
       console.warn(`Section with ID '${sectionId}' not found`);
       return false;
+    }
+
+    // Sync highlight sebelum jump untuk immediate feedback
+    try {
+      const { highlightStore } = await import('$lib/stores/viewport/highlight');
+      highlightStore.syncWithSectionChange(sectionId);
+    } catch (error) {
+      console.error('Error syncing highlight before jump:', error);
     }
 
     return this.jumpToSection(targetIndex);
@@ -228,6 +240,91 @@ export class ViewportNavigator {
    */
   updateOptions(options: Partial<NavigatorOptions>): void {
     this.options = { ...this.options, ...options };
+  }
+
+  /**
+   * Sync highlight dengan section yang aktif dan handle section monitoring
+   */
+  private async syncHighlightWithSection(sectionIndex: number): Promise<void> {
+    try {
+      // Get section info
+      let sections: Section[] = [];
+      viewportStore.subscribe(state => {
+        sections = state.sections;
+      })();
+
+      const currentSection = sections[sectionIndex];
+      if (!currentSection) return;
+
+      // Import highlight store dynamically untuk avoid circular dependency
+      const { highlightStore } = await import('$lib/stores/viewport/highlight');
+      
+      // Sync highlight dengan section ID
+      highlightStore.syncWithSectionChange(currentSection.id);
+
+      // Handle section-specific component visibility
+      await this.handleSectionMonitoring(currentSection.id);
+      
+    } catch (error) {
+      console.error('Error syncing highlight with section:', error);
+    }
+  }
+
+  /**
+   * Handle section monitoring untuk hide/show components berdasarkan section
+   */
+  private async handleSectionMonitoring(sectionId: string): Promise<void> {
+    try {
+      // Import section monitors dynamically
+      switch (sectionId) {
+        case SectionId.Footer:
+          const { createFooterMonitor } = await import('$lib/utils/monitor/section/footer');
+          const footerMonitor = createFooterMonitor();
+          footerMonitor.callSection();
+          break;
+          
+        case SectionId.Hero:
+          const { createHeroMonitor } = await import('$lib/utils/monitor/section/hero');
+          const heroMonitor = createHeroMonitor();
+          heroMonitor.callSection();
+          break;
+          
+        case SectionId.Experience:
+          const { createExperienceMonitor } = await import('$lib/utils/monitor/section/experience');
+          const experienceMonitor = createExperienceMonitor();
+          experienceMonitor.callSection();
+          break;
+          
+        case SectionId.Chef:
+          const { createChefMonitor } = await import('$lib/utils/monitor/section/chef');
+          const chefMonitor = createChefMonitor();
+          chefMonitor.callSection();
+          break;
+          
+        case SectionId.Menu:
+          const { createMenuMonitor } = await import('$lib/utils/monitor/section/menu');
+          const menuMonitor = createMenuMonitor();
+          menuMonitor.callSection();
+          break;
+          
+        case SectionId.Booking:
+          const { createBookingMonitor } = await import('$lib/utils/monitor/section/reservation');
+          const bookingMonitor = createBookingMonitor();
+          bookingMonitor.callSection();
+          break;
+          
+        case SectionId.VideoHighlight:
+          const { createVideoHighlightMonitor } = await import('$lib/utils/monitor/section/video-highlight');
+          const videoHighlightMonitor = createVideoHighlightMonitor();
+          videoHighlightMonitor.callSection();
+          break;
+          
+        default:
+          console.warn(`No monitor found for section: ${sectionId}`);
+      }
+    } catch (error) {
+      console.error('Error handling section monitoring:', error);
+    }
   }
 }
 
