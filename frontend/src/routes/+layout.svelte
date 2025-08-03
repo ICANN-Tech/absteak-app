@@ -89,6 +89,7 @@
 	import { HighlightLayout, LanguageSwitcherLayout } from '$lib/components/organisms';
 	import ScrollIndicator from '$lib/components/organisms/layout/ScrollIndicator.svelte';
 	import BackToTop from '$lib/components/organisms/layout/BackToTop.svelte';
+	import ChatBotFab from '$lib/components/ChatBotFAB.svelte';
 </script>
 
 <NavBarLayout />
@@ -98,7 +99,7 @@
 
 <slot />
 
-<ChatBot />
+<ChatBotFab />
 
 <HighlightLayout />
 
