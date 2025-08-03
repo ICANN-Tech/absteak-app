@@ -79,10 +79,12 @@ export const highlightStore = {
             navigator.jumpToSectionById(highlight.sectionId);
           });
 
-          // Reset visibility untuk memastikan highlight component muncul kembali
-          import('$lib/stores/viewport/visibility').then(({ resetComponentVisibility }) => {
+          // Only reset visibility if component is not locked (to respect footer section hiding)
+          import('$lib/stores/viewport/visibility').then(({ resetComponentVisibility, isVisibilityLocked }) => {
             import('$lib/enums').then(({ ComponentId }) => {
-              resetComponentVisibility(ComponentId.Highlight);
+              if (!isVisibilityLocked(ComponentId.Highlight)) {
+                resetComponentVisibility(ComponentId.Highlight);
+              }
             });
           });
         }

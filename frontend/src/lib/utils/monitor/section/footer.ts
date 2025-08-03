@@ -160,6 +160,14 @@ export function createFooterMonitor(): MonitorSectionModule {
             // Use reusable base function for manual components
             handleSectionCall(footerSectionConfig, componentTrackingStore);
             
+            // Explicitly force hide the Highlight component and lock it to prevent resetComponentVisibility from showing it
+            import('$lib/stores/viewport/visibility').then(({ setComponentVisibility, lockVisibility }) => {
+                import('$lib/enums').then(({ ComponentId }) => {
+                    setComponentVisibility(ComponentId.Highlight, false);
+                    lockVisibility(ComponentId.Highlight, false); // Lock it to hidden state
+                });
+            });
+            
             // Handle registered components
             registeredComponents.forEach((visibility) => {
                 visibility.hide();
@@ -172,6 +180,14 @@ export function createFooterMonitor(): MonitorSectionModule {
         exitSection: (): void => {
             // Use reusable base function for manual components
             handleSectionExit(footerSectionConfig, componentTrackingStore);
+            
+            // Unlock and reset the Highlight component to use normal visibility logic when leaving footer
+            import('$lib/stores/viewport/visibility').then(({ resetComponentVisibility, unlockVisibility }) => {
+                import('$lib/enums').then(({ ComponentId }) => {
+                    unlockVisibility(ComponentId.Highlight); // Unlock first
+                    resetComponentVisibility(ComponentId.Highlight); // Then reset
+                });
+            });
             
             // Handle registered components
             registeredComponents.forEach((visibility) => {
