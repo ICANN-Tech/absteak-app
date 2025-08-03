@@ -9,10 +9,10 @@
 	} from '$lib/components/atoms';
 	import { Stepper } from '$lib/components/molecules';
 	import BookingCalendar from '$lib/components/molecules/calendar/Booking.svelte';
-	import BranchSelectorForm from '../../reservation/form/BranchSelector.svelte';
-	import OutletSelectorForm from '../../reservation/form/OutletSelector.svelte';
-	import type { Branch } from '../../reservation/form/BranchSelector.svelte';
-	import type { Outlet } from '../../reservation/form/OutletSelector.svelte';
+	import BranchSelectorForm from '../../components/organisms/reservation/form/BranchSelector.svelte';
+	import OutletSelectorForm from '../../components/organisms/reservation/form/OutletSelector.svelte';
+	import type { Branch } from '../../components/organisms/reservation/form/BranchSelector.svelte';
+	import type { Outlet } from '../../components/organisms/reservation/form/OutletSelector.svelte';
 	import { PaymentMethod } from '$lib/components/molecules';
 	import {
 		steps,
@@ -23,7 +23,7 @@
 	} from '$lib/stores/reservation/step';
 	import { fly, fade } from 'svelte/transition';
 	import { quintIn, quintOut } from 'svelte/easing';
-	import { ReviewForm } from '../../reservation';
+	import { ReviewForm } from '../../components/organisms/reservation';
 
 	// Branch and Outlet selection data
 	let selectedBranch: Branch | null = null;

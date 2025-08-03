@@ -1,8 +1,8 @@
 <script context="module" lang="ts">
     import { CONTAINER_SECTION } from '$lib/const';
     import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
-    import LeftContainer from './LeftContainer.svelte';
-    import RightContainer from './RightContainer.svelte';
+    import LeftContainer from './components/containers/Left.svelte';
+    import RightContainer from './components/containers/Right.svelte';
 </script>
 
 <script lang="ts">

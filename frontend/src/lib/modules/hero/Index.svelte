@@ -4,6 +4,7 @@
 	import { CONTAINER_SECTION } from '$lib/const';
   
   import HeroCarousel from '$lib/components/organisms/carousel/hero/Index.svelte';
+  import ButtonGroup from "./components/groups/Button.svelte"
   
   const t = createTranslationStore();
 
@@ -31,10 +32,7 @@
       </p>
       
       <!-- Button Group -->
-      <div class={CONTAINER_SECTION.hero.buttons.container}>
-        <Button href="#menu" color="yellow" pill outline>{$t('hero.menuButton', 'Menu')}</Button>
-        <Button href="#reservation" variant="warning" pill outline>{$t('hero.bookButton', 'Book')}</Button>
-      </div>
+      <ButtonGroup />
     </div>
   </div>
 </HeroCarousel>

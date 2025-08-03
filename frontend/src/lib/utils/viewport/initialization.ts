@@ -27,17 +27,17 @@ const loadComponent = async (componentName: string) => {
   try {
     switch (componentName) {
       case 'HeroSection':
-        return (await import('$lib/components/organisms/section/hero/Index.svelte')).default;
+        return (await import('$lib/modules/hero/Index.svelte')).default;
       case 'VideoHighlightSection':
-        return (await import('$lib/components/organisms/section/video-highlight/Index.svelte')).default;
+        return (await import('$lib/modules/video-highlight/Index.svelte')).default;
       case 'ExperienceSection':
-        return (await import('$lib/components/organisms/section/experience/Index.svelte')).default;
+        return (await import('$lib/modules/experience/Index.svelte')).default;
       case 'ChefSection':
-        return (await import('$lib/components/organisms/section/chef/Index.svelte')).default;
+        return (await import('$lib/modules/chef/Index.svelte')).default;
       case 'MenuSection':
         return (await import('$lib/modules/menu/Index.svelte')).default;
       case 'ReservationSection':
-        return (await import('$lib/components/organisms/section/reservation/Index.svelte')).default;
+        return (await import('$lib/modules/reservation/Index.svelte')).default;
       case 'FooterSection':
         return (await import('$lib/modules/footer/Index.svelte')).default;
       default:

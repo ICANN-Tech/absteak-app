@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
-	import LeftContainer from './LeftContainer.svelte';
-	import RightContainer from '../video-highlight/RightContainer.svelte';
+	import LeftContainer from './components/containers/Left.svelte';
+	import RightContainer from './components/containers/Right.svelte';
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { CONTAINER_SECTION } from '$lib/const';
 </script>

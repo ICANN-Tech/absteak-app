@@ -1166,3 +1166,183 @@ export function getVisibilityLockedValue(componentId: string): boolean | null {
 // Export types for external use
 export type { ViewportPositionConfig, ViewportPositionState } from '$lib/utils/viewport/visibility.js';
 export { ViewportPositionPresets } from '$lib/utils/viewport/visibility.js';
+
+/**
+ * ============================================================================
+ * LEGACY COMPATIBILITY FUNCTIONS
+ * ============================================================================
+ * These functions provide backward compatibility with the old visibility store
+ * They maintain the same API but use the new viewport visibility system internally
+ */
+
+// Legacy visibility store map for backward compatibility
+const legacyVisibilityMap = new Map<string | null, Writable<boolean>>();
+
+/**
+ * Legacy function: Get visibility store for backward compatibility
+ * @param id - Component identifier (string or null)
+ * @returns Writable store for visibility state
+ */
+export function getVisibilityStore(id: string | null = null): Writable<boolean> {
+  if (!legacyVisibilityMap.has(id)) {
+    // Create a new writable store
+    const store = writable(true);
+    legacyVisibilityMap.set(id, store);
+    
+    // If id is provided and it's a valid ComponentId, sync with viewport system
+       if (id && Object.values(ComponentId).includes(id as ComponentId)) {
+         const componentId = id as ComponentId;
+         
+         // Try to get existing component or create a new one
+         let component = viewportVisibilityStore.getComponent(componentId);
+         
+         if (!component) {
+           // Create a new trigger-based component
+           const manager = new ViewportVisibilityManager(componentId, {
+             triggerMode: true,
+             initialVisible: true
+           });
+           component = viewportVisibilityStore.getComponent(componentId);
+         }
+         
+         // Sync the legacy store with the viewport component
+         if (component) {
+           component.visible.subscribe(visible => {
+             store.set(visible);
+           });
+           
+           // When legacy store changes, update the viewport component
+           store.subscribe(visible => {
+             if (visible) {
+               component?.show();
+             } else {
+               component?.hide();
+             }
+           });
+         }
+       }
+  }
+  return legacyVisibilityMap.get(id)!;
+}
+
+/**
+ * Legacy function: Create visibility handler for backward compatibility
+ * @param id - Component identifier (string or null)
+ * @returns Handler function that respects lock state
+ */
+export function createVisibilityHandler(id: string | null = null) {
+  const store = getVisibilityStore(id);
+
+  // Return the handler function that respects lock state
+  const handler = (visible: boolean) => {
+    // Check if component is locked (using new system if it's a ComponentId)
+    if (id && Object.values(ComponentId).includes(id as ComponentId)) {
+      const componentId = id as ComponentId;
+      if (isLocked(componentId)) {
+        // If locked, ignore attempts to change visibility to true
+        if (visible === true) {
+          return; // Ignore the change
+        }
+        // Allow setting to false even when locked
+        store.set(visible);
+      } else {
+        // Normal behavior when not locked
+        store.set(visible);
+      }
+    } else {
+      // For non-ComponentId identifiers, use legacy lock check
+      const legacyLockState = lockMap.get(id || 'legacy');
+      if (legacyLockState?.locked) {
+        // If locked, ignore attempts to change visibility to true
+        if (visible === true) {
+          return; // Ignore the change
+        }
+        // Allow setting to false even when locked
+        store.set(visible);
+      } else {
+        // Normal behavior when not locked
+        store.set(visible);
+      }
+    }
+  };
+
+  return handler;
+}
+
+/**
+ * Legacy function: Create visibility toggle for backward compatibility
+ * @param id - Component identifier (string or null)
+ * @returns Toggle function that respects lock state
+ */
+export function createVisibilityToggle(id: string | null = null) {
+  const store = getVisibilityStore(id);
+
+  // Return the toggle function that respects lock state
+  const toggle = () => {
+    // Check if component is locked (using new system if it's a ComponentId)
+    if (id && Object.values(ComponentId).includes(id as ComponentId)) {
+      const componentId = id as ComponentId;
+      if (isLocked(componentId)) {
+        // If locked, ignore toggle attempts that would set to true
+        store.update(current => {
+          if (!current) {
+            // Currently false, would toggle to true - ignore if locked
+            return current;
+          } else {
+            // Currently true, would toggle to false - allow
+            return !current;
+          }
+        });
+      } else {
+        // Normal toggle behavior when not locked
+        store.update(current => !current);
+      }
+    } else {
+      // For non-ComponentId identifiers, use legacy lock check
+      const legacyLockState = lockMap.get(id || 'legacy');
+      if (legacyLockState?.locked) {
+        // If locked, ignore toggle attempts that would set to true
+        store.update(current => {
+          if (!current) {
+            // Currently false, would toggle to true - ignore if locked
+            return current;
+          } else {
+            // Currently true, would toggle to false - allow
+            return !current;
+          }
+        });
+      } else {
+        // Normal toggle behavior when not locked
+        store.update(current => !current);
+      }
+    }
+  };
+
+  return toggle;
+}
+
+/**
+ * Get all legacy visibility stores for backward compatibility
+ * @returns Map of all legacy visibility stores
+ */
+export function getAllVisibilityStores(): Map<string | null, Writable<boolean>> {
+  return new Map(legacyVisibilityMap);
+}
+
+/**
+ * Get all lock states for backward compatibility
+ * @returns Map of all lock states
+ */
+export function getAllLockStates(): Map<string | null, { locked: boolean; lockedValue: boolean }> {
+  const result = new Map<string | null, { locked: boolean; lockedValue: boolean }>();
+  
+  // Add ComponentId lock states
+  for (const [componentId, lockState] of lockMap) {
+    result.set(componentId, {
+      locked: lockState.locked,
+      lockedValue: lockState.lockedValue !== null ? Boolean(lockState.lockedValue) : false
+    });
+  }
+  
+  return result;
+}

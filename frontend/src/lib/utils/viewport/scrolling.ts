@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
-import { viewportStore, scrollEnabled, isTransitioning } from '$lib/stores/viewport';
-import type { Section } from '$lib/types';
+import { viewportStore, viewportState, isScrollDisabled, isNavigating } from '$lib/stores/viewport/viewport';
+import { SectionId } from '$lib/enums';
 
 /**
  * Scroll configuration interface
@@ -56,9 +56,12 @@ export class ViewportScrollManager {
     start: (event: TouchEvent) => void;
     end: (event: TouchEvent) => void;
   };
+  private scrollDelay: number = 800;
+  private lastScrollTime: number = 0;
 
   constructor(config: ScrollConfig = {}) {
     this.config = { ...DEFAULT_SCROLL_CONFIG, ...config };
+    this.scrollDelay = this.config.delay;
     this.initializeScrollState();
   }
 
@@ -67,11 +70,10 @@ export class ViewportScrollManager {
    */
   private initializeScrollState(): void {
     if (this.config.enabled) {
-      viewportStore.enableScroll();
+      viewportStore.actions.enableScroll();
     } else {
-      viewportStore.disableScroll();
+      viewportStore.actions.disableScroll();
     }
-    viewportStore.setScrollDelay(this.config.delay);
   }
 
   /**
@@ -79,7 +81,7 @@ export class ViewportScrollManager {
    */
   enableScroll(): void {
     this.config.enabled = true;
-    viewportStore.enableScroll();
+    viewportStore.actions.enableScroll();
   }
 
   /**
@@ -87,7 +89,7 @@ export class ViewportScrollManager {
    */
   disableScroll(): void {
     this.config.enabled = false;
-    viewportStore.disableScroll();
+    viewportStore.actions.disableScroll();
   }
 
   /**
@@ -95,14 +97,20 @@ export class ViewportScrollManager {
    */
   toggleScroll(): void {
     this.config.enabled = !this.config.enabled;
-    viewportStore.toggleScroll();
+    const state = get(viewportState);
+    if (state.scroll.isDisabled) {
+      viewportStore.actions.enableScroll();
+    } else {
+      viewportStore.actions.disableScroll();
+    }
   }
 
   /**
    * Check if scrolling is currently enabled
    */
   isScrollEnabled(): boolean {
-    return get(scrollEnabled);
+    const state = get(viewportState);
+    return !state.scroll.isDisabled;
   }
 
   /**
@@ -110,33 +118,46 @@ export class ViewportScrollManager {
    */
   setScrollDelay(delay: number): void {
     this.config.delay = delay;
-    viewportStore.setScrollDelay(delay);
+    this.scrollDelay = delay;
   }
 
   /**
    * Get current scroll delay
    */
   getScrollDelay(): number {
-    return this.config.delay;
+    return this.scrollDelay;
   }
 
   /**
    * Check if can scroll (considering delay and transition state)
    */
   canScroll(): boolean {
-    return viewportStore.canScroll();
+    const state = get(viewportState);
+    const now = Date.now();
+    const timeSinceLastScroll = now - this.lastScrollTime;
+    
+    return !state.scroll.isDisabled && 
+           !state.section.isNavigating && 
+           timeSinceLastScroll >= this.scrollDelay;
+  }
+
+  /**
+   * Update last scroll time
+   */
+  updateLastScrollTime(): void {
+    this.lastScrollTime = Date.now();
   }
 
   /**
    * Get current scroll state
    */
   getScrollState(): ScrollState {
-    const state = get(viewportStore);
+    const state = get(viewportState);
     return {
-      enabled: state.scrollEnabled,
-      delay: state.scrollDelay,
-      lastScrollTime: state.lastScrollTime,
-      isTransitioning: state.isTransitioning,
+      enabled: !state.scroll.isDisabled,
+      delay: this.scrollDelay,
+      lastScrollTime: this.lastScrollTime,
+      isTransitioning: state.section.isNavigating,
       canScroll: this.canScroll()
     };
   }
@@ -168,14 +189,30 @@ export class ViewportScrollManager {
   }
 
   /**
+   * Get section index from SectionId
+   */
+  private getSectionIndex(sectionId: SectionId): number {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds.indexOf(sectionId);
+  }
+
+  /**
+   * Get SectionId from index
+   */
+  private getSectionId(index: number): SectionId | null {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds[index] || null;
+  }
+
+  /**
    * Handle scroll event with direction detection
    */
   private handleScrollEvent(direction: ScrollDirection): void {
     if (!this.canScroll()) return;
 
-    const currentState = get(viewportStore);
-    const currentIndex = currentState.currentSectionIndex;
-    const totalSections = currentState.sections.length;
+    const state = get(viewportState);
+    const currentIndex = this.getSectionIndex(state.section.currentSection);
+    const totalSections = Object.values(SectionId).length;
 
     let targetIndex = currentIndex;
     
@@ -186,7 +223,7 @@ export class ViewportScrollManager {
     }
 
     if (targetIndex !== currentIndex) {
-      viewportStore.updateLastScrollTime();
+      this.updateLastScrollTime();
       this.onScrollCallback?.(direction, currentIndex, targetIndex);
     }
   }
@@ -304,54 +341,60 @@ export const scrollUtils = {
   /**
    * Enable viewport scrolling
    */
-  enable: () => viewportStore.enableScroll(),
+  enable: () => viewportStore.actions.enableScroll(),
 
   /**
    * Disable viewport scrolling
    */
-  disable: () => viewportStore.disableScroll(),
+  disable: () => viewportStore.actions.disableScroll(),
 
   /**
    * Toggle viewport scrolling
    */
-  toggle: () => viewportStore.toggleScroll(),
+  toggle: () => {
+    const state = get(viewportState);
+    if (state.scroll.isDisabled) {
+      viewportStore.actions.enableScroll();
+    } else {
+      viewportStore.actions.disableScroll();
+    }
+  },
 
   /**
    * Check if scrolling is enabled
    */
-  isEnabled: () => get(scrollEnabled),
+  isEnabled: () => {
+    const state = get(viewportState);
+    return !state.scroll.isDisabled;
+  },
 
   /**
    * Check if currently transitioning
    */
-  isTransitioning: () => get(isTransitioning),
-
-  /**
-   * Set scroll delay
-   */
-  setDelay: (delay: number) => viewportStore.setScrollDelay(delay),
+  isTransitioning: () => {
+    const state = get(viewportState);
+    return state.section.isNavigating;
+  },
 
   /**
    * Check if can scroll right now
    */
-  canScroll: () => viewportStore.canScroll(),
-
-  /**
-   * Update last scroll time
-   */
-  updateLastScrollTime: () => viewportStore.updateLastScrollTime(),
+  canScroll: () => {
+    const state = get(viewportState);
+    return !state.scroll.isDisabled && !state.section.isNavigating;
+  },
 
   /**
    * Get current scroll state
    */
   getState: (): ScrollState => {
-    const state = get(viewportStore);
+    const state = get(viewportState);
     return {
-      enabled: state.scrollEnabled,
-      delay: state.scrollDelay,
-      lastScrollTime: state.lastScrollTime,
-      isTransitioning: state.isTransitioning,
-      canScroll: viewportStore.canScroll()
+      enabled: !state.scroll.isDisabled,
+      delay: 800, // Default delay
+      lastScrollTime: state.scroll.lastScrollTime,
+      isTransitioning: state.section.isNavigating,
+      canScroll: !state.scroll.isDisabled && !state.section.isNavigating
     };
   }
 };
@@ -418,19 +461,14 @@ export function withScrollDisabled<T>(fn: () => T | Promise<T>): Promise<T> {
 export function withScrollDelay<T>(delay: number, fn: () => T | Promise<T>): Promise<T> {
   const originalDelay = scrollUtils.getState().delay;
   
-  scrollUtils.setDelay(delay);
-  
   const result = fn();
   
   if (result instanceof Promise) {
-    return result.finally(() => {
-      scrollUtils.setDelay(originalDelay);
-    });
+    return result;
   } else {
-    scrollUtils.setDelay(originalDelay);
     return Promise.resolve(result);
   }
 }
 
 // Re-export store references for convenience
-export { scrollEnabled, isTransitioning } from '$lib/stores/viewport';
+export { isScrollDisabled, isNavigating } from '$lib/stores/viewport/viewport';

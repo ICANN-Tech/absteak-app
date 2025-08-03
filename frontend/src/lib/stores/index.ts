@@ -1,8 +1,16 @@
 export * from './carousel';
 export * from './modal';
-export * from './visibility';
 export * from './reservation';
 export * from "./viewport";
+
+// Legacy compatibility exports from viewport visibility
+export { 
+  getVisibilityStore,
+  createVisibilityHandler,
+  createVisibilityToggle,
+  getAllVisibilityStores,
+  getAllLockStates
+} from './viewport/visibility';
 
 // Enhanced modal exports (with different names to avoid conflicts)
 export { 
@@ -15,5 +23,5 @@ export {
   closeModal,
   openModalById,
   closeModalById
-} from './enhancedModal';
-export type { ModalItem as EnhancedModalItem, ModalState as EnhancedModalState } from './enhancedModal';
+} from './modal';
+export type { ModalItem as EnhancedModalItem, ModalState as EnhancedModalState } from './modal';

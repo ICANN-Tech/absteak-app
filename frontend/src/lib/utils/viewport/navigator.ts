@@ -1,4 +1,5 @@
-import { viewportStore } from '$lib/stores/viewport';
+import { viewportStore, viewportState } from '$lib/stores/viewport/viewport';
+import { get } from 'svelte/store';
 import type { Section } from '$lib/types';
 import { SectionId } from '$lib/enums';
 
@@ -16,19 +17,36 @@ export class ViewportNavigator {
   }
 
   /**
+   * Helper function to get current section index from SectionId
+   */
+  private getSectionIndex(sectionId: SectionId): number {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds.indexOf(sectionId);
+  }
+
+  /**
+   * Helper function to get SectionId from index
+   */
+  private getSectionId(index: number): SectionId | null {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds[index] || null;
+  }
+
+  /**
+   * Helper function to get total sections count
+   */
+  private getTotalSectionsCount(): number {
+    return Object.values(SectionId).length;
+  }
+
+  /**
    * Navigasi ke section tertentu berdasarkan index
    */
   async jumpToSection(targetIndex: number): Promise<boolean> {
-    let currentIndex = 0;
-    let sectionsLength = 0;
-    let isTransitioning = false;
-
-    // Get current state
-    viewportStore.subscribe(state => {
-      currentIndex = state.currentSectionIndex;
-      sectionsLength = state.sections.length;
-      isTransitioning = state.isTransitioning;
-    })();
+    const state = get(viewportState);
+    const currentIndex = this.getSectionIndex(state.section.currentSection);
+    const sectionsLength = this.getTotalSectionsCount();
+    const isTransitioning = state.section.isNavigating;
 
     // Validasi index
     if (targetIndex < 0 || targetIndex >= sectionsLength) {
@@ -41,8 +59,12 @@ export class ViewportNavigator {
       return false;
     }
 
-    // Mulai transisi
-    viewportStore.setTransitioning(true);
+    // Get target section ID
+    const targetSectionId = this.getSectionId(targetIndex);
+    if (!targetSectionId) {
+      console.warn(`Invalid section index: ${targetIndex}`);
+      return false;
+    }
 
     try {
       // Callback sebelum navigasi
@@ -61,7 +83,7 @@ export class ViewportNavigator {
 
       // Setelah fade out selesai, ganti section dan fade in
       setTimeout(() => {
-        viewportStore.setCurrentSection(targetIndex);
+        viewportStore.actions.setCurrentSection(targetSectionId);
 
         // Sync highlight dengan section yang baru
         this.syncHighlightWithSection(targetIndex);
@@ -72,11 +94,6 @@ export class ViewportNavigator {
           if (newSection) {
             newSection.style.opacity = '1';
           }
-
-          // Reset flag transisi
-          setTimeout(() => {
-            viewportStore.setTransitioning(false);
-          }, 300);
         }, 50);
       }, 300);
 
@@ -86,7 +103,6 @@ export class ViewportNavigator {
       return true;
     } catch (error) {
       console.error('Error during navigation:', error);
-      viewportStore.setTransitioning(false);
       return false;
     }
   }
@@ -95,13 +111,8 @@ export class ViewportNavigator {
    * Navigasi ke section berdasarkan ID
    */
   async jumpToSectionById(sectionId: string): Promise<boolean> {
-    let sections: Section[] = [];
-    
-    viewportStore.subscribe(state => {
-      sections = state.sections;
-    })();
-
-    const targetIndex = sections.findIndex(section => section.id === sectionId);
+    const sectionIds = Object.values(SectionId);
+    const targetIndex = sectionIds.indexOf(sectionId as SectionId);
     
     if (targetIndex === -1) {
       console.warn(`Section with ID '${sectionId}' not found`);
@@ -123,13 +134,9 @@ export class ViewportNavigator {
    * Navigasi ke section selanjutnya
    */
   async nextSection(): Promise<boolean> {
-    let currentIndex = 0;
-    let sectionsLength = 0;
-
-    viewportStore.subscribe(state => {
-      currentIndex = state.currentSectionIndex;
-      sectionsLength = state.sections.length;
-    })();
+    const state = get(viewportState);
+    const currentIndex = this.getSectionIndex(state.section.currentSection);
+    const sectionsLength = this.getTotalSectionsCount();
 
     const nextIndex = currentIndex + 1;
     if (nextIndex >= sectionsLength) {
@@ -143,11 +150,8 @@ export class ViewportNavigator {
    * Navigasi ke section sebelumnya
    */
   async previousSection(): Promise<boolean> {
-    let currentIndex = 0;
-
-    viewportStore.subscribe(state => {
-      currentIndex = state.currentSectionIndex;
-    })();
+    const state = get(viewportState);
+    const currentIndex = this.getSectionIndex(state.section.currentSection);
 
     const prevIndex = currentIndex - 1;
     if (prevIndex < 0) {
@@ -161,49 +165,46 @@ export class ViewportNavigator {
    * Enable scroll functionality
    */
   enableScroll(): void {
-    viewportStore.enableScroll();
+    viewportStore.actions.enableScroll();
   }
 
   /**
    * Disable scroll functionality
    */
   disableScroll(): void {
-    viewportStore.disableScroll();
+    viewportStore.actions.disableScroll();
   }
 
   /**
    * Toggle scroll functionality
    */
   toggleScroll(): void {
-    viewportStore.toggleScroll();
+    const state = get(viewportState);
+    if (state.scroll.isDisabled) {
+      viewportStore.actions.enableScroll();
+    } else {
+      viewportStore.actions.disableScroll();
+    }
   }
 
   /**
    * Check apakah scroll enabled
    */
   isScrollEnabled(): boolean {
-    let enabled = false;
-    viewportStore.subscribe(state => {
-      enabled = state.scrollEnabled;
-    })();
-    return enabled;
+    const state = get(viewportState);
+    return !state.scroll.isDisabled;
   }
 
   /**
    * Get current section info
    */
-  getCurrentSection(): { index: number; section: Section | null } {
-    let currentIndex = 0;
-    let sections: Section[] = [];
-
-    viewportStore.subscribe(state => {
-      currentIndex = state.currentSectionIndex;
-      sections = state.sections;
-    })();
+  getCurrentSection(): { index: number; section: SectionId } {
+    const state = get(viewportState);
+    const currentIndex = this.getSectionIndex(state.section.currentSection);
 
     return {
       index: currentIndex,
-      section: sections[currentIndex] || null
+      section: state.section.currentSection
     };
   }
 
@@ -211,24 +212,16 @@ export class ViewportNavigator {
    * Get total sections count
    */
   getTotalSections(): number {
-    let sectionsLength = 0;
-    viewportStore.subscribe(state => {
-      sectionsLength = state.sections.length;
-    })();
-    return sectionsLength;
+    return this.getTotalSectionsCount();
   }
 
   /**
    * Check apakah bisa navigasi ke section tertentu
    */
   canNavigateTo(targetIndex: number): boolean {
-    let sectionsLength = 0;
-    let isTransitioning = false;
-
-    viewportStore.subscribe(state => {
-      sectionsLength = state.sections.length;
-      isTransitioning = state.isTransitioning;
-    })();
+    const state = get(viewportState);
+    const sectionsLength = this.getTotalSectionsCount();
+    const isTransitioning = state.section.isNavigating;
 
     return targetIndex >= 0 && 
            targetIndex < sectionsLength && 
@@ -247,23 +240,17 @@ export class ViewportNavigator {
    */
   private async syncHighlightWithSection(sectionIndex: number): Promise<void> {
     try {
-      // Get section info
-      let sections: Section[] = [];
-      viewportStore.subscribe(state => {
-        sections = state.sections;
-      })();
-
-      const currentSection = sections[sectionIndex];
-      if (!currentSection) return;
+      const sectionId = this.getSectionId(sectionIndex);
+      if (!sectionId) return;
 
       // Import highlight store dynamically untuk avoid circular dependency
       const { highlightStore } = await import('$lib/stores/viewport/highlight');
       
       // Sync highlight dengan section ID
-      highlightStore.syncWithSectionChange(currentSection.id);
+      highlightStore.syncWithSectionChange(sectionId);
 
       // Handle section-specific component visibility
-      await this.handleSectionMonitoring(currentSection.id);
+      await this.handleSectionMonitoring(sectionId);
       
     } catch (error) {
       console.error('Error syncing highlight with section:', error);

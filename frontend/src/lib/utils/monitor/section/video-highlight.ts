@@ -482,6 +482,10 @@ export function getRegisteredVideoHighlightComponents(): ComponentId[] {
     return Array.from(registeredComponents.keys());
 }
 
+export function getRegisteredVideoHighlightComponentsMap(): Map<ComponentId, ReturnType<typeof createStateVisibility>> {
+    return new Map(registeredComponents);
+}
+
 export function showRegisteredVideoHighlightComponents(): void {
     return videoHighlightMonitor.showRegisteredComponents();
 }

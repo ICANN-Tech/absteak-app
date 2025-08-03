@@ -6,7 +6,8 @@
  * @param options.enableVisibilityControl - Enable visibility control
  */
 
-import { viewportStore } from '$lib/stores/viewport';
+import { viewportStore, viewportState } from '$lib/stores/viewport/viewport';
+import { get } from 'svelte/store';
 import { SectionId, ComponentId } from '$lib/enums';
 import { createStateVisibility, type ViewportPositionConfig } from '$lib/stores/viewport/visibility';
 import { 
@@ -18,6 +19,7 @@ import {
     registerVideoHighlightComponent,
     unregisterVideoHighlightComponent,
     getRegisteredVideoHighlightComponents,
+    getRegisteredVideoHighlightComponentsMap,
     // Exclusive visibility functions
     showOnlyVideoHighlightComponent,
     hideOnlyVideoHighlightComponent,
@@ -227,12 +229,12 @@ export class SectionMonitor {
             this.stop(); // Stop existing monitoring
         }
 
-        this.unsubscribe = viewportStore.subscribe(state => {
-            const currentSection = state.sections[state.currentSectionIndex];
+        this.unsubscribe = viewportState.subscribe(state => {
+            const currentSection = state.section.currentSection;
 
-            if (currentSection && currentSection.id !== this.currentSection) {
+            if (currentSection && currentSection !== this.currentSection) {
                 const previousSection = this.currentSection;
-                this.currentSection = currentSection.id as SectionId;
+                this.currentSection = currentSection as SectionId;
 
                 // Handle video highlight visibility
                 if (this.options.enableVisibilityControl) {
@@ -243,7 +245,8 @@ export class SectionMonitor {
                 this.notifySubscribers(this.currentSection, previousSection);
 
                 // Call custom callback if provided
-                this.options.onSectionChange?.(this.currentSection, state.currentSectionIndex, previousSection);
+                // Note: Section index is not available in the new state structure
+                this.options.onSectionChange?.(this.currentSection, 0, previousSection);
             }
         });
     }
@@ -481,7 +484,7 @@ export class SectionMonitor {
     getRegisteredComponents(sectionId: SectionId): Map<ComponentId, ReturnType<typeof createStateVisibility>> | null {
         // Support VideoHighlight section
         if (sectionId === SectionId.VideoHighlight) {
-            return getRegisteredVideoHighlightComponents();
+            return getRegisteredVideoHighlightComponentsMap();
         }
         
         // Support Hero section

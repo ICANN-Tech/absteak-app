@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { viewportStore } from '$lib/stores/viewport';
+  import { viewportStore, viewportState } from '$lib/stores/viewport/viewport';
   import { useViewportSystem, useSectionMonitor } from '$lib/utils';
   import { onMount, onDestroy } from 'svelte';
   
@@ -8,6 +8,9 @@
   import { initializeApp } from '$lib/utils/viewport/initialization';
   import { sectionsInitialized, isLoading, error, logInitializationState } from '$lib/stores/viewport/instantiate';
   import { highlightStore } from '$lib/stores/viewport/highlight';
+  
+  // Helper function to get current section index
+  $: currentSectionIndex = sections.findIndex(section => section.id === $viewportState.section.currentSection);
 
 
   // Setup integrated viewport system dengan scroll handling
@@ -80,8 +83,8 @@
     {#each sections as section, index}
       <div 
         id={section.id} 
-        class="section-container {index === $viewportStore.currentSectionIndex ? 'active' : ''}"
-        style="opacity: {index === $viewportStore.currentSectionIndex ? '1' : '0'};"
+        class="section-container {index === currentSectionIndex ? 'active' : ''}"
+        style="opacity: {index === currentSectionIndex ? '1' : '0'};"
       >
         {#if section.component}
           <svelte:component this={section.component} />
@@ -93,9 +96,9 @@
     {#if import.meta.env.DEV}
       <div class="debug-controls">
         <div class="debug-info">
-          <span>Section: {$viewportStore.currentSectionIndex + 1}/{sections.length}</span>
+          <span>Section: {currentSectionIndex + 1}/{sections.length}</span>
           <span>Scroll: {viewport.scrolling.isEnabled() ? 'ON' : 'OFF'}</span>
-          <span>Transitioning: {$viewportStore.isTransitioning ? 'YES' : 'NO'}</span>
+          <span>Transitioning: {$viewportState.section.isNavigating ? 'YES' : 'NO'}</span>
         </div>
         <div class="debug-buttons">
           <button on:click={() => viewport.scrolling.toggle()}>

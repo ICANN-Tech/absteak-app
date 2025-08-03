@@ -7,6 +7,7 @@ import { useIndicatorSystem } from './indicator';
 import { useScrolling, type ScrollConfig } from './scrolling';
 
 import type { Section } from '$lib/types';
+import type { SectionId } from '$lib/enums';
 
 // Re-export all utilities
 export * from './observer';
@@ -57,7 +58,7 @@ export interface ViewportSystemReturn {
   isObserverActive: () => boolean;
   
   // Utility functions
-  getCurrentSection: () => { index: number; section: Section | null };
+  getCurrentSection: () => { index: number; section: SectionId };
   getTotalSections: () => number;
   canNavigateTo: (index: number) => boolean;
   

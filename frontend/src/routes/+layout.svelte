@@ -4,7 +4,7 @@
 	import { ChatBot } from '$lib/components/organisms';
 
 	import { modalStore } from '$lib/stores/modal';
-	import { viewportStore } from '$lib/stores/viewport';
+	import { viewportStore, viewportState } from '$lib/stores/viewport/viewport';
 	import { useIndicatorSystem } from '$lib/utils/viewport';
 	import { anchors } from '$lib/const/anchors';
 	import {
@@ -13,6 +13,7 @@
 	} from '$lib/const/navigation-config';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { SectionId } from '$lib/enums';
 
 	// Import komponen secara langsung untuk menghindari loading issues
 	import Menu from '$lib/modules/menu/Index.svelte';
@@ -73,13 +74,16 @@
 		}
 	};
 
+	// Helper to get current section index from SectionId
+	$: currentSectionIndex = (() => {
+		const currentSectionId = $viewportState.section.currentSection;
+		return sectionsForScrolling.findIndex((s) => s.id === currentSectionId);
+	})();
+
 	// Get current section index for indicator display
 	$: currentIndicatorIndex = (() => {
-		const currentSection = sectionsForScrolling[$viewportStore.currentSectionIndex];
-		if (currentSection) {
-			return sectionsForIndicator.findIndex((s) => s.id === currentSection.id);
-		}
-		return -1;
+		const currentSectionId = $viewportState.section.currentSection;
+		return sectionsForIndicator.findIndex((s) => s.id === currentSectionId);
 	})();
 
 	import { HighlightLayout, LanguageSwitcherLayout } from '$lib/components/organisms';
@@ -113,5 +117,5 @@
 <style lang="scss">
   // Import your global SCSS file here
   // The path is relative to the +layout.svelte file.
-  @import '$lib/styles/global.scss';
+  @import '../lib/styles/global.scss';
 </style>

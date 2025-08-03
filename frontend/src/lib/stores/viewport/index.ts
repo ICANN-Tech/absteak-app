@@ -32,3 +32,6 @@ export * from './highlight';
 
 // Visibility management
 export * from './visibility';
+
+// Viewport state management
+export * from './viewport';

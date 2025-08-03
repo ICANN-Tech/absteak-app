@@ -1,6 +1,6 @@
-import { viewportStore } from '$lib/stores/viewport';
-  import { useViewportNavigator } from '$lib/utils/viewport';
-import type { Section } from '$lib/stores/viewport';
+import { get } from 'svelte/store';
+import { viewportStore, viewportState } from '$lib/stores/viewport/viewport';
+import { SectionId } from '$lib/enums';
 
 export interface ScrollObserverOptions {
   onSectionChange?: (index: number) => void;
@@ -12,9 +12,47 @@ export interface ScrollObserverOptions {
 export class ScrollObserver {
   private cleanup: (() => void) | null = null;
   private options: ScrollObserverOptions;
+  private lastScrollTime: number = 0;
+  private scrollDelay: number = 800;
 
   constructor(options: ScrollObserverOptions = {}) {
     this.options = options;
+  }
+
+  /**
+   * Get section index from SectionId
+   */
+  private getSectionIndex(sectionId: SectionId): number {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds.indexOf(sectionId);
+  }
+
+  /**
+   * Get SectionId from index
+   */
+  private getSectionId(index: number): SectionId | null {
+    const sectionIds = Object.values(SectionId);
+    return sectionIds[index] || null;
+  }
+
+  /**
+   * Check if can scroll (considering delay and transition state)
+   */
+  private canScroll(): boolean {
+    const state = get(viewportState);
+    const now = Date.now();
+    const timeSinceLastScroll = now - this.lastScrollTime;
+    
+    return !state.scroll.isDisabled && 
+           !state.section.isNavigating && 
+           timeSinceLastScroll >= this.scrollDelay;
+  }
+
+  /**
+   * Update last scroll time
+   */
+  private updateLastScrollTime(): void {
+    this.lastScrollTime = Date.now();
   }
 
   /**
@@ -29,7 +67,7 @@ export class ScrollObserver {
       e.preventDefault();
 
       // Cek apakah bisa scroll
-      if (!viewportStore.canScroll()) {
+      if (!this.canScroll()) {
         return;
       }
 
@@ -39,13 +77,9 @@ export class ScrollObserver {
       this.options.onScrollAttempt?.(direction);
 
       // Get current state
-      let currentIndex = 0;
-      let sectionsLength = 0;
-      
-      viewportStore.subscribe(state => {
-        currentIndex = state.currentSectionIndex;
-        sectionsLength = state.sections.length;
-      })();
+      const state = get(viewportState);
+      const currentIndex = this.getSectionIndex(state.section.currentSection);
+      const sectionsLength = Object.values(SectionId).length;
 
       // Tentukan section selanjutnya
       let nextIndex = currentIndex + (direction === 'down' ? 1 : -1);
@@ -57,9 +91,12 @@ export class ScrollObserver {
       // Jika index tidak berubah, tidak perlu transisi
       if (nextIndex === currentIndex) return;
 
-      // Update state
-      viewportStore.setTransitioning(true);
-      viewportStore.updateLastScrollTime();
+      // Get target section ID
+      const targetSectionId = this.getSectionId(nextIndex);
+      if (!targetSectionId) return;
+
+      // Update last scroll time
+      this.updateLastScrollTime();
 
       try {
         // Preload komponen jika ada callback
@@ -75,7 +112,9 @@ export class ScrollObserver {
 
         // Setelah fade out selesai, ganti section dan fade in
         setTimeout(() => {
-          viewportStore.setCurrentSection(nextIndex);
+          // Convert SectionId to index for legacy compatibility
+          const targetIndex = this.getSectionIndex(targetSectionId);
+          viewportStore.setCurrentSection(targetIndex);
           
           // Callback untuk section change
           this.options.onSectionChange?.(nextIndex);
@@ -86,11 +125,6 @@ export class ScrollObserver {
             if (newSection) {
               newSection.style.opacity = '1';
             }
-
-            // Reset flag transisi
-            setTimeout(() => {
-              viewportStore.setTransitioning(false);
-            }, 300);
           }, 50);
         }, 300);
 
@@ -98,7 +132,6 @@ export class ScrollObserver {
         this.options.indicatorCallback?.();
       } catch (error) {
         console.error('Error during section transition:', error);
-        viewportStore.setTransitioning(false);
       }
     };
 
