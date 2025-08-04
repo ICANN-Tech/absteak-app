@@ -107,7 +107,7 @@
 <!-- Down arrow for hero section -->
 <!-- <ScrollIndicator direction="down" /> -->
 <!-- Up arrow for footer section -->
-<ScrollIndicator direction="up" targetSection="hero" />
+<ScrollIndicator />
 
 <!-- Back to Top Button -->
 <BackToTop />

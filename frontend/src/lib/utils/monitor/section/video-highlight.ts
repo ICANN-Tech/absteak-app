@@ -35,7 +35,7 @@ export function createVideoHighlightMonitor(): MonitorSectionModule {
             registeredComponents.set(componentId, visibility);
             
             // Setup tracking untuk component ini
-            visibility.finalVisible.subscribe(isVisible => {
+            visibility.isDisplay.subscribe(isVisible => {
                 registeredComponentTrackingStore.update(store => {
                     const newStore = new Map(store);
                     newStore.set(componentId, isVisible);

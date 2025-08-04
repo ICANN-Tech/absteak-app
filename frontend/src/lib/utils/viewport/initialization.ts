@@ -2,6 +2,7 @@ import type { Sections } from "$lib/types";
 import { sections } from "$lib/const/control/section";
 import { initializeComponentVisibility } from "$lib/utils/monitor/section/initialize";
 import { initializationActions } from "$lib/stores/viewport/instantiate";
+import { initializeHighlights } from "$lib/stores/viewport/highlight";
 
 /**
  * Initialization Logic
@@ -79,17 +80,6 @@ export const initializeSections = async (): Promise<Sections> => {
   return sections;
 };
 
-/**
- * Initialize highlights data with lazy loading
- * This function can be extended to handle highlight-specific initialization
- * @returns Promise that resolves when highlights are initialized
- */
-export const initializeHighlights = async (): Promise<void> => {
-  // This can be extended for highlight-specific initialization
-  // For now, it's a placeholder for future highlight initialization logic
-  console.log('Highlights initialized');
-};
-
 // ============================================================================
 // MAIN INITIALIZATION FUNCTION
 // ============================================================================
@@ -114,6 +104,8 @@ export const initializeApp = async (): Promise<{
     initializationActions.setLoading(true);
     initializationActions.setError(null);
     
+    console.log('✨ Initializing highlights...');
+    await initializeHighlights();
     // Step 1: Initialize component visibility FIRST (hide components before sections render)
     console.log('🔧 Initializing component visibility...');
     await initializeComponentVisibility();
@@ -125,8 +117,6 @@ export const initializeApp = async (): Promise<{
     initializationActions.setSectionsInitialized(true);
     
     // Step 3: Initialize highlights
-    console.log('✨ Initializing highlights...');
-    await initializeHighlights();
     initializationActions.setHighlightsInitialized(true);
     
     // Step 4: Complete initialization

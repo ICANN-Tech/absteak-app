@@ -1,4 +1,5 @@
 <script context="module" lang="ts">
+	import { CONTAINER_PRESETS } from '$lib/const';
 	import { createAreaBasedStateVisibility } from '$lib/stores/viewport/visibility';
 	import { ComponentId } from '$lib/enums';
 
@@ -22,18 +23,16 @@
 	import { 
 		currentHighlightIndex, 
 		highlightsData, 
-		highlightStore,
 		initializeHighlights
 	} from '$lib/stores/viewport/highlight';
 	import { Indicator } from '$lib/components/atoms';
-	import { CONTAINER_PRESETS } from '$lib/const';
 	import { createHighlightLockMonitor, type HighlightLockMonitor } from '$lib/utils/monitor/component/highlight';
 
 	// Create highlight lock monitor
 	let highlightMonitor: HighlightLockMonitor;
 
 	onMount(async () => {
-		await initializeHighlights();
+		// await initializeHighlights();
 		// Initialize the highlight lock monitor
 		highlightMonitor = createHighlightLockMonitor();
 	});

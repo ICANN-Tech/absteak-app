@@ -26,7 +26,7 @@ export function exampleBasicUsage() {
         
         if (visibility) {
             // Subscribe ke perubahan visibility
-            visibility.finalVisible.subscribe(isVisible => {
+            visibility.isDisplay.subscribe(isVisible => {
                 console.log('VideoPromotion visible:', isVisible);
                 // Update UI berdasarkan visibility
             });
@@ -63,7 +63,7 @@ export function exampleMultipleComponents() {
         // Handle setiap visibility object
         visibilityObjects.forEach((visibility, index) => {
             if (visibility) {
-                visibility.finalVisible.subscribe(isVisible => {
+                visibility.isDisplay.subscribe(isVisible => {
                     console.log(`Component ${index} visible:`, isVisible);
                 });
             }
@@ -86,7 +86,7 @@ export function exampleAdvancedUsage() {
         
         if (videoPromotionVisibility) {
             // Subscribe ke visibility changes
-            videoPromotionVisibility.finalVisible.subscribe(isVisible => {
+            videoPromotionVisibility.isDisplay.subscribe(isVisible => {
                 if (isVisible) {
                     console.log('VideoPromotion is now visible');
                     // Trigger animations, load content, etc.

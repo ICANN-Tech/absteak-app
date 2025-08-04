@@ -492,13 +492,13 @@ export function createTriggerBasedVisibility(
  * This provides a unified state that can be shared across components while maintaining uniqueness
  */
 export function createStateVisibility(
-  componentId: string,
+  componentId: ComponentId,
   config: Partial<ViewportPositionConfig> = {}
 ): {
   visible: Readable<boolean>;
   showComponent: Writable<boolean | null>;
   isVisible: Readable<boolean>;
-  finalVisible: Readable<boolean>;
+  isDisplay: Readable<boolean>;
   show: () => void;
   hide: () => void;
   toggle: () => void;
@@ -532,7 +532,7 @@ export function createStateVisibility(
     visible: manager.visible,
     showComponent: manager.showComponent,
     isVisible,
-    finalVisible,
+    isDisplay: finalVisible,
     show: manager.show,
     hide: manager.hide,
     toggle: manager.toggle,

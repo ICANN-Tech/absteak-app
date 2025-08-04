@@ -8,7 +8,7 @@
 		hideDelay: 2000
 	});
 
-	const { isVisible, finalVisible, show, hide, toggle, setHideComponent, hideComponent } = visibility;
+	const { isVisible, isDisplay: finalVisible, show, hide, toggle, setHideComponent, hideComponent } = visibility;
 
 	// Demo state untuk kontrol
 	let hideComponentValue: boolean | null = null;
