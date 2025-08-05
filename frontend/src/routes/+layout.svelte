@@ -114,9 +114,7 @@
 
 <!-- Global styles are imported in app.css -->
 
-
 <style lang="scss">
-  // Import your global SCSS file here
-  // The path is relative to the +layout.svelte file.
-  @import '../lib/styles/global.scss';
+  @use '../lib/styles/global.scss' as *;
+
 </style>

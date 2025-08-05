@@ -1,0 +1,1 @@
+import{S as e,H as i}from"./NP3t9Vfi.js";const o=[{id:i.VideoHighlight,name:"Video Highlight",sectionId:e.VideoHighlight},{id:i.Experience,name:"Experience",sectionId:e.Experience},{id:i.Chef,name:"Chef",sectionId:e.Chef},{id:i.Menu,name:"Menu",sectionId:e.Menu},{id:i.Booking,name:"Reservation",sectionId:e.Booking}];export{o as highlights};
