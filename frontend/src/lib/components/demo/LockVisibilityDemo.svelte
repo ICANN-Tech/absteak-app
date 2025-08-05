@@ -26,14 +26,14 @@
 	});
 
 	const { 
-		isVisible: headingIsVisible, 
+		isDisplay: headingIsVisible, 
 		showComponent: headingShowComponent, 
 		setShowComponent: setHeadingShowComponent,
 		updatePosition: updateHeadingPosition 
 	} = headingVisibility;
 
 	const { 
-		isVisible: scrollIsVisible, 
+		isDisplay: scrollIsVisible, 
 		showComponent: scrollShowComponent, 
 		setShowComponent: setScrollShowComponent,
 		updatePosition: updateScrollPosition 

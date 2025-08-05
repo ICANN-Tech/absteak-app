@@ -85,7 +85,11 @@ export class InterfaceService {
         // Add payment step validation logic here
         return true;
         
-      case StepLabel.Confirmation:
+      case StepLabel.Summary:
+        // Add summary step validation logic here
+        return true;
+        
+      case StepLabel.Receipt:
         // Add confirmation step validation logic here
         return true;
         

@@ -3,20 +3,8 @@
 	import { fade } from 'svelte/transition';
 	import { createCarousel } from '$lib/utils/carousel';
 
-	// Props untuk ID carousel (opsional)
 	export let carouselId: string | null = null;
-
-	// Props untuk images (dengan default value)
-	export let images: { url: string }[] = [
-		{
-			url: 'https://bootstrapmade.com/content/demo/Delicious/assets/img/hero-carousel/hero-carousel-1.jpg'
-		},
-		{
-			url: 'https://bootstrapmade.com/content/demo/Delicious/assets/img/hero-carousel/hero-carousel-2.jpg'
-		}
-	];
-
-	// Props untuk interval (opsional)
+	export let images: { url: string }[];
 	export let interval: number = 6000;
 
 	// Carousel instance dengan ID

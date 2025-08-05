@@ -8,7 +8,7 @@
 		hideDelay: 2000
 	});
 
-	export const { isVisible, showComponent } = visibility;
+	export const { isDisplay, showComponent } = visibility;
 	export const updateVisibilityPosition = visibility.updatePosition;
 	export const destroyVisibilityManager = visibility.destroy;
 </script>
@@ -23,7 +23,7 @@
 	onDestroy(() => destroyVisibilityManager());
 </script>
 
-{#if $showComponent && $isVisible}
+{#if $isDisplay}
 	<nav
 		class={`${CONTAINER_PRESETS.panel.blur} fixed bottom-0 left-1/2 z-20 mx-auto flex max-w-5xl -translate-x-1/2 flex-col gap-2 rounded-t-3xl rounded-b-none border-t border-white/20 px-4 py-4 text-white`}
 		transition:fly={{ y: 100, duration: 600 }}

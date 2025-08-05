@@ -11,7 +11,7 @@
 		hideDelay: 1000
 	});
 
-	const { isVisible, finalVisible, showComponent, setShowComponent, updatePosition } = visibility;
+	const { isDisplay: isVisible, finalVisible, showComponent, setShowComponent, updatePosition } = visibility;
 
 	let testElement: HTMLElement;
 

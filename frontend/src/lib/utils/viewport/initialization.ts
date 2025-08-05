@@ -88,9 +88,9 @@ export const initializeSections = async (): Promise<Sections> => {
  * Unified initialization function - handles everything in correct order
  * Uses the state management stores to track progress
  * 
- * 1. Initialize component visibility (hide components before sections render)
- * 2. Load section components
- * 3. Initialize highlights
+ * 1. Initialize highlights
+ * 2. Initialize component visibility (hide components before sections render)
+ * 3. Load section components
  * 4. Update state stores accordingly
  * 
  * @returns Promise that resolves when all initialization is complete
@@ -100,28 +100,17 @@ export const initializeApp = async (): Promise<{
   sectionsReady: boolean;
 }> => {
   try {
-    console.log('🚀 Starting app initialization...');
     initializationActions.setLoading(true);
     initializationActions.setError(null);
     
-    console.log('✨ Initializing highlights...');
-    await initializeHighlights();
-    // Step 1: Initialize component visibility FIRST (hide components before sections render)
-    console.log('🔧 Initializing component visibility...');
-    await initializeComponentVisibility();
-    initializationActions.setComponentsInitialized(true);
-    
-    // Step 2: Load section components
-    console.log('📦 Loading section components...');
     const initializedSections = await initializeSections();
+
+    await initializeHighlights();
+    await initializeComponentVisibility();
+
+    initializationActions.setComponentsInitialized(true);
     initializationActions.setSectionsInitialized(true);
-    
-    // Step 3: Initialize highlights
     initializationActions.setHighlightsInitialized(true);
-    
-    // Step 4: Complete initialization
-    initializationActions.setLoading(false);
-    console.log('✅ App initialization complete');
     
     return {
       sections: initializedSections,
@@ -129,10 +118,11 @@ export const initializeApp = async (): Promise<{
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
-    console.error('❌ Failed to initialize app:', error);
     initializationActions.setError(errorMessage);
-    initializationActions.setLoading(false);
+
     throw error;
+  } finally {
+    initializationActions.setLoading(false);
   }
 };
 
@@ -143,22 +133,15 @@ export const initializeApp = async (): Promise<{
 export const initializeViewportData = async (): Promise<{
   sections: Sections;
 }> => {
-  console.warn('⚠️ initializeViewportData is deprecated. Use initializeApp() instead.');
-  
   try {
-    // Initialize sections
     const initializedSections = await initializeSections();
     
-    // Initialize highlights
     await initializeHighlights();
-    
-    console.log('Viewport data initialization complete');
     
     return {
       sections: initializedSections
     };
   } catch (error) {
-    console.error('Failed to initialize viewport data:', error);
     throw error;
   }
 };

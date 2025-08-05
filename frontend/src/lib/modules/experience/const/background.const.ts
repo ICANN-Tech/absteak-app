@@ -1,0 +1,1 @@
+export const BACKGROUND_IMAGE_URL: string = 'https://res.cloudinary.com/gordonramsay/image/upload/c_fill,w_1920,h_640,q_auto,f_auto/Gordon%20Ramsay%20Restaurants%20-%20NA/default-light-bg_dddsi4';

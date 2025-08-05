@@ -21,7 +21,7 @@
 	});
 
 	const { 
-		isVisible: isBottomNavVisible, 
+		isDisplay: isBottomNavVisible, 
 		finalVisible: bottomNavFinalVisible,
 		show: showBottomNav, 
 		hide: hideBottomNav,
@@ -30,7 +30,7 @@
 	} = bottomNavVisibility;
 
 	const { 
-		isVisible: isSidePanelVisible, 
+		isDisplay: isSidePanelVisible, 
 		finalVisible: sidePanelFinalVisible,
 		show: showSidePanel, 
 		hide: hideSidePanel,

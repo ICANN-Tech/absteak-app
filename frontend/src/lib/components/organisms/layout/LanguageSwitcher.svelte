@@ -4,8 +4,8 @@
 
 	const visibility = createAreaBasedStateVisibility(ComponentId.LanguageSwitch, {
 		targetArea: 'left',
-		proximityRadius: 150,
-		areaOffset: 100,
+		proximityRadius: 50,
+		areaOffset: 50,
 		hideDelay: 2000,
 		showComponent: true
 	});
@@ -13,7 +13,7 @@
 	// Lock visibility to true so it's not affected by monitor systems
 	lockVisibility(ComponentId.LanguageSwitch, true);
 
-	export const { isVisible, showComponent } = visibility;
+	export const { isDisplay, showComponent } = visibility;
 	export const updateVisibilityPosition = visibility.updatePosition;
 	export const destroyVisibilityManager = visibility.destroy;
 </script>
@@ -37,13 +37,12 @@
 	onDestroy(() => visibility.destroy);
 </script>
 
-{#if $showComponent && $isVisible}
+{#if $isDisplay}
 	<div
 		class={CONTAINER_PRESETS.positioned.leftCenter}
 		transition:fly={{ x: -100, duration: 600 }}
 	>
 		<div class={`${CONTAINER_PRESETS.panel.blur} flex flex-col flex-wrap gap-4`}>
-			<!-- Full interactive version when visible -->
 			<button
 				on:click={() => switchLanguage(Locale.Id)}
 				class={selectedClass(Locale.Id)}

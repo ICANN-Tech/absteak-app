@@ -10,14 +10,11 @@
 </script>
 
 <div class={`${CONTAINER_SECTION.chef.content.right} ${textContainerClasses}`}>
-	<!-- Content dalam 1 baris vertikal ke bawah -->
 	<div class={`${CONTAINER_SECTION.chef.flex}`}>
-		<!-- Chef Name -->
 		<h2 class={CONTAINER_SECTION.chef.text.title}>
 			{$t('chef.name') || 'CHEF ABSTEAK'}
 		</h2>
 
-		<!-- Chef Quote/Description dalam satu paragraf -->
 		<p class={CONTAINER_SECTION.chef.text.description}>
 			{$t('chef.quote') || $t('chef.description')}
 		</p>

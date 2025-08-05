@@ -556,7 +556,7 @@ export function createAreaBasedStateVisibility(
 ): {
   visible: Readable<boolean>;
   showComponent: Writable<boolean | null>;
-  isVisible: Readable<boolean>;
+  isDisplay: Readable<boolean>;
   finalVisible: Readable<boolean>;
   show: () => void;
   hide: () => void;
@@ -633,7 +633,7 @@ export function createAreaBasedStateVisibility(
   return {
     visible: manager.visible,
     showComponent: manager.showComponent,
-    isVisible,
+    isDisplay: isVisible,
     finalVisible,
     show: manager.show,
     hide: manager.hide,

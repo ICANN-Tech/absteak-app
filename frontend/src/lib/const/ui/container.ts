@@ -212,7 +212,7 @@ export const CONTAINER_SECTION = {
     }
   },
   menu: {
-    base: 'w-full h-screen relative overflow-hidden',
+    base: 'w-full h-screen relative',
     overlay: {
       first: 'absolute inset-0 bg-gradient-to-r from-black/85 via-black/75 to-black/65',
       second: 'absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70'

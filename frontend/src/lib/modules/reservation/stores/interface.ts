@@ -3,7 +3,8 @@ import { writable, derived } from 'svelte/store';
 export enum StepLabel {
   Personal = 'Personal',
   Payment = 'Payment',
-  Confirmation = 'Confirmation'
+  Summary = 'Summary',
+  Receipt = 'Receipt'
 }
 
 export interface Step {
@@ -39,7 +40,14 @@ const initialSteps: Step[] = [
   },
   {
     id: 2,
-    label: StepLabel.Confirmation,
+    label: StepLabel.Summary,
+    status: 'pending',
+    isValid: false,
+    canNavigate: false
+  },
+  {
+    id: 3,
+    label: StepLabel.Receipt,
     status: 'pending',
     isValid: false,
     canNavigate: false

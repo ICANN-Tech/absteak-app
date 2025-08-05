@@ -9,15 +9,13 @@
 <script lang="ts">
 	import { ThumbnailMedia, VideoOverlay } from '$lib/components/molecules';
 	
-	export let thumbnailUrl: string;
-	export let thumbnailAlt: string;
-	export let mediaClass: string;
-	export let videoUrl: string =
+	const thumbnailUrl: string = 'assets/thumbnail.webp';
+	const thumbnailAlt: string = 'video highlight';
+	const videoUrl: string =
 		'assets/videos/highlight.webm';
-
 	let showOverlay: boolean = false;
     
-	$: containerClass = `${CONTAINER_SECTION.videoHighlight.content.left} ${mediaClass}`;
+	$: containerClass = `${CONTAINER_SECTION.videoHighlight.content.left}`;
 </script>
 
 <div class={containerClass}>

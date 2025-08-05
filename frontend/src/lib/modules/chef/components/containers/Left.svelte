@@ -3,14 +3,12 @@
 	import { CONTAINER_SECTION } from '$lib/const';
 
 	const imageUrl: string =
-		'https://absteakjkt.com/wp-content/uploads/2024/01/ACR07440-683x1024.jpg';
+		'assets/images/img_chef.webp';
 </script>
 
 <script lang="ts">
-	export let imageClass: string;
-
 	$: imageContainerClasses = `${CONTAINER_SECTION.chef.content.left} group relative overflow-hidden`;
-	$: imageClasses = `${CONTAINER_SECTION.chef.image.base} ${imageClass}`;
+	$: imageClasses = `${CONTAINER_SECTION.chef.image.base}`;
 </script>
 
 <div class={imageContainerClasses}>

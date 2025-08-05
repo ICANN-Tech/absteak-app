@@ -1,17 +1,29 @@
+<script context="module" lang="ts">
+	import type { Branch } from '$lib/components/molecules/card/Branch.svelte';
+	import type { Outlet } from '$lib/components/organisms/reservation/form/OutletSelector.svelte';
+</script>
+
 <script lang="ts">
-	import { BranchSelectorForm, OutletSelectorForm, Button, Container, Input, Dropdown, Textarea } from "$lib/components";
-	import { fly } from "svelte/transition";
-	import { OUTLET_DUMMY } from "../../dummy/outlet.dummy";
-	import { BRANCH_DUMMY } from "../../dummy/branch.dummy";
-	import { 
-		personalFormStore, 
-		selectedBranch, 
+	import {
+		BranchSelectorForm,
+		OutletSelectorForm,
+		Button,
+		Container,
+		Input,
+		Dropdown,
+		Textarea
+	} from '$lib/components';
+	import { fly } from 'svelte/transition';
+	import { OUTLET_DUMMY } from '../../dummy/outlet.dummy';
+	import { BRANCH_DUMMY } from '../../dummy/branch.dummy';
+	import {
+		personalFormStore,
+		selectedBranch,
 		selectedOutlet,
 		personalFormData
-	} from "../../stores/form/personal";
-	import { interfaceService } from "../../service/interface.service";
-	import type { Branch } from "$lib/components/organisms/reservation/form/BranchSelector.svelte";
-	import type { Outlet } from "$lib/components/organisms/reservation/form/OutletSelector.svelte";
+	} from '../../stores/form/personal';
+	import { interfaceService } from '../../service/interface.service';
+	import BranchOutletSelector from './BranchOutletSelector.svelte';
 
 	// Form input values - reactive binding pattern like Newsletter.svelte
 	let customerName = $personalFormData.customerName;
@@ -78,64 +90,46 @@
 </script>
 
 <div
-	class="mx-auto grid h-full max-w-7xl grid-cols-1 lg:grid-cols-2 items-start gap-8 xl:grid-cols-5"
+	class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 xl:grid-cols-5"
 	in:fly={{ x: 300, duration: 300 }}
 >
 	<!-- Branch/Outlet Selection -->
-	<div class="order-2 lg:order-1 xl:col-span-2">
-		<div 
-			class="h-full max-h-[65vh] overflow-y-auto pr-3"
-			role="region"
-			aria-label="Branch and outlet selection"
-		>
-			{#if $selectedBranch !== null}
-				<!-- Outlet Selection Form -->
-				<OutletSelectorForm
-					outlets={OUTLET_DUMMY}
-					selectedBranch={$selectedBranch}
-					selectedOutlet={$selectedOutlet}
-					on:outletSelected={handleOutletSelected}
-					on:outletDeselected={handleOutletDeselected}
-				/>
-			{:else}
-				<!-- Branch Selection Form -->
-				<BranchSelectorForm
-				showBackButton={false}
-					branches={BRANCH_DUMMY}
-					selectedBranch={$selectedBranch}
-					on:branchSelected={handleBranchSelected}
-					on:branchDeselected={handleBranchDeselected}
-				/>
-			{/if}
-		</div>
+	<div class="order-2 min-w-0 lg:order-1 xl:col-span-2">
+		<BranchOutletSelector />
 	</div>
 
 	<!-- Personal Information Form -->
-	<div class="order-1 lg:order-2 xl:col-span-3">
-		<Container variant="elegant" size="full" padding="xl" scrollable={true} class="col-span-2 w-full h-full max-h-[65vh]">
-			<div 
-				class="space-y-6 pr-3 pb-4"
+	<div class="order-1 min-w-0 lg:order-2 xl:col-span-3">
+		<Container
+			variant="elegant"
+			size="full"
+			padding="xl"
+			scrollable={true}
+			class="col-span-2 h-full max-h-[65vh] w-full"
+		>
+			<div
+				class="space-y-6 pb-4 pr-3"
 				on:wheel|stopPropagation
 				on:touchmove|stopPropagation
 				role="region"
 				aria-label="Personal information form"
 			>
 				<h2 class="mb-6 text-xl font-semibold text-white">Personal Information</h2>
-				
+
 				<div class="space-y-6">
 					<!-- Customer Name -->
 					<Input
 						label="Full Name"
 						type="text"
 						bind:value={customerName}
-											placeholder="Enter your full name"
+						placeholder="Enter your full name"
 						required
 						variant="elegant"
 						icon="fas fa-user"
 					/>
 
 					<!-- Email and Phone in a grid -->
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<!-- Customer Email -->
 						<Input
 							label="Email Address"
@@ -192,6 +186,6 @@
 					</Button>
 				</div>
 			</div>
-  		</Container>
-  	</div>
-  </div>
+		</Container>
+	</div>
+</div>

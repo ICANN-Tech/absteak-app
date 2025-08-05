@@ -12,6 +12,7 @@
 	"/hero-examples": [],
 	"/icons-demo": [],
 	"/modal-test": [],
+	"/receipt-demo": [],
 	"/sverdle": [
 		"src/routes/sverdle/+page.server.ts"
 	],

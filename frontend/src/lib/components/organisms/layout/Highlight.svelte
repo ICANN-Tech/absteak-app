@@ -2,6 +2,7 @@
 	import { CONTAINER_PRESETS } from '$lib/const';
 	import { createAreaBasedStateVisibility } from '$lib/stores/viewport/visibility';
 	import { ComponentId } from '$lib/enums';
+	import { Indicator } from '$lib/components/atoms';
 
 	const visibility = createAreaBasedStateVisibility(ComponentId.Highlight, {
 		targetArea: 'right',
@@ -12,7 +13,7 @@
 		showComponent: false
 	});
 
-	export const { isVisible, showComponent } = visibility;
+	export const { isDisplay: isVisible, showComponent } = visibility;
 	export const updateVisibilityPosition = visibility.updatePosition;
 	export const destroyVisibilityManager = visibility.destroy;
 </script>
@@ -22,26 +23,21 @@
 	import { fly } from 'svelte/transition';
 	import { 
 		currentHighlightIndex, 
-		highlightsData, 
-		initializeHighlights
+		highlightsData,
 	} from '$lib/stores/viewport/highlight';
-	import { Indicator } from '$lib/components/atoms';
 	import { createHighlightLockMonitor, type HighlightLockMonitor } from '$lib/utils/monitor/component/highlight';
 
-	// Create highlight lock monitor
 	let highlightMonitor: HighlightLockMonitor;
 
 	onMount(async () => {
-		// await initializeHighlights();
-		// Initialize the highlight lock monitor
 		highlightMonitor = createHighlightLockMonitor();
 	});
 	
 	onDestroy(() => {
-		// Cleanup the monitor
 		if (highlightMonitor) {
 			highlightMonitor.destroy();
 		}
+
 		destroyVisibilityManager();
 	});
 </script>
@@ -50,7 +46,7 @@
 	<div
 		role="navigation"
 		aria-label="Section highlights navigation"
-		class={`${CONTAINER_PRESETS.panel.blur} fixed right-4 top-1/2 z-30 flex -translate-y-1/2 flex-col space-y-2 rounded-l-2xl border-white/20 p-3 py-2 shadow-lg`}
+		class={`${CONTAINER_PRESETS.panel.blur} fixed right-4 top-1/2 z-30 flex -translate-y-1/2 flex-col space-y-2 rounded-l-2xl border-white/20 p-3 py-2 shadow-lg py-4`}
 		transition:fly={{ x: 100, duration: 300 }}
 		on:mouseenter={() => highlightMonitor?.handleMouseEnter()}
 		on:mouseleave={() => highlightMonitor?.handleMouseLeave()}
