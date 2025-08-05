@@ -1,7 +1,0 @@
-export { default as FooterSection } from "$lib/modules/footer/Index.svelte"
-export { default as HeroSection } from "$lib/modules/hero/Index.svelte"
-export { default as ExperienceSection } from "$lib/modules/experience/Index.svelte"
-export { default as ChefSection } from "$lib/modules/chef/Index.svelte"
-export { default as MenuSection } from "$lib/modules/menu/Index.svelte"
-export { default as ReservationSection } from "$lib/modules/reservation/Index.svelte"
-export { default as VideoHighlightSection } from "$lib/modules/video-highlight/Index.svelte"

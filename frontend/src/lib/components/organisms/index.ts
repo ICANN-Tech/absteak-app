@@ -5,7 +5,6 @@ export * from './modal'
 export * from "./layout"
 export * from "./reservation"
 export * from "./chat"
-export * from "./section"
 export * from "./location"
 
 // Export types
