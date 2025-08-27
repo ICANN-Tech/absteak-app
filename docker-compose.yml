@@ -1,4 +1,7 @@
-version: "3.9"
+networks:
+  absteak:
+    driver: bridge
+    name: absteak_network
 
 services:
   app:
@@ -31,6 +34,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - absteak
     restart: unless-stopped
 
   db:
@@ -48,8 +53,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - absteak
     restart: unless-stopped
 
+  flowise:
+    image: flowiseai/flowise:3.0.5
+    container_name: absteak_flowise
+    environment:
+      PORT: 3000
+      FLOWISE_USERNAME: admin@absteak.com
+      FLOWISE_PASSWORD: Admin|absteak1
+
+      # File and storage configuration
+      FLOWISE_FILE_SIZE_LIMIT: 100mb
+      FLOWISE_FILE_TYPES: pdf,docx,xlsx,csv,zip,tar.gz
+
+      FLOWISE_CHROMA_URL: http://chroma:8000
+      FLOWISE_CHROMA_COLLECTION: agent_support_chatbot_knowledge
+
+      # Weaviate configuration
+      FLOWISE_WEAVIATE_URL: http://weaviate:8080
+      FLOWISE_WEAVIATE_API_KEY: ""
+      FLOWISE_WEAVIATE_INDEX: FloWiseKnowledge
+
+      FLOWISE_DEFAULT_EMBEDDER: huggingface
+    ports:
+      - "3000:3000"
+    volumes:
+      - flowise_data:/root/.flowise
+    mem_limit: 1g
+    memswap_limit: 1g
+    networks:
+      - absteak
+    restart: unless-stopped
+    depends_on:
+      - chroma
+      - weaviate
+  
   redis:
     image: redis:7-alpine
     ports:
@@ -61,10 +102,132 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - absteak
+    restart: unless-stopped
+
+  redis_gui:
+    image: redislabs/redisinsight:2.70
+    container_name: redis_gui
+    ports:
+      - "8001:5540"
+    environment:
+      - RIPORT=5540
+      - RIHOST=0.0.0.0
+    volumes:
+      - redis_gui_data:/data
+    networks:
+      - absteak
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: chroma
+    ports:
+      - "8002:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - ALLOW_RESET=true
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - absteak
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_password_2024
+      MONGO_INITDB_DATABASE: absteak_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - absteak
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  weaviate:
+    image: semitechnologies/weaviate:1.30.0
+    container_name: weaviate
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: 'text2vec-cohere,text2vec-huggingface,text2vec-palm,text2vec-openai,generative-openai,generative-cohere,generative-palm,ref2vec-centroid,reranker-cohere,qna-openai'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - absteak
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  beanstalkd:
+    image: maateen/docker-beanstalkd:1.8-alpine-3.12
+    container_name: beanstalkd
+    ports:
+      - "11300:11300"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - absteak
+    restart: unless-stopped
+    command:
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - absteak
     restart: unless-stopped
 
 volumes:
   db_data:
   redis_data:
+  redis_gui_data:
+  chroma_data:
+  flowise_data:
+  grafana_data:
+  mongodb_data:
+  weaviate_data:
+  prometheus_data:
   vendor_data:
   node_modules_data:

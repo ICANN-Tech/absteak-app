@@ -1,0 +1,74 @@
+# Prometheus configuration file
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Monitor the Laravel application
+  - job_name: 'absteak-app'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Monitor PostgreSQL database
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['db:5432']
+    scrape_interval: 30s
+
+  # Monitor Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # Monitor Flowise
+  - job_name: 'flowise'
+    static_configs:
+      - targets: ['flowise:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Monitor Grafana itself
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Monitor Beanstalkd
+  - job_name: 'beanstalkd'
+    static_configs:
+      - targets: ['beanstalkd:11300']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics (if you add it later)
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #   scrape_interval: 30s
+
+  # cAdvisor for container metrics (if you add it later)
+  # - job_name: 'cadvisor'
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']
+  #   scrape_interval: 30s
