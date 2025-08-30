@@ -10,9 +10,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+      - "5173:5173"
+      - "5174:5174"
+      - "5175:5175"
     volumes:
+      - .:/app
       - vendor_data:/app/vendor
       - node_modules_data:/app/node_modules
+      - ./storage:/app/storage
+      - ./bootstrap/cache:/app/bootstrap/cache
     environment:
       APP_NAME: "ABSteak App"
       APP_ENV: local
@@ -29,6 +35,15 @@ services:
       QUEUE_CONNECTION: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      FLOWISE_BASE_URL: "http://flowise:3000"
+      FLOWISE_TIMEOUT: 30
+
+      # Mongo connection
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_DATABASE: absteak_db
+      MONGO_USERNAME: absteak_app
+      MONGO_PASSWORD: absteak_app_password_2024
     depends_on:
       db:
         condition: service_healthy
@@ -62,22 +77,17 @@ services:
     container_name: absteak_flowise
     environment:
       PORT: 3000
-      FLOWISE_USERNAME: admin@absteak.com
-      FLOWISE_PASSWORD: Admin|absteak1
+      FLOWISE_USERNAME: flowise
+      FLOWISE_PASSWORD: FfZt9zjqJNq22Ccbdn
 
       # File and storage configuration
       FLOWISE_FILE_SIZE_LIMIT: 100mb
       FLOWISE_FILE_TYPES: pdf,docx,xlsx,csv,zip,tar.gz
 
-      FLOWISE_CHROMA_URL: http://chroma:8000
-      FLOWISE_CHROMA_COLLECTION: agent_support_chatbot_knowledge
-
       # Weaviate configuration
       FLOWISE_WEAVIATE_URL: http://weaviate:8080
-      FLOWISE_WEAVIATE_API_KEY: ""
-      FLOWISE_WEAVIATE_INDEX: FloWiseKnowledge
-
-      FLOWISE_DEFAULT_EMBEDDER: huggingface
+      FLOWISE_WEAVIATE_API_KEY: "jqyUWkzrrfl0040t2Hyo3nVAa4xLj6viTDSeEd6wgKPt6cwLk7n99AZhjDv9CkKs"
+      FLOWISE_WEAVIATE_INDEX: knowledge
     ports:
       - "3000:3000"
     volumes:
@@ -88,7 +98,6 @@ services:
       - absteak
     restart: unless-stopped
     depends_on:
-      - chroma
       - weaviate
   
   redis:
@@ -122,40 +131,49 @@ services:
     depends_on:
       - redis
 
-  chroma:
-    image: chromadb/chroma:latest
-    container_name: chroma
-    ports:
-      - "8002:8000"
-    environment:
-      - CHROMA_SERVER_HOST=0.0.0.0
-      - CHROMA_SERVER_HTTP_PORT=8000
-      - ALLOW_RESET=true
-    volumes:
-      - chroma_data:/chroma/chroma
-    networks:
-      - absteak
-    restart: unless-stopped
-
   mongodb:
     image: mongo:7.0
-    container_name: mongodb
+    container_name: absteak_mongodb
     ports:
       - "27017:27017"
     environment:
+      # Root user credentials
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin_password_2024
       MONGO_INITDB_DATABASE: absteak_db
     volumes:
       - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - absteak
     restart: unless-stopped
+    command: [
+      "mongod",
+      "--auth",
+      "--bind_ip_all"
+    ]
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
+      test: [
+        "CMD",
+        "mongosh",
+        "--host", "localhost:27017",
+        "--username", "admin",
+        "--password", "admin_password_2024",
+        "--authenticationDatabase", "admin",
+        "--eval", "db.adminCommand('ping').ok"
+      ]
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 40s
+    mem_limit: 1g
+    memswap_limit: 1g
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   weaviate:
     image: semitechnologies/weaviate:1.30.0
@@ -164,8 +182,11 @@ services:
       - "8080:8080"
       - "50051:50051"
     environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+      AUTHENTICATION_APIKEY_ENABLED: 'true'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'jqyUWkzrrfl0040t2Hyo3nVAa4xLj6viTDSeEd6wgKPt6cwLk7n99AZhjDv9CkKs'
+      AUTHENTICATION_APIKEY_USERS: 'admin'
       QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'none'
       ENABLE_MODULES: 'text2vec-cohere,text2vec-huggingface,text2vec-palm,text2vec-openai,generative-openai,generative-cohere,generative-palm,ref2vec-centroid,reranker-cohere,qna-openai'
@@ -219,6 +240,98 @@ services:
       - absteak
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:0.11.7
+    container_name: absteak_ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    volumes:
+      - ollama_data:/root/.ollama
+    mem_limit: 6g
+    memswap_limit: 12g
+    cpus: 4
+    networks:
+      - absteak
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  vault:
+    image: hashicorp/vault:1.20
+    container_name: vault
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    command: server -dev
+    volumes:
+      - ./vault-data:/vault/file
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: absteak_n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin_password_2024
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      - DB_TYPE=sqlite
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - absteak
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:25
+    container_name: absteak_cloudbeaver
+    ports:
+      - "8978:8978"
+    environment:
+      - CB_SERVER_NAME=ABSteak CloudBeaver
+      - CB_ADMIN_NAME=cbadmin
+      - CB_ADMIN_PASSWORD=Admin|cb1
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+    networks:
+      - absteak
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8978/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 volumes:
   db_data:
   redis_data:
@@ -227,7 +340,11 @@ volumes:
   flowise_data:
   grafana_data:
   mongodb_data:
+  mongodb_config:
   weaviate_data:
   prometheus_data:
   vendor_data:
   node_modules_data:
+  ollama_data:
+  n8n_data:
+  cloudbeaver_data:

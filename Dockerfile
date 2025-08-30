@@ -15,10 +15,19 @@ RUN apk add --no-cache \
     netcat-openbsd \
     postgresql-client \
     postgresql-dev \
+    autoconf \
+    gcc \
+    g++ \
+    make \
+    openssl-dev \
     && rm -rf /var/cache/apk/*
 
 # Install PHP extensions
-RUN install-php-extensions pdo_pgsql redis
+RUN install-php-extensions pdo_pgsql redis intl zip
+
+# Install MongoDB extension with specific version for compatibility
+RUN pecl install mongodb-1.21.0 \
+    && docker-php-ext-enable mongodb
 
 # Install pnpm globally
 RUN npm install -g pnpm

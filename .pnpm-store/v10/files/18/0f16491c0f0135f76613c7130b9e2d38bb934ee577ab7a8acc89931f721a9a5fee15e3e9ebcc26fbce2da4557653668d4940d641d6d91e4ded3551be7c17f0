@@ -1,0 +1,68 @@
+<script>import { inertia } from "../index";
+export let href = "";
+export let as = "a";
+export let data = {};
+export let method = "get";
+export let replace = false;
+export let preserveScroll = false;
+export let preserveState = null;
+export let only = [];
+export let except = [];
+export let headers = {};
+export let queryStringArrayFormat = "brackets";
+export let async = false;
+export let prefetch = false;
+export let cacheFor = 0;
+export let cacheTags = [];
+$: _method = typeof href === "object" ? href.method : method;
+$: _href = typeof href === "object" ? href.url : href;
+$: asProp = _method !== "get" ? "button" : as.toLowerCase();
+$: elProps = {
+  a: { href: _href },
+  button: { type: "button" }
+}[asProp] || {};
+</script>
+
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<svelte:element
+  this={asProp}
+  use:inertia={{
+    ...(asProp !== 'a' ? { href: _href } : {}),
+    data,
+    method: _method,
+    replace,
+    preserveScroll,
+    preserveState: preserveState ?? _method !== 'get',
+    only,
+    except,
+    headers,
+    queryStringArrayFormat,
+    async,
+    prefetch,
+    cacheFor,
+    cacheTags,
+  }}
+  {...$$restProps}
+  {...elProps}
+  on:focus
+  on:blur
+  on:click
+  on:dblclick
+  on:mousedown
+  on:mousemove
+  on:mouseout
+  on:mouseover
+  on:mouseup
+  on:cancel-token
+  on:before
+  on:start
+  on:progress
+  on:finish
+  on:cancel
+  on:success
+  on:error
+  on:prefetching
+  on:prefetched
+>
+  <slot />
+</svelte:element>

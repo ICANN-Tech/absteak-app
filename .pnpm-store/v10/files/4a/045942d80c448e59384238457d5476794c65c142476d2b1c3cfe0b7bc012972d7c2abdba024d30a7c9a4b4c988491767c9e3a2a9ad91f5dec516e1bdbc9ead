@@ -1,0 +1,36 @@
+import type { ErrorValue, FormDataErrors, FormDataKeys, FormDataType, FormDataValues, Method, Progress, UrlMethodPair, VisitOptions } from '@inertiajs/core';
+import { type Writable } from 'svelte/store';
+type InertiaFormStore<TForm extends object> = Writable<InertiaForm<TForm>> & InertiaForm<TForm>;
+type FormOptions = Omit<VisitOptions, 'data'>;
+export interface InertiaFormProps<TForm extends object> {
+    isDirty: boolean;
+    errors: FormDataErrors<TForm>;
+    hasErrors: boolean;
+    progress: Progress | null;
+    wasSuccessful: boolean;
+    recentlySuccessful: boolean;
+    processing: boolean;
+    setStore(data: TForm): void;
+    setStore<T extends FormDataKeys<TForm>>(key: T, value: FormDataValues<TForm, T>): void;
+    data(): TForm;
+    transform(callback: (data: TForm) => object): this;
+    defaults(): this;
+    defaults(fields: Partial<TForm>): this;
+    defaults<T extends FormDataKeys<TForm>>(field: T, value: FormDataValues<TForm, T>): this;
+    reset<K extends FormDataKeys<TForm>>(...fields: K[]): this;
+    clearErrors<K extends FormDataKeys<TForm>>(...fields: K[]): this;
+    resetAndClearErrors<K extends FormDataKeys<TForm>>(...fields: K[]): this;
+    setError<K extends FormDataKeys<TForm>>(field: K, value: ErrorValue): this;
+    setError(errors: FormDataErrors<TForm>): this;
+    submit: (...args: [Method, string, FormOptions?] | [UrlMethodPair, FormOptions?]) => void;
+    get(url: string, options?: FormOptions): void;
+    post(url: string, options?: FormOptions): void;
+    put(url: string, options?: FormOptions): void;
+    patch(url: string, options?: FormOptions): void;
+    delete(url: string, options?: FormOptions): void;
+    cancel(): void;
+}
+export type InertiaForm<TForm extends object> = InertiaFormProps<TForm> & TForm;
+export default function useForm<TForm extends FormDataType<TForm>>(data: TForm | (() => TForm)): InertiaFormStore<TForm>;
+export default function useForm<TForm extends FormDataType<TForm>>(rememberKey: string, data: TForm | (() => TForm)): InertiaFormStore<TForm>;
+export {};

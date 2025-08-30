@@ -1,0 +1,56 @@
+import { SvelteComponent } from "svelte";
+import type { CacheForOption, FormDataConvertible, LinkPrefetchOption, Method, PreserveStateOption, UrlMethodPair } from '@inertiajs/core';
+declare const __propDef: {
+    props: {
+        [x: string]: any;
+        href?: (string | UrlMethodPair) | undefined;
+        as?: keyof HTMLElementTagNameMap | undefined;
+        data?: Record<string, FormDataConvertible> | undefined;
+        method?: Method | undefined;
+        replace?: boolean | undefined;
+        preserveScroll?: PreserveStateOption | undefined;
+        preserveState?: (PreserveStateOption | null) | undefined;
+        only?: string[] | undefined;
+        except?: string[] | undefined;
+        headers?: Record<string, string> | undefined;
+        queryStringArrayFormat?: "brackets" | "indices" | undefined;
+        async?: boolean | undefined;
+        prefetch?: (boolean | LinkPrefetchOption | LinkPrefetchOption[]) | undefined;
+        cacheFor?: (CacheForOption | CacheForOption[]) | undefined;
+        cacheTags?: string | string[] | undefined;
+    };
+    events: {
+        focus: FocusEvent;
+        blur: FocusEvent;
+        click: MouseEvent;
+        dblclick: MouseEvent;
+        mousedown: MouseEvent;
+        mousemove: MouseEvent;
+        mouseout: MouseEvent;
+        mouseover: MouseEvent;
+        mouseup: MouseEvent;
+        'cancel-token': Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        before: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        start: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        progress: ProgressEvent<EventTarget>;
+        finish: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        cancel: Event;
+        success: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        error: ErrorEvent;
+        prefetching: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+        prefetched: Event | ProgressEvent<EventTarget> | SubmitEvent | ErrorEvent | UIEvent | AnimationEvent | MouseEvent | InputEvent | FocusEvent | CompositionEvent | ClipboardEvent | DragEvent | FormDataEvent | PointerEvent | KeyboardEvent | SecurityPolicyViolationEvent | TouchEvent | TransitionEvent | WheelEvent;
+    } & {
+        [evt: string]: CustomEvent<any>;
+    };
+    slots: {
+        default: {};
+    };
+    exports?: undefined;
+    bindings?: undefined;
+};
+export type LinkProps = typeof __propDef.props;
+export type LinkEvents = typeof __propDef.events;
+export type LinkSlots = typeof __propDef.slots;
+export default class Link extends SvelteComponent<LinkProps, LinkEvents, LinkSlots> {
+}
+export {};
