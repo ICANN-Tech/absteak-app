@@ -1,0 +1,563 @@
+import { get } from 'svelte/store';
+import { SectionEnum } from '../../../Enums/Guest/Section';
+import {
+  sectionsStore,
+  navigationStore,
+  sectionLoadingStore,
+  setActiveSection,
+  getSectionConfig,
+  getNavigationState,
+  getAllSectionIds,
+  getSectionIndex,
+  getSectionByIndex,
+  hasNextSection,
+  hasPreviousSection,
+  currentSectionIndex,
+  visibleSections,
+  setNavigationLoading,
+  updateSection
+} from '../../../Stores/Guest/Viewport/Section';
+import type { SectionConfig, SectionOptions } from '../../../Stores/Guest/Viewport/Section';
+import {
+  syncWithSectionChange,
+  jumpToHighlightBySectionId,
+  nextHighlight,
+  previousHighlight
+} from '../../../Stores/Guest/Viewport/Highlight';
+import type { SvelteComponent } from 'svelte';
+
+// Type for Svelte components that can be dynamically imported
+type ComponentType = any;
+
+/**
+ * Section Navigation Utilities
+ * 
+ * Provides comprehensive section navigation functionality including:
+ * - Direct section jumping with SectionEnum
+ * - Next/previous navigation
+ * - Component loading integration
+ * - Smooth scrolling and transitions
+ * - State synchronization with viewport stores
+ * 
+ * @module SectionNavigation
+ * @version 1.0.0
+ */
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+/**
+ * Navigation direction for next/previous operations
+ */
+export type NavigationDirection = 'next' | 'previous';
+
+/**
+ * Component loading configuration
+ */
+export interface ComponentLoadConfig {
+  /** Whether to preload adjacent components */
+  preloadAdjacent?: boolean;
+  /** Timeout for component loading in milliseconds */
+  loadTimeout?: number;
+  /** Whether to show loading indicator */
+  showLoadingIndicator?: boolean;
+}
+
+/**
+ * Scroll behavior configuration for section navigation
+ */
+export interface ScrollConfig {
+  /** Scroll behavior type */
+  behavior?: ScrollBehavior;
+  /** Whether to offset for fixed headers */
+  offsetForHeader?: boolean;
+  /** Custom scroll offset in pixels */
+  customOffset?: number;
+  /** Duration for smooth scroll animation */
+  duration?: number;
+}
+
+/**
+ * Complete navigation options
+ */
+export interface NavigationOptions extends SectionOptions {
+  /** Component loading configuration */
+  componentConfig?: ComponentLoadConfig;
+  /** Scroll behavior configuration */
+  scrollConfig?: ScrollConfig;
+  /** Callback function after navigation completes */
+  onComplete?: (section: SectionEnum) => void;
+  /** Callback function if navigation fails */
+  onError?: (error: Error) => void;
+}
+
+// ============================================================================
+// COMPONENT LOADING UTILITIES
+// ============================================================================
+
+/**
+ * Lazy load components to avoid circular imports
+ * @param componentName - Name of the component to load
+ * @returns Promise that resolves to the component or null if failed
+ */
+const loadComponent = async (componentName: string): Promise<ComponentType | null> => {
+  try {
+    switch (componentName) {
+      case 'HeroSection':
+        return (await import('../../../Modules/Guest/Hero/Index.svelte')).default;
+      case 'VideoHighlightSection':
+        return (await import('../../../Modules/Guest/VideoHighlight/Index.svelte')).default;
+      case 'ExperienceSection':
+        return (await import('../../../Modules/Guest/OurExperience/Index.svelte')).default;
+      case 'ChefSection':
+        return (await import('../../../Modules/Guest/OurChef/Index.svelte')).default;
+      case 'MenuSection':
+        return (await import('../../../Modules/Guest/Menu/Index.svelte')).default;
+      case 'ReservationSection':
+        return (await import('../../../Modules/Guest/Reservation/Index.svelte')).default;
+      case 'FooterSection':
+        return (await import('../../../Modules/Guest/Footer/Index.svelte')).default;
+      default:
+        return null;
+    }
+  } catch (error) {
+    console.error(`Failed to load component ${componentName}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Maps section enum to component name
+ * @param sectionId - Section identifier
+ * @returns Component name or null
+ */
+function getComponentNameForSection(sectionId: SectionEnum): string | null {
+  const componentMap: Record<SectionEnum, string> = {
+    [SectionEnum.Hero]: 'HeroSection',
+    [SectionEnum.VideoHighlight]: 'VideoHighlightSection',
+    [SectionEnum.Experience]: 'ExperienceSection',
+    [SectionEnum.Chef]: 'ChefSection',
+    [SectionEnum.Menu]: 'MenuSection',
+    [SectionEnum.Booking]: 'ReservationSection',
+    [SectionEnum.Footer]: 'FooterSection'
+  };
+  
+  return componentMap[sectionId] || null;
+}
+
+/**
+ * Loads a component for a specific section
+ * @param sectionId - Section to load component for
+ * @param config - Loading configuration
+ * @returns Promise that resolves when component is loaded
+ */
+export async function loadSectionComponent(
+  sectionId: SectionEnum,
+  config: ComponentLoadConfig = {}
+): Promise<ComponentType | null> {
+  const { loadTimeout = 5000, showLoadingIndicator = true } = config;
+  
+  // Check if component is already loaded
+  const sectionConfig = getSectionConfig(sectionId);
+  if (sectionConfig?.component) {
+    return sectionConfig.component;
+  }
+  
+  // Set loading state
+  if (showLoadingIndicator) {
+    sectionLoadingStore.update(loading => {
+      loading.set(sectionId, true);
+      return loading;
+    });
+  }
+  
+  try {
+    const componentName = getComponentNameForSection(sectionId);
+    if (!componentName) {
+      throw new Error(`No component mapping found for section ${sectionId}`);
+    }
+    
+    // Load component with timeout
+    const component = await Promise.race([
+      loadComponent(componentName),
+      new Promise<null>((_, reject) => 
+        setTimeout(() => reject(new Error('Component load timeout')), loadTimeout)
+      )
+    ]);
+    
+    if (component) {
+      // Update section with loaded component
+      updateSection(sectionId, { component });
+    }
+    
+    return component;
+  } catch (error) {
+    console.error(`Failed to load component for section ${sectionId}:`, error);
+    return null;
+  } finally {
+    // Clear loading state
+    if (showLoadingIndicator) {
+      sectionLoadingStore.update(loading => {
+        loading.delete(sectionId);
+        return loading;
+      });
+    }
+  }
+}
+
+/**
+ * Preloads components for adjacent sections
+ * @param currentSectionId - Current section
+ */
+export async function preloadAdjacentComponents(currentSectionId: SectionEnum): Promise<void> {
+  const currentIndex = getSectionIndex(currentSectionId);
+  const sections = get(visibleSections);
+  
+  const preloadPromises: Promise<ComponentType | null>[] = [];
+  
+  // Preload previous section
+  if (currentIndex > 0) {
+    const prevSection = sections[currentIndex - 1];
+    if (prevSection && !prevSection.component) {
+      preloadPromises.push(loadSectionComponent(prevSection.id, { showLoadingIndicator: false }));
+    }
+  }
+  
+  // Preload next section
+  if (currentIndex < sections.length - 1) {
+    const nextSection = sections[currentIndex + 1];
+    if (nextSection && !nextSection.component) {
+      preloadPromises.push(loadSectionComponent(nextSection.id, { showLoadingIndicator: false }));
+    }
+  }
+  
+  // Wait for all preloads to complete (but don't throw on errors)
+  await Promise.allSettled(preloadPromises);
+}
+
+// ============================================================================
+// SCROLLING UTILITIES
+// ============================================================================
+
+/**
+ * Gets the DOM element for a section
+ * @param sectionId - Section identifier
+ * @returns DOM element or null if not found
+ */
+function getSectionElement(sectionId: SectionEnum): Element | null {
+  // Try multiple possible selectors
+  const selectors = [
+    `#section-${sectionId.toLowerCase()}`,
+    `[data-section="${sectionId}"]`,
+    `[data-section-id="${sectionId}"]`,
+    `.section-${sectionId.toLowerCase()}`
+  ];
+  
+  for (const selector of selectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+      return element;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Scrolls to a specific section with smooth animation
+ * @param sectionId - Section to scroll to
+ * @param config - Scroll configuration
+ * @returns Promise that resolves when scroll completes
+ */
+export async function scrollToSection(
+  sectionId: SectionEnum,
+  config: ScrollConfig = {}
+): Promise<void> {
+  const {
+    behavior = 'smooth',
+    offsetForHeader = true,
+    customOffset = 0,
+    duration = 800
+  } = config;
+  
+  const element = getSectionElement(sectionId);
+  if (!element) {
+    throw new Error(`Section element not found for ${sectionId}`);
+  }
+  
+  const rect = element.getBoundingClientRect();
+  let targetY = window.pageYOffset + rect.top;
+  
+  // Apply header offset
+  if (offsetForHeader) {
+    const header = document.querySelector('header, .header, .navbar');
+    if (header) {
+      targetY -= header.getBoundingClientRect().height;
+    }
+  }
+  
+  // Apply custom offset
+  targetY += customOffset;
+  
+  // Perform scroll
+  if (behavior === 'smooth' && 'scrollBehavior' in document.documentElement.style) {
+    window.scrollTo({
+      top: targetY,
+      behavior: 'smooth'
+    });
+    
+    // Wait for scroll to complete
+    return new Promise(resolve => {
+      const startTime = Date.now();
+      const checkScroll = () => {
+        if (Date.now() - startTime >= duration) {
+          resolve();
+        } else {
+          requestAnimationFrame(checkScroll);
+        }
+      };
+      checkScroll();
+    });
+  } else {
+    window.scrollTo(0, targetY);
+    return Promise.resolve();
+  }
+}
+
+// ============================================================================
+// CORE NAVIGATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Jumps directly to a specific section
+ * @param sectionId - Section to jump to
+ * @param options - Navigation options
+ * @returns Promise that resolves when navigation completes
+ */
+export async function jumpToSection(
+  sectionId: SectionEnum,
+  options: NavigationOptions = {}
+): Promise<void> {
+  const {
+    componentConfig = {},
+    scrollConfig = {},
+    triggerScroll = true,
+    loadComponent: shouldLoadComponent = true,
+    onComplete,
+    onError
+  } = options;
+  
+  try {
+    // Set navigation loading state
+    setNavigationLoading(true);
+    
+    // Load component if needed
+    if (shouldLoadComponent) {
+      await loadSectionComponent(sectionId, componentConfig);
+      
+      // Preload adjacent components if configured
+      if (componentConfig.preloadAdjacent) {
+        preloadAdjacentComponents(sectionId).catch(console.warn);
+      }
+    }
+    
+    // Update section state
+    setActiveSection(sectionId, options);
+    
+    // Sync with highlight store
+    syncWithSectionChange(sectionId, {
+      triggerNavigation: false, // We're already handling navigation
+      respectLocks: true
+    });
+    
+    // Scroll to section if enabled
+    if (triggerScroll) {
+      await scrollToSection(sectionId, scrollConfig);
+    }
+    
+    // Call completion callback
+    onComplete?.(sectionId);
+  } catch (error) {
+    const navigationError = error instanceof Error ? error : new Error('Navigation failed');
+    console.error(`Failed to jump to section ${sectionId}:`, navigationError);
+    onError?.(navigationError);
+    throw navigationError;
+  } finally {
+    // Clear navigation loading state
+    setNavigationLoading(false);
+  }
+}
+
+/**
+ * Navigates to the next section
+ * @param options - Navigation options
+ * @returns Promise that resolves when navigation completes
+ */
+export async function navigateToNextSection(options: NavigationOptions = {}): Promise<void> {
+  const hasNext = get(hasNextSection);
+  if (!hasNext) {
+    throw new Error('No next section available');
+  }
+  
+  const currentIndex = get(currentSectionIndex);
+  const sections = get(visibleSections);
+  const nextSection = sections[currentIndex + 1];
+  
+  if (!nextSection) {
+    throw new Error('Next section not found');
+  }
+  
+  // Sync with highlight store for consistent state management
+  nextHighlight({
+    triggerNavigation: false, // We're handling navigation here
+    respectLocks: true
+  });
+  
+  await jumpToSection(nextSection.id, options);
+}
+
+/**
+ * Navigates to the previous section
+ * @param options - Navigation options
+ * @returns Promise that resolves when navigation completes
+ */
+export async function navigateToPreviousSection(options: NavigationOptions = {}): Promise<void> {
+  const hasPrev = get(hasPreviousSection);
+  if (!hasPrev) {
+    throw new Error('No previous section available');
+  }
+  
+  const currentIndex = get(currentSectionIndex);
+  const sections = get(visibleSections);
+  const prevSection = sections[currentIndex - 1];
+  
+  if (!prevSection) {
+    throw new Error('Previous section not found');
+  }
+  
+  // Sync with highlight store for consistent state management
+  previousHighlight({
+    triggerNavigation: false, // We're handling navigation here
+    respectLocks: true
+  });
+  
+  await jumpToSection(prevSection.id, options);
+}
+
+/**
+ * Navigates in a specific direction
+ * @param direction - Navigation direction
+ * @param options - Navigation options
+ * @returns Promise that resolves when navigation completes
+ */
+export async function navigateInDirection(
+  direction: NavigationDirection,
+  options: NavigationOptions = {}
+): Promise<void> {
+  if (direction === 'next') {
+    await navigateToNextSection(options);
+  } else {
+    await navigateToPreviousSection(options);
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Gets the current active section
+ * @returns Current section ID
+ */
+export function getCurrentSection(): SectionEnum {
+  return getNavigationState().currentSection;
+}
+
+/**
+ * Gets the previous section
+ * @returns Previous section ID or null
+ */
+export function getPreviousSection(): SectionEnum | null {
+  return getNavigationState().previousSection;
+}
+
+/**
+ * Checks if navigation is currently locked
+ * @returns True if navigation is locked
+ */
+export function isNavigationLocked(): boolean {
+  return getNavigationState().isLocked;
+}
+
+/**
+ * Checks if navigation is currently loading
+ * @returns True if navigation is loading
+ */
+export function isNavigationLoading(): boolean {
+  return getNavigationState().isLoading;
+}
+
+/**
+ * Gets navigation capabilities for current state
+ * @returns Object with navigation capabilities
+ */
+export function getNavigationCapabilities(): {
+  canGoNext: boolean;
+  canGoPrevious: boolean;
+  currentIndex: number;
+  totalSections: number;
+} {
+  const currentIndex = get(currentSectionIndex);
+  const sections = get(visibleSections);
+  
+  return {
+    canGoNext: get(hasNextSection),
+    canGoPrevious: get(hasPreviousSection),
+    currentIndex,
+    totalSections: sections.length
+  };
+}
+
+/**
+ * Creates a navigation function for a specific section
+ * @param sectionId - Section to create navigator for
+ * @param defaultOptions - Default navigation options
+ * @returns Navigation function
+ */
+export function createSectionNavigator(
+  sectionId: SectionEnum,
+  defaultOptions: NavigationOptions = {}
+): () => Promise<void> {
+  return () => jumpToSection(sectionId, defaultOptions);
+}
+
+/**
+ * Batch loads multiple section components
+ * @param sectionIds - Sections to load
+ * @param config - Loading configuration
+ * @returns Promise that resolves when all components are loaded
+ */
+export async function batchLoadSectionComponents(
+  sectionIds: SectionEnum[],
+  config: ComponentLoadConfig = {}
+): Promise<(ComponentType | null)[]> {
+  const loadPromises = sectionIds.map(sectionId => 
+    loadSectionComponent(sectionId, { ...config, showLoadingIndicator: false })
+  );
+  
+  const results = await Promise.allSettled(loadPromises);
+  return results.map(result => 
+    result.status === 'fulfilled' ? result.value : null
+  );
+}
+
+/**
+ * Initializes all section components
+ * @param config - Loading configuration
+ * @returns Promise that resolves when all sections are initialized
+ */
+export async function initializeAllSections(config: ComponentLoadConfig = {}): Promise<void> {
+  const allSectionIds = getAllSectionIds();
+  await batchLoadSectionComponents(allSectionIds, config);
+}

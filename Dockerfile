@@ -20,10 +20,14 @@ RUN apk add --no-cache \
     g++ \
     make \
     openssl-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
     && rm -rf /var/cache/apk/*
 
 # Install PHP extensions
-RUN install-php-extensions pdo_pgsql redis intl zip
+RUN install-php-extensions pdo_pgsql redis intl zip gd pcntl
 
 # Install MongoDB extension with specific version for compatibility
 RUN pecl install mongodb-1.21.0 \

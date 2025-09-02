@@ -314,7 +314,7 @@ if (db.users.countDocuments() === 0) {
 }
 
 print('MongoDB initialization completed successfully!');
-print('Database: absteak_db');
+print('Databases: absteak_db, rocketchat');
 print('Collections created: users, reservations, chat_sessions, analytics');
 print('Indexes created for optimal performance');
 print('Sample data inserted for development');

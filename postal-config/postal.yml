@@ -1,0 +1,53 @@
+# Postal Configuration
+web:
+  host: 0.0.0.0
+  port: 5000
+  protocol: http
+  max_request_size: 50
+
+database:
+  host: db
+  port: 5432
+  username: absteak_user
+  password: absteak_secure_password_2024
+  database: postal_db
+
+redis:
+  host: redis
+  port: 6379
+  db: 0
+
+smtp:
+  host: 0.0.0.0
+  port: 25
+
+logging:
+  stdout: true
+  level: info
+
+general:
+  use_ip_pools: false
+  default_maximum_delivery_attempts: 18
+  default_maximum_hold_expiry_days: 7
+  suppression_list_automatic_additions: true
+
+web_server:
+  bind_address: 0.0.0.0
+  port: 5000
+  max_request_size: 50
+
+worker_processes: 1
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: postal
+  password: postal
+  vhost: /postal
+
+fast_server:
+  enabled: false
+  bind_address: 127.0.0.1
+  port: 2525
+
+signing_key_path: /config/signing.key

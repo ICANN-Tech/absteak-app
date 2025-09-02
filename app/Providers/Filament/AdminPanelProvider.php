@@ -19,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -56,7 +57,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->login()
             ->plugins([
-                \Rupadana\ApiService\ApiServicePlugin::make()
+                \Rupadana\ApiService\ApiServicePlugin::make(),
+                \TomatoPHP\FilamentDeveloperGate\FilamentDeveloperGatePlugin::make(),
+                \TomatoPHP\FilamentTranslations\FilamentTranslationsPlugin::make()->allowCreate()
             ]);
     }
 }

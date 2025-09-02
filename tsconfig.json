@@ -1,0 +1,41 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./resources/js/*"],
+      "@Components/*": ["./resources/js/Components/*"],
+      "@GuestComponents/*": ["./resources/js/Components/Guest/*"],
+      "@Modules/*": ["./resources/js/Modules/*"],
+      "@Const/*": ["./resources/js/Const/*"],
+      "@Enums/*": ["./resources/js/Enums/*"],
+      "@Pages/*": ["./resources/js/Pages/*"],
+      "@Stores/*": ["./resources/js/Stores/*"],
+      "@Utils/*": ["./resources/js/Utils/*"],
+      "@Types/*": ["./resources/js/Types/*"],
+      "@Layouts/*": ["./resources/js/Layouts/*"]
+    }
+  },
+  "include": [
+    "resources/js/**/*.ts",
+    "resources/js/**/*.d.ts",
+    "resources/js/**/*.tsx",
+    "resources/js/**/*.svelte"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

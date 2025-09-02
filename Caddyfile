@@ -1,6 +1,18 @@
-:8000 {
+{
+	frankenphp
+	order php_server before file_server
+	auto_https off
+	default_bind 0.0.0.0
+}
+
+http://:8000 {
 	root * /app/public
 	encode gzip
-	php_server
-	file_server
+	php_server {
+		resolve_root_symlink
+	}
+}
+
+:3003 {
+    reverse_proxy absteak_rocketchat:3000
 }

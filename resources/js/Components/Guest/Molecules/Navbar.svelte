@@ -1,5 +1,5 @@
 <script>
-  import Logo from '../Atoms/Logo.svelte';
+  import Logo from '../../Global/Atoms/Logo.svelte';
   import Button from '../Atoms/Button.svelte';
   import Icon from '../Atoms/Icon.svelte';
   

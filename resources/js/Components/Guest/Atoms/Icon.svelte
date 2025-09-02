@@ -1,8 +1,14 @@
-<script>
-  export let name;
-  export let size = 'md'; // sm, md, lg, xl
-  export let color = 'currentColor';
+<script lang="ts">
+  // Type definitions
+  type IconSize = 'sm' | 'md' | 'lg' | 'xl';
+  type IconName = 'menu' | 'close' | 'phone' | 'email' | 'location' | 'clock' | 'star' | 'user' | 'calendar' | 'plus' | 'arrow_right' | 'arrow_up';
+
+  export let name: IconName;
+  export let size: IconSize = 'md';
+  export let color: string = 'currentColor';
   
+  // Size classes mapping
+  let sizeClasses: Record<IconSize, string>;
   $: sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
@@ -10,7 +16,7 @@
     xl: 'w-8 h-8'
   };
   
-  const icons = {
+  const icons: Record<IconName, string> = {
     menu: 'M3 12h18m-9-9v18',
     close: 'M18 6L6 18M6 6l12 12',
     phone: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',

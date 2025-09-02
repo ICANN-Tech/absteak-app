@@ -12,8 +12,7 @@ alerting:
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - "/etc/prometheus/rules/*.yml"
 
 # A scrape configuration containing exactly one endpoint to scrape:
 scrape_configs:
@@ -61,14 +60,46 @@ scrape_configs:
       - targets: ['beanstalkd:11300']
     scrape_interval: 30s
 
-  # Node exporter for system metrics (if you add it later)
-  # - job_name: 'node-exporter'
-  #   static_configs:
-  #     - targets: ['node-exporter:9100']
-  #   scrape_interval: 30s
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
 
-  # cAdvisor for container metrics (if you add it later)
-  # - job_name: 'cadvisor'
-  #   static_configs:
-  #     - targets: ['cadvisor:8080']
-  #   scrape_interval: 30s
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+
+  # MongoDB metrics
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb:27017']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+
+  # Weaviate metrics
+  - job_name: 'weaviate'
+    static_configs:
+      - targets: ['weaviate:8080']
+    scrape_interval: 30s
+    metrics_path: '/v1/metrics'
+
+  # Minio metrics
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+    scrape_interval: 30s
+    metrics_path: '/minio/v2/metrics/cluster'
+
+  # Vault metrics
+  - job_name: 'vault'
+    static_configs:
+      - targets: ['vault:8200']
+    scrape_interval: 30s
+    metrics_path: '/v1/sys/metrics'
+    params:
+      format: ['prometheus']

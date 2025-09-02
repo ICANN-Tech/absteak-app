@@ -13,8 +13,56 @@ class ConfigurationSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->seedFromJsonFile();
         $this->seedReservation();
         $this->seedChatbot();
+    }
+
+    private function seedFromJsonFile(): void
+    {
+        $jsonPath = storage_path('app/public/data/configuration-seeder.json');
+        
+        if (!file_exists($jsonPath)) {
+            $this->command->warn('Configuration seeder JSON file not found at: ' . $jsonPath);
+            return;
+        }
+        
+        $configurations = json_decode(file_get_contents($jsonPath), true);
+        
+        if (!$configurations) {
+            $this->command->warn('Invalid JSON in configuration seeder file');
+            return;
+        }
+        
+        foreach ($configurations as $config) {
+            $type = match($config['type']) {
+                'string' => \App\Enums\Configuration\Type::String,
+                'integer' => \App\Enums\Configuration\Type::Integer,
+                'float' => \App\Enums\Configuration\Type::Float,
+                'boolean' => \App\Enums\Configuration\Type::Boolean,
+                'array' => \App\Enums\Configuration\Type::Array,
+                'object' => \App\Enums\Configuration\Type::Object,
+                default => \App\Enums\Configuration\Type::String,
+            };
+            
+            $value = $config['value'];
+            
+            // JSON encode arrays and objects for storage
+            if (in_array($type, [\App\Enums\Configuration\Type::Array, \App\Enums\Configuration\Type::Object]) && (is_array($value) || is_object($value))) {
+                $value = json_encode($value);
+            }
+            
+            Configuration::updateOrCreate(
+                ['key' => $config['key']],
+                [
+                    'group' => $config['group'],
+                    'value' => $value,
+                    'type' => $type,
+                ]
+            );
+        }
+        
+        $this->command->info('Configurations seeded from JSON file successfully.');
     }
 
     private function seedReservation(): void

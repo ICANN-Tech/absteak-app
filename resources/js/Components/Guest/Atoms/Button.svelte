@@ -1,36 +1,73 @@
-<script>
-  export let variant = 'primary'; // primary, secondary, outline, ghost
-  export let size = 'md'; // sm, md, lg
-  export let disabled = false;
-  export let type = 'button';
-  export let href = null;
-  export let target = null;
-  export let onclick = null;
+<script lang="ts">
+  import { Button as FBButton } from 'flowbite-svelte';
 
-  $: baseClasses = 'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
-  
-  $: variantClasses = {
-    primary: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    outline: 'border border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500',
-    ghost: 'text-red-600 hover:bg-red-50 focus:ring-red-500'
-  };
-  
-  $: sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm rounded-md',
-    md: 'px-4 py-2 text-sm rounded-md',
-    lg: 'px-6 py-3 text-base rounded-lg'
-  };
-  
-  $: classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]}`;
+  // Type definitions
+  type ButtonVariant = 'primary' | 'danger' | 'success' | 'warning' | 'info';
+  type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  type ButtonType = 'button' | 'submit' | 'reset';
+
+  // Props with proper TypeScript annotations
+  export let variant: ButtonVariant = 'primary';
+  export let type: ButtonType = 'button';
+  export let disabled: boolean = false;
+  export let className: string = '';
+  export let href: string | undefined = undefined;
+  export let pill: boolean = false; // Support for circle/pill button
+  export let size: ButtonSize = 'md'; // Support for button sizes
+  export let circle: boolean = false; // Support for circle button (shorthand for pill + square)
+
+  // Flowbite Button color type
+  type FlowbiteColor = 'primary' | 'red' | 'green' | 'yellow' | 'cyan' | 'dark' | 'alternative' | 'light' | 'secondary' | 'gray' | 'orange' | 'amber' | 'lime' | 'emerald' | 'teal' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'pink' | 'rose';
+
+  // Color mapping for Flowbite Button
+  const colorMap: Record<ButtonVariant, FlowbiteColor> = {
+    primary: 'primary',
+    danger: 'red',
+    success: 'green',
+    warning: 'yellow',
+    info: 'cyan',
+  } as const;
+
+  // Size mapping for circle button
+  const circleSizeMap: Record<ButtonSize, string> = {
+    xs: 'w-8 h-8',
+    sm: 'w-10 h-10',
+    md: 'w-12 h-12',
+    lg: 'w-16 h-16',
+    xl: 'w-20 h-20',
+  } as const;
+
+  // Reactive statements
+  $: resolvedColor = colorMap[variant];
+  $: isPill = pill || circle;
+  $: circleClasses = circle ? `${circleSizeMap[size]} flex items-center justify-center` : '';
+  $: combinedClassName = `${className} ${circleClasses}`.trim();
 </script>
 
 {#if href}
-  <a {href} {target} class={classes} on:click={onclick}>
+  <!-- Safe: Link -->
+  <FBButton
+    href={href}
+    color={resolvedColor}
+    disabled={disabled}
+    pill={isPill}
+    size={circle ? undefined : size}
+    class={combinedClassName}
+    {...($$restProps)}
+  >
     <slot />
-  </a>
+  </FBButton>
 {:else}
-  <button {type} {disabled} class={classes} on:click={onclick}>
+  <!-- Safe: Button -->
+  <FBButton
+    type={type}
+    color={resolvedColor}
+    disabled={disabled}
+    pill={isPill}
+    size={circle ? undefined : size}
+    class={combinedClassName}
+    {...($$restProps)}
+  >
     <slot />
-  </button>
+  </FBButton>
 {/if}

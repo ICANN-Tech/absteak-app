@@ -28,4 +28,4 @@ php artisan view:cache
 php artisan migrate --force
 
 # Start FrankenPHP
-exec frankenphp run --config /etc/caddy/Caddyfile
+exec frankenphp run --config /app/Caddyfile
