@@ -48,6 +48,15 @@ type ComponentType = any;
 // ============================================================================
 
 /**
+ * Interface for section data structure
+ */
+export interface SectionData {
+	id: string;
+	component?: any;
+	[key: string]: any;
+}
+
+/**
  * Navigation direction for next/previous operations
  */
 export type NavigationDirection = 'next' | 'previous';

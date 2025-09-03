@@ -8,7 +8,7 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 use App\Models\Transaction;
-use App\Jobs\SendTransactionEmailJob;
+use App\Jobs\Transaction\SendEmailJob;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
@@ -46,7 +46,7 @@ try {
     echo "-----------------------------------------\n";
     
     // Dispatch the job to the queue
-    SendTransactionEmailJob::dispatch($transaction, 'invoice');
+    SendEmailJob::dispatch($transaction, 'invoice');
     echo "✅ Job dispatched to queue\n\n";
     
     echo "3. Processing queue jobs...\n";

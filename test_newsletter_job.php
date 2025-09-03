@@ -3,7 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Illuminate\Foundation\Application;
-use App\Jobs\SendNewsletterJob;
+use App\Jobs\Newsletter\SendMailingJob;
 
 // Bootstrap Laravel
 $app = require_once __DIR__ . '/bootstrap/app.php';
@@ -16,7 +16,7 @@ try {
     config(['queue.default' => 'sync']);
     
     // Test dispatching with string parameter
-    SendNewsletterJob::dispatch('test@example.com');
+    SendMailingJob::dispatch('test@example.com');
     echo "✅ Job executed synchronously!\n";
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage() . "\n";

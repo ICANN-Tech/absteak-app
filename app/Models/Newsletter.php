@@ -13,7 +13,8 @@ use Spatie\QueryBuilder\AllowedSort;
 
 class Newsletter extends Model
 {
-    use HasUuids, RelationTrait, AttributeTrait, ScopeTrait, SelfReferenceTrait;
+    use HasUuids;
+    use RelationTrait, AttributeTrait, ScopeTrait, SelfReferenceTrait;
 
     protected $fillable = [
         'title',

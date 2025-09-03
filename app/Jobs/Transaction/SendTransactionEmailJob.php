@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Transaction;
 
 use App\Mail\Transaction\DeclinedMail;
 use App\Mail\Transaction\InvoiceMail;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use Exception;
 
 /**
- * SendTransactionEmailJob
+ * SendEmailJob
  * 
  * Handles sending transaction-related emails based on transaction status.
  * This job dispatches the appropriate email type:
@@ -35,7 +35,7 @@ use Exception;
  * @author ABSteak Development Team
  * @version 1.0.0
  */
-class SendTransactionEmailJob implements ShouldQueue
+class SendEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

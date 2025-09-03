@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Newsletter;
 
-use App\Jobs\SendNewsletterJob;
+use App\Jobs\Newsletter\SendMailingJob;
 use App\Models\Newsletter;
 use App\Models\NewsletterSubscriber;
 use Illuminate\Console\Command;
@@ -86,7 +86,7 @@ class Distribution extends Command
         $jobsDispatched = 0;
         foreach ($subscribers as $subscriber) {
             try {
-                SendNewsletterJob::dispatch($newsletter, $subscriber);
+                SendMailingJob::dispatch($newsletter, $subscriber);
                 $jobsDispatched++;
             } catch (\Exception $e) {
                 $this->error("Failed to dispatch job for subscriber {$subscriber->email}: {$e->getMessage()}");

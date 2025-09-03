@@ -4,39 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Menu\RelationTrait;
-use App\Traits\Menu\AttributeTrait;
-use App\Traits\Menu\ScopeTrait;
+use App\Traits\Menu\{RelationTrait, AttributeTrait, ScopeTrait};
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 
-/**
- * Menu Model
- * 
- * Represents menu items in the restaurant system.
- * Each menu item belongs to a category and supports
- * image uploads, pricing, ingredients, allergens, and availability status.
- * 
- * @property string $id UUID primary key
- * @property string $name Menu item name
- * @property string|null $description Menu item description
- * @property string $slug URL-friendly slug
- * @property string|null $image Menu item image path
- * @property float $price Menu item price
- * @property bool $is_available Whether item is available
- * @property bool $is_featured Whether item is featured
- * @property int $sort_order Display order
- * @property string $category_id Foreign key to categories table
- * @property array|null $ingredients List of ingredients
- * @property array|null $allergens List of allergens
- * @property string|null $preparation_time Preparation time
- * @property int|null $calories Calorie count
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class Menu extends Model
 {
-    use HasUuids, RelationTrait, AttributeTrait, ScopeTrait;
+    use HasUuids;
+    use RelationTrait, AttributeTrait, ScopeTrait;
 
     /**
      * The attributes that are mass assignable.

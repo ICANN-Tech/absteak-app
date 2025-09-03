@@ -4,32 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Menu\RelationTrait;
-use App\Traits\Menu\AttributeTrait;
-use App\Traits\Menu\ScopeTrait;
+use App\Traits\Menu\{RelationTrait, AttributeTrait, ScopeTrait};
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 
-/**
- * Category Model
- * 
- * Represents menu categories in the restaurant system.
- * Each category can contain multiple menu items and supports
- * image uploads, sorting, and activation status.
- * 
- * @property string $id UUID primary key
- * @property string $name Category name
- * @property string|null $description Category description
- * @property string $slug URL-friendly slug
- * @property string|null $image Category image path
- * @property bool $is_active Whether category is active
- * @property int $sort_order Display order
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class Category extends Model
 {
-    use HasUuids, RelationTrait, AttributeTrait, ScopeTrait;
+    use HasUuids;
+    use RelationTrait, AttributeTrait, ScopeTrait;
 
     /**
      * The attributes that are mass assignable.

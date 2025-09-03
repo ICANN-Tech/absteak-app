@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Newsletter;
 
 use App\Models\Newsletter;
 use App\Models\NewsletterLog;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NewsletterMail;
 
-class SendNewsletterJob implements ShouldQueue
+class SendMailingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

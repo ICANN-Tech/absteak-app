@@ -10,7 +10,7 @@ $kernel->bootstrap();
 // Set queue connection to sync for immediate processing
 config(['queue.default' => 'sync']);
 
-use App\Jobs\SendTransactionEmailJob;
+use App\Jobs\Transaction\SendEmailJob;
 use App\Models\Transaction;
 use Database\Factories\TransactionFactory;
 use Illuminate\Support\Facades\Log;
@@ -37,19 +37,19 @@ try {
     // Test 1: Invoice email (pending status)
     echo "Test 1: Dispatching invoice email job...\n";
     $transaction->update(['status' => 'pending']);
-    SendTransactionEmailJob::dispatch($transaction);
+    SendEmailJob::dispatch($transaction);
     echo "✓ Invoice email job processed successfully\n\n";
     
     // Test 2: Receipt email (paid status)
     echo "Test 2: Dispatching receipt email job...\n";
     $transaction->update(['status' => 'paid']);
-    SendTransactionEmailJob::dispatch($transaction);
+    SendEmailJob::dispatch($transaction);
     echo "✓ Receipt email job processed successfully\n\n";
     
     // Test 3: Declined email (unpaid status)
     echo "Test 3: Dispatching declined email job...\n";
     $transaction->update(['status' => 'unpaid']);
-    SendTransactionEmailJob::dispatch($transaction);
+    SendEmailJob::dispatch($transaction);
     echo "✓ Declined email job processed successfully\n\n";
     
     // Clean up - delete the test transaction

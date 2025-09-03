@@ -12,7 +12,8 @@ use Spatie\QueryBuilder\AllowedSort;
 
 class NewsletterLog extends Model
 {
-    use RelationTrait, AttributeTrait, ScopeTrait, SelfReferenceTrait;
+    use RelationTrait;
+    use AttributeTrait, ScopeTrait, SelfReferenceTrait;
 
     protected $fillable = [
         'newsletter_id',

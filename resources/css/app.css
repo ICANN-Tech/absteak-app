@@ -1,10 +1,75 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@plugin 'flowbite/plugin';
+
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  /* Primary colors aligned with tailwind.config.ts */
+  --color-primary-50: #f9f5f2;
+  --color-primary-100: #f0e6df;
+  --color-primary-200: #e2cdbf;
+  --color-primary-300: #d0ae99;
+  --color-primary-400: #b98c6e;
+  --color-primary-500: #a27050;
+  --color-primary-600: #8d5a3c;
+  --color-primary-700: #7B4019; /* Main desired color */
+  --color-primary-800: #663618;
+  --color-primary-900: #542d15;
+  --color-primary-950: #2d180b;
+
+  --color-secondary-50: #f0f9ff;
+  --color-secondary-100: #e0f2fe;
+  --color-secondary-200: #bae6fd;
+  --color-secondary-300: #7dd3fc;
+  --color-secondary-400: #38bdf8;
+  --color-secondary-500: #0ea5e9;
+  --color-secondary-600: #0284c7;
+  --color-secondary-700: #0369a1;
+  --color-secondary-800: #075985;
+  --color-secondary-900: #0c4a6e;
+}
+
+/* Flowbite styles will be handled by the Vite plugin and Tailwind configuration */
+
+@layer base {
+  /* Disable Chrome search cancel button */
+  input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+@layer utilities {
+  /* Scroll animations for infinite scrolling images */
+  @keyframes scroll-up {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
+  }
+  
+  @keyframes scroll-down {
+    0% {
+      transform: translateY(-50%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-scroll-up {
+    animation: scroll-up 20s linear infinite;
+  }
+  
+  .animate-scroll-down {
+    animation: scroll-down 20s linear infinite;
+  }
+}
+
+button,
+[role="button"],
+[role="tab"] {
+  cursor: pointer !important;
 }

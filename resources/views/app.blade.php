@@ -11,8 +11,5 @@
 </head>
 <body class="antialiased">
     @inertia
-    
-    <!-- Chatwoot Widget -->
-    <script src="{{ asset('js/chatwoot-widget.js') }}"></script>
 </body>
 </html>

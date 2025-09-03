@@ -8,12 +8,20 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Broadcast;
-use App\Events\NewTicketCreated;
 use Exception;
 
-class CustomerSupportRepository
+class CustomerSupportRepository implements CustomerSupportServiceInterface
 {
+    protected CustomerSupportBroadcastRepository $broadcastRepository;
+    protected CustomerSupportMessageRepository $messageRepository;
+
+    public function __construct(
+        CustomerSupportBroadcastRepository $broadcastRepository,
+        CustomerSupportMessageRepository $messageRepository
+    ) {
+        $this->broadcastRepository = $broadcastRepository;
+        $this->messageRepository = $messageRepository;
+    }
     /**
      * Find an available customer service agent.
      */
@@ -81,7 +89,7 @@ class CustomerSupportRepository
             ]);
 
             // Broadcast new ticket event to CS dashboard
-            $this->broadcastNewTicket($ticket);
+            $this->broadcastRepository->broadcastNewTicket($ticket);
 
             return $ticket;
         } catch (Exception $e) {
@@ -122,81 +130,14 @@ class CustomerSupportRepository
         }
     }
 
-    /**
-     * Broadcast new ticket event to CS dashboard.
-     */
-    private function broadcastNewTicket(Ticket $ticket): void
-    {
-        try {
-            // Format ticket data for broadcasting
-            $ticketData = [
-                'id' => $ticket->id,
-                'ticket_number' => $ticket->ticket_number,
-                'session_id' => $ticket->chat_session_data['session_id'] ?? null,
-                'customer_name' => $ticket->customer_name,
-                'customer_email' => $ticket->customer_email,
-                'subject' => $ticket->subject,
-                'status' => $ticket->status,
-                'priority' => $ticket->priority,
-                'created_at' => $ticket->created_at->toISOString(),
-                'last_message' => $ticket->description,
-                'last_message_time' => $ticket->created_at->diffForHumans(),
-                'assigned_agent' => $ticket->assignedCs ? [
-                    'id' => $ticket->assignedCs->id,
-                    'name' => $ticket->assignedCs->name,
-                    'department' => $ticket->assignedCs->department
-                ] : null
-            ];
 
-            // Broadcast new ticket event
-            broadcast(new NewTicketCreated($ticketData));
-
-            Log::info('New ticket broadcasted to CS dashboard', [
-                'ticket_id' => $ticket->id,
-                'ticket_number' => $ticket->ticket_number
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to broadcast new ticket', [
-                'error' => $e->getMessage(),
-                'ticket_id' => $ticket->id ?? 'unknown'
-            ]);
-        }
-    }
 
     /**
      * Send a message in the context of a ticket.
      */
     public function sendMessage(string $ticketId, string $message, array $context = []): array
     {
-        try {
-            $ticket = Ticket::findOrFail($ticketId);
-            
-            // Record first response if this is from CS agent
-            if (isset($context['sender']) && $context['sender'] === 'cs_agent') {
-                $ticket->recordFirstResponse();
-            }
-
-            // For now, return a simple acknowledgment
-            // This could be enhanced to integrate with real-time messaging
-            return [
-                'success' => true,
-                'message' => 'Message sent successfully',
-                'ticket_id' => $ticketId,
-                'timestamp' => now()->toISOString(),
-            ];
-        } catch (Exception $e) {
-            Log::error('Failed to send message', [
-                'error' => $e->getMessage(),
-                'ticket_id' => $ticketId,
-                'message' => $message,
-            ]);
-            
-            return [
-                'success' => false,
-                'error' => 'Failed to send message',
-                'ticket_id' => $ticketId,
-            ];
-        }
+        return $this->messageRepository->sendMessage($ticketId, $message, $context);
     }
 
     /**
@@ -204,39 +145,15 @@ class CustomerSupportRepository
      */
     public function addMessageToTicket(string $ticketId, array $messageData): bool
     {
-        try {
-            $ticket = Ticket::findOrFail($ticketId);
-            
-            // Get existing chat session data
-            $chatData = $ticket->chat_session_data ?? [];
-            
-            // Add new message to the history
-            if (!isset($chatData['messages'])) {
-                $chatData['messages'] = [];
-            }
-            
-            $chatData['messages'][] = [
-                'id' => (string) Str::uuid(),
-                'sender' => $messageData['sender'],
-                'message' => $messageData['message'],
-                'timestamp' => $messageData['timestamp']->toISOString(),
-                'session_id' => $messageData['session_id'] ?? null,
-            ];
-            
-            // Update ticket
-            $ticket->update([
-                'chat_session_data' => $chatData,
-            ]);
+        return $this->messageRepository->addMessageToTicket($ticketId, $messageData);
+    }
 
-            return true;
-        } catch (Exception $e) {
-            Log::error('Failed to add message to ticket', [
-                'error' => $e->getMessage(),
-                'ticket_id' => $ticketId,
-                'message_data' => $messageData,
-            ]);
-            return false;
-        }
+    /**
+     * Broadcast new ticket event to CS dashboard.
+     */
+    public function broadcastNewTicket(Ticket $ticket): void
+    {
+        $this->broadcastRepository->broadcastNewTicket($ticket);
     }
 
     /**
@@ -311,20 +228,40 @@ class CustomerSupportRepository
 
     /**
      * Update ticket status.
+     *
+     * @param string $ticketId
+     * @param string $status
+     * @param string|null $agentId
+     * @return bool
      */
-    public function updateTicketStatus(string $ticketId, string $status): bool
+    public function updateTicketStatus(string $ticketId, string $status, ?string $agentId = null): bool
     {
         try {
             $ticket = Ticket::findOrFail($ticketId);
             
+            $updateData = [
+                'status' => $status,
+                'updated_at' => now(),
+            ];
+            
+            // If resolving or closing, record the timestamp
             if ($status === 'resolved') {
-                $ticket->markAsResolved();
+                $updateData['resolved_at'] = now();
             } elseif ($status === 'closed') {
-                $ticket->close();
-            } else {
-                $ticket->update(['status' => $status]);
+                $updateData['closed_at'] = now();
             }
-
+            
+            $ticket->update($updateData);
+            
+            // Broadcast status update
+            $this->broadcastRepository->broadcastTicketStatusUpdate($ticket, $status, $agentId);
+            
+            Log::info('Ticket status updated', [
+                'ticket_id' => $ticketId,
+                'status' => $status,
+                'agent_id' => $agentId
+            ]);
+            
             return true;
         } catch (Exception $e) {
             Log::error('Failed to update ticket status', [
@@ -354,26 +291,29 @@ class CustomerSupportRepository
 
     /**
      * Update agent status.
+     *
+     * @param string $csAgentId
+     * @param string $status
+     * @return bool
      */
     public function updateAgentStatus(string $csAgentId, string $status): bool
     {
         try {
             $agent = CustomerService::findOrFail($csAgentId);
             
-            switch ($status) {
-                case 'available':
-                    $agent->setOnline();
-                    break;
-                case 'busy':
-                    $agent->setBusy();
-                    break;
-                case 'offline':
-                    $agent->setOffline();
-                    break;
-                default:
-                    $agent->update(['status' => $status]);
-            }
-
+            $agent->update([
+                'status' => $status,
+                'last_activity_at' => now(),
+            ]);
+            
+            // Broadcast agent status update
+            $this->broadcastRepository->broadcastAgentStatusChange($csAgentId, $status, ['agent_name' => $agent->name]);
+            
+            Log::info('Agent status updated', [
+                'agent_id' => $csAgentId,
+                'status' => $status
+            ]);
+            
             return true;
         } catch (Exception $e) {
             Log::error('Failed to update agent status', [

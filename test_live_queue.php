@@ -7,7 +7,7 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use App\Models\Transaction;
-use App\Jobs\SendTransactionEmailJob;
+use App\Jobs\Transaction\SendEmailJob;
 
 echo "=== Testing Live Queue Processing ===\n\n";
 
@@ -34,7 +34,7 @@ try {
 
     // Dispatch the job
     echo "Dispatching SendTransactionEmailJob for invoice...\n";
-    SendTransactionEmailJob::dispatch($transaction, 'invoice');
+    SendEmailJob::dispatch($transaction, 'invoice');
     echo "✓ Job dispatched successfully\n\n";
 
     echo "Job has been queued. Check the queue worker terminal to see if it processes successfully.\n";
