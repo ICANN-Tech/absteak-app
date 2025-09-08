@@ -74,25 +74,25 @@ export async function initializeLayoutComponents(
 
     if (loadHeader) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Guest/Layout/Header.svelte'));
+      imports.push(import('@Components/Guest/Organisme/Layout/Header.svelte'));
       componentKeys.push('Header');
     }
 
     if (loadFooter) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Guest/Layout/Footer.svelte'));
+      imports.push(import('@Components/Guest/Organisme/Layout/Footer.svelte'));
       componentKeys.push('Footer');
     }
 
     if (loadLanguageSwitch) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Guest/Layout/LanguageSwitch.svelte'));
+      imports.push(import('@Components/Guest/Organisme/Layout/LanguageSwitch.svelte'));
       componentKeys.push('LanguageSwitch');
     }
 
     if (loadScrollIndicator) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Guest/Layout/ScrollIndicator.svelte'));
+      imports.push(import('@Components/Guest/Organisme/Layout/ScrollIndicator.svelte'));
       componentKeys.push('ScrollIndicator');
     }
 

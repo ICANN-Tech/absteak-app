@@ -5,6 +5,7 @@ networks:
 
 services:
   app:
+    container_name: app
     build:
       context: .
       dockerfile: Dockerfile
@@ -84,7 +85,7 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d
+      - ./docker/postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U absteak_user -d app_db"]
       interval: 10s
@@ -97,15 +98,8 @@ services:
   flowise:
     image: flowiseai/flowise:3.0.5
     container_name: flowise
-    environment:
-      PORT: 3000
-      FLOWISE_USERNAME: flowise
-      FLOWISE_PASSWORD: FfZt9zjqJNq22Ccbdn
-      FLOWISE_FILE_SIZE_LIMIT: 100mb
-      FLOWISE_FILE_TYPES: pdf,docx,xlsx,csv,zip,tar.gz
-      FLOWISE_WEAVIATE_URL: http://weaviate:8080
-      FLOWISE_WEAVIATE_API_KEY: "jqyUWkzrrfl0040t2Hyo3nVAa4xLj6viTDSeEd6wgKPt6cwLk7n99AZhjDv9CkKs"
-      FLOWISE_WEAVIATE_INDEX: knowledge
+    env_file:
+      - ./docker/flowise/flowise.env
     ports:
       - "3000:3000"
     volumes:
@@ -139,10 +133,8 @@ services:
     container_name: mongodb
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin_password_2024
-      MONGO_INITDB_DATABASE: absteak_db
+    env_file:
+      - ./docker/mongodb/mongo.env
     volumes:
       - mongodb_data:/data/db
       - ./docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
@@ -157,7 +149,6 @@ services:
       timeout: 10s
       retries: 5
   
-
   weaviate:
     image: semitechnologies/weaviate:1.30.0
     container_name: weaviate
@@ -406,6 +397,62 @@ services:
       timeout: 10s
       retries: 3
 
+  listmonk_db:
+    image: postgres:15-alpine
+    container_name: listmonk_postgres
+    environment:
+      POSTGRES_DB: listmonk_db
+      POSTGRES_USER: listmonk_user
+      POSTGRES_PASSWORD: listmonk_secure_password_2024
+    volumes:
+      - listmonk_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U listmonk_user -d listmonk_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - absteak
+    restart: unless-stopped
+
+  listmonk:
+    image: listmonk/listmonk:latest
+    container_name: absteak_listmonk
+    ports:
+      - "9010:9000"
+    environment:
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_db__host: listmonk_db
+      LISTMONK_db__port: 5432
+      LISTMONK_db__user: listmonk_user
+      LISTMONK_db__password: listmonk_secure_password_2024
+      LISTMONK_db__database: listmonk_db
+      LISTMONK_db__ssl_mode: disable
+      LISTMONK_db__max_open: 25
+      LISTMONK_db__max_idle: 25
+      LISTMONK_db__max_lifetime: 300s
+      TZ: UTC
+      LISTMONK_ADMIN_USER: admin
+      LISTMONK_ADMIN_PASSWORD: absteak_admin_2024
+    volumes:
+      - listmonk_data:/listmonk
+      - listmonk_uploads:/listmonk/uploads
+    depends_on:
+      listmonk_db:
+        condition: service_healthy
+    networks:
+      - absteak
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    command: [sh, -c, "./listmonk --install --idempotent --yes && ./listmonk --upgrade --yes && ./listmonk"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
 volumes:
   db_data:
   redis_data:
@@ -424,3 +471,9 @@ volumes:
   vendor_data:
   node_modules_data:
   weaviate_data:
+  listmonk_data:
+    driver: local
+  listmonk_uploads:
+    driver: local
+  listmonk_db_data:
+    driver: local

@@ -46,8 +46,7 @@
 export type {
   ComponentVisibilityState,
   ComponentTarget,
-  VisibilityStore,
-  VisibilityOptions
+  VisibilityStore
 } from './Visibility';
 
 // Export the ComponentId enum
@@ -63,25 +62,23 @@ export {
   toggleComponentVisibility
 } from './Visibility';
 
-// Export lock/unlock management functions
-export {
-  lockComponent,
-  unlockComponent
-} from './Visibility';
+
 
 // Export utility functions
 export {
   isComponentVisible,
-  isComponentLocked,
-  getComponentState,
-  resetAllComponents
+  resetAllComponents,
+  createVisibilityState
 } from './Visibility';
 
 // Export highlight management functions and types
-export {
+export type {
   HighlightState,
   HighlightOptions,
-  HighlightTarget,
+  HighlightTarget
+} from './Highlight';
+
+export {
   addHighlight,
   removeHighlight,
   activateHighlight,
@@ -116,19 +113,19 @@ import {
   showComponent,
   hideComponent,
   toggleComponentVisibility,
-  lockComponent,
-  unlockComponent,
   isComponentVisible,
-  isComponentLocked,
-  getComponentState,
   resetAllComponents,
+  createVisibilityState,
   visibilityStore
 } from './Visibility';
 
-import {
+import type {
   HighlightState,
   HighlightOptions,
-  HighlightTarget,
+  HighlightTarget
+} from './Highlight';
+
+import {
   addHighlight,
   removeHighlight,
   activateHighlight,
@@ -171,16 +168,11 @@ export default {
   hideComponent,
   toggleComponentVisibility,
   
-  // Lock/unlock functions
-  lockComponent,
-  unlockComponent,
-  
   // Utility functions
   isComponentVisible,
-  isComponentLocked,
-  getComponentState,
   resetAllComponents,
-  
+  createVisibilityState,
+
   // Store
   visibilityStore,
   

@@ -1,4 +1,4 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, derived, type Writable } from 'svelte/store';
 
 /**
  * Enumeration of available component identifiers for visibility management
@@ -19,7 +19,8 @@ export enum ComponentId {
   ChatBot = 'chatbot',
   Footer = 'footer',
   Header = 'header',
-  Sidebar = 'sidebar'
+  Sidebar = 'sidebar',
+  ScrollIndicator = 'scroll-indicator'
 }
 
 /**
@@ -27,12 +28,10 @@ export enum ComponentId {
  * 
  * @interface ComponentVisibilityState
  * @property {boolean} visible - Current visibility status of the component
- * @property {boolean} locked - Whether the component's visibility is locked from changes
  * @property {number} lastUpdated - Timestamp of the last visibility change
  */
 export interface ComponentVisibilityState {
   visible: boolean;
-  locked: boolean;
   lastUpdated: number;
 }
 
@@ -54,31 +53,22 @@ export interface VisibilityStore {
   [key: string]: ComponentVisibilityState;
 }
 
-/**
- * Configuration options for visibility operations
- * 
- * @interface VisibilityOptions
- * @property {boolean} [force] - Force the operation even if component is locked
- * @property {boolean} [silent] - Perform operation without triggering store updates
- */
-export interface VisibilityOptions {
-  force?: boolean;
-  silent?: boolean;
-}
+
 
 /**
  * Initial visibility state for all components
- * All components start as visible and unlocked
+ * All components start as visible
  */
 const initialState: VisibilityStore = {
-  [ComponentId.Navigation]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Highlight]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Locale]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Operation]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.ChatBot]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Footer]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Header]: { visible: true, locked: false, lastUpdated: Date.now() },
-  [ComponentId.Sidebar]: { visible: true, locked: false, lastUpdated: Date.now() }
+  [ComponentId.Navigation]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Highlight]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Locale]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Operation]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.ChatBot]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Footer]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Header]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.Sidebar]: { visible: true, lastUpdated: Date.now() },
+  [ComponentId.ScrollIndicator]: { visible: false, lastUpdated: Date.now() }
 };
 
 /**
@@ -111,22 +101,13 @@ function normalizeTarget(target: ComponentTarget): ComponentId[] {
  */
 function updateComponentsVisibility(
   componentIds: ComponentId[],
-  visible: boolean,
-  options: VisibilityOptions = {}
+  visible: boolean
 ): void {
-  if (options.silent) return;
-
   visibilityStore.update(store => {
     const newStore = { ...store };
     
     componentIds.forEach(componentId => {
       const currentState = newStore[componentId];
-      
-      // Skip if component is locked and force is not enabled
-      if (currentState?.locked && !options.force) {
-        console.warn(`Component ${componentId} is locked and cannot be modified without force option`);
-        return;
-      }
       
       // Update the component state
       newStore[componentId] = {
@@ -158,16 +139,15 @@ function updateComponentsVisibility(
  * showComponent(ComponentId.ChatBot, { force: true });
  * ```
  */
-export function showComponent(target: ComponentTarget, options: VisibilityOptions = {}): void {
+export function showComponent(target: ComponentTarget): void {
   const componentIds = normalizeTarget(target);
-  updateComponentsVisibility(componentIds, true, options);
+  updateComponentsVisibility(componentIds, true);
 }
 
 /**
  * Hides one or more components by setting their visibility to false
  * 
  * @param {ComponentTarget} target - Component ID(s) to hide
- * @param {VisibilityOptions} [options] - Configuration options
  * 
  * @example
  * ```typescript
@@ -176,21 +156,17 @@ export function showComponent(target: ComponentTarget, options: VisibilityOption
  * 
  * // Hide multiple components
  * hideComponent([ComponentId.Navigation, ComponentId.ChatBot]);
- * 
- * // Force hide a locked component
- * hideComponent(ComponentId.Sidebar, { force: true });
  * ```
  */
-export function hideComponent(target: ComponentTarget, options: VisibilityOptions = {}): void {
+export function hideComponent(target: ComponentTarget): void {
   const componentIds = normalizeTarget(target);
-  updateComponentsVisibility(componentIds, false, options);
+  updateComponentsVisibility(componentIds, false);
 }
 
 /**
  * Toggles the visibility of one or more components
  * 
  * @param {ComponentTarget} target - Component ID(s) to toggle
- * @param {VisibilityOptions} [options] - Configuration options
  * 
  * @example
  * ```typescript
@@ -199,12 +175,9 @@ export function hideComponent(target: ComponentTarget, options: VisibilityOption
  * 
  * // Toggle multiple components
  * toggleComponentVisibility([ComponentId.Locale, ComponentId.Operation]);
- * 
- * // Force toggle locked components
- * toggleComponentVisibility(ComponentId.Navigation, { force: true });
  * ```
  */
-export function toggleComponentVisibility(target: ComponentTarget, options: VisibilityOptions = {}): void {
+export function toggleComponentVisibility(target: ComponentTarget): void {
   const componentIds = normalizeTarget(target);
   
   visibilityStore.update(store => {
@@ -213,16 +186,10 @@ export function toggleComponentVisibility(target: ComponentTarget, options: Visi
     componentIds.forEach(componentId => {
       const currentState = newStore[componentId];
       
-      // Skip if component is locked and force is not enabled
-      if (currentState?.locked && !options.force) {
-        console.warn(`Component ${componentId} is locked and cannot be modified without force option`);
-        return;
-      }
-      
-      // Toggle the component visibility
+      // Update the component state
       newStore[componentId] = {
         ...currentState,
-        visible: !currentState.visible,
+        visible: !currentState?.visible,
         lastUpdated: Date.now()
       };
     });
@@ -231,73 +198,7 @@ export function toggleComponentVisibility(target: ComponentTarget, options: Visi
   });
 }
 
-/**
- * Locks one or more components to prevent visibility changes
- * 
- * @param {ComponentTarget} target - Component ID(s) to lock
- * 
- * @example
- * ```typescript
- * // Lock a single component
- * lockComponent(ComponentId.Header);
- * 
- * // Lock multiple components
- * lockComponent([ComponentId.Header, ComponentId.Footer]);
- * ```
- */
-export function lockComponent(target: ComponentTarget): void {
-  const componentIds = normalizeTarget(target);
-  
-  visibilityStore.update(store => {
-    const newStore = { ...store };
-    
-    componentIds.forEach(componentId => {
-      if (newStore[componentId]) {
-        newStore[componentId] = {
-          ...newStore[componentId],
-          locked: true,
-          lastUpdated: Date.now()
-        };
-      }
-    });
-    
-    return newStore;
-  });
-}
 
-/**
- * Unlocks one or more components to allow visibility changes
- * 
- * @param {ComponentTarget} target - Component ID(s) to unlock
- * 
- * @example
- * ```typescript
- * // Unlock a single component
- * unlockComponent(ComponentId.Header);
- * 
- * // Unlock multiple components
- * unlockComponent([ComponentId.Header, ComponentId.Footer]);
- * ```
- */
-export function unlockComponent(target: ComponentTarget): void {
-  const componentIds = normalizeTarget(target);
-  
-  visibilityStore.update(store => {
-    const newStore = { ...store };
-    
-    componentIds.forEach(componentId => {
-      if (newStore[componentId]) {
-        newStore[componentId] = {
-          ...newStore[componentId],
-          locked: false,
-          lastUpdated: Date.now()
-        };
-      }
-    });
-    
-    return newStore;
-  });
-}
 
 /**
  * Checks if a component is currently visible
@@ -322,87 +223,263 @@ export function isComponentVisible(componentId: ComponentId): boolean {
   return isVisible;
 }
 
-/**
- * Checks if a component is currently locked
- * 
- * @param {ComponentId} componentId - Component ID to check
- * @returns {boolean} True if component is locked, false otherwise
- * 
- * @example
- * ```typescript
- * if (isComponentLocked(ComponentId.Header)) {
- *   console.log('Header is locked');
- * }
- * ```
- */
-export function isComponentLocked(componentId: ComponentId): boolean {
-  let isLocked = false;
-  
-  visibilityStore.subscribe(store => {
-    isLocked = store[componentId]?.locked ?? false;
-  })();
-  
-  return isLocked;
-}
 
-/**
- * Gets the complete visibility state of a component
- * 
- * @param {ComponentId} componentId - Component ID to get state for
- * @returns {ComponentVisibilityState | null} Component state or null if not found
- * 
- * @example
- * ```typescript
- * const state = getComponentState(ComponentId.Navigation);
- * if (state) {
- *   console.log(`Visible: ${state.visible}, Locked: ${state.locked}`);
- * }
- * ```
- */
-export function getComponentState(componentId: ComponentId): ComponentVisibilityState | null {
-  let state: ComponentVisibilityState | null = null;
-  
-  visibilityStore.subscribe(store => {
-    state = store[componentId] ?? null;
-  })();
-  
-  return state;
-}
 
 /**
  * Resets all components to their initial visibility state
- * 
- * @param {VisibilityOptions} [options] - Configuration options
  * 
  * @example
  * ```typescript
  * // Reset all components
  * resetAllComponents();
- * 
- * // Force reset even locked components
- * resetAllComponents({ force: true });
  * ```
  */
-export function resetAllComponents(options: VisibilityOptions = {}): void {
+export function resetAllComponents(): void {
   visibilityStore.update(store => {
     const newStore = { ...store };
     
     Object.keys(newStore).forEach(componentId => {
-      const currentState = newStore[componentId];
-      
-      // Skip if component is locked and force is not enabled
-      if (currentState?.locked && !options.force) {
-        return;
-      }
-      
       // Reset to initial state
       newStore[componentId] = {
         visible: true,
-        locked: false,
         lastUpdated: Date.now()
       };
     });
     
     return newStore;
   });
+}
+
+
+
+/**
+ * Configuration interface for area-based visibility
+ */
+export interface AreaBasedVisibilityConfig {
+  proximityRadius?: number;
+  targetArea?: 'top' | 'bottom' | 'left' | 'right' | 'center';
+  areaOffset?: number;
+  hideDelay?: number;
+  autoStart?: boolean;
+}
+
+/**
+ * Creates a visibility state manager for a component
+ * @param componentId - The component identifier
+ * @returns Object with isVisible and isDisplay stores
+ */
+export function createVisibilityState(componentId: ComponentId) {
+  // isVisible: whether component should show/hide based on global visibility store
+  const isVisible = derived(
+    visibilityStore,
+    ($store) => $store[componentId]?.visible ?? true
+  );
+  
+  // isDisplay: for UI display logic (can be extended for more complex logic)
+  const isDisplay = derived(
+    isVisible,
+    ($isVisible) => $isVisible
+  );
+  
+  return {
+    isVisible,
+    isDisplay
+  };
+}
+
+/**
+ * Creates a combined visibility manager that integrates area-based detection with global visibility control
+ * @param componentId - The component identifier
+ * @param config - Area-based visibility configuration
+ * @returns Combined visibility state with global override capability
+ */
+export function createCombinedVisibility(
+  componentId: ComponentId,
+  config: AreaBasedVisibilityConfig = {}
+) {
+  const areaVisibility = createAreaBasedStateVisibility(componentId, config);
+  const { isVisible } = createVisibilityState(componentId);
+  
+  // Combined visibility that respects global visibility control
+  const isDisplay = derived(
+    [areaVisibility.finalVisible, isVisible],
+    ([$areaVisible, $globalVisible]) => {
+      // If global visibility is explicitly set to false, hide component
+      if (!$globalVisible) {
+        return false;
+      }
+      // Otherwise, use area-based visibility
+      return $areaVisible;
+    }
+  );
+  
+  return {
+    ...areaVisibility,
+    isVisible,
+    isDisplay
+  };
+}
+
+/**
+ * Creates an area-based state visibility manager with mouse proximity detection
+ * Shows when mouse is near the component area, hides when mouse moves away
+ */
+export function createAreaBasedStateVisibility(
+  componentId: ComponentId,
+  config: AreaBasedVisibilityConfig = {}
+) {
+  const {
+    proximityRadius = 100,
+    targetArea = 'left',
+    areaOffset = 50,
+    hideDelay = 1000,
+    autoStart = true
+  } = config;
+
+  // Mouse position tracking
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetX = 0;
+  let targetY = 0;
+  let hideTimeout: number | null = null;
+  let isAreaMode = false;
+
+  // Create writable stores
+  const visible = writable(false);
+  const showComponent = writable<boolean | null>(null);
+
+  // Calculate initial position based on target area
+  function calculateTargetPosition() {
+    if (typeof window !== 'undefined') {
+      const { innerWidth, innerHeight } = window;
+      
+      switch (targetArea) {
+        case 'top':
+          targetX = innerWidth / 2;
+          targetY = areaOffset;
+          break;
+        case 'bottom':
+          targetX = innerWidth / 2;
+          targetY = innerHeight - areaOffset;
+          break;
+        case 'left':
+          targetX = areaOffset;
+          targetY = innerHeight / 2;
+          break;
+        case 'right':
+          targetX = innerWidth - areaOffset;
+          targetY = innerHeight / 2;
+          break;
+        case 'center':
+          targetX = innerWidth / 2;
+          targetY = innerHeight / 2;
+          break;
+      }
+    }
+  }
+
+  // Calculate distance between mouse and target area
+  function calculateDistance(): number {
+    const dx = mouseX - targetX;
+    const dy = mouseY - targetY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Update visibility based on proximity
+  function updateVisibility() {
+    if (!isAreaMode) return;
+
+    const distance = calculateDistance();
+    const isNear = distance <= proximityRadius;
+
+    if (isNear) {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+      visible.set(true);
+    } else {
+      if (hideTimeout) return;
+      
+      hideTimeout = window.setTimeout(() => {
+        visible.set(false);
+        hideTimeout = null;
+      }, hideDelay);
+    }
+  }
+
+  // Mouse move handler
+  function handleMouseMove(event: MouseEvent) {
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+    updateVisibility();
+  }
+
+  // Window resize handler
+  function handleResize() {
+    calculateTargetPosition();
+    updateVisibility();
+  }
+
+  // Enable area-based mode
+  function enableAreaMode() {
+    if (isAreaMode) return;
+    
+    isAreaMode = true;
+    calculateTargetPosition();
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('resize', handleResize);
+    }
+  }
+
+  // Disable area-based mode
+  function disableAreaMode() {
+    if (!isAreaMode) return;
+    
+    isAreaMode = false;
+    
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+    }
+    
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+  }
+
+  // Cleanup function
+  function destroy() {
+    disableAreaMode();
+  }
+
+  // Create derived stores
+  const isDisplay = derived(visible, $visible => $visible);
+  
+  const finalVisible = derived(
+    [visible, showComponent],
+    ([$visible, $showComponent]) => {
+      // If showComponent is true, always show regardless of visible state
+      if ($showComponent === true) return true;
+      // If showComponent is false, always hide regardless of visible state
+      if ($showComponent === false) return false;
+      // If showComponent is null, use normal visible state
+      return $visible;
+    }
+  );
+
+  // Auto-start if enabled
+  if (autoStart) {
+    enableAreaMode();
+  }
+
+  return {
+    visible,
+    isDisplay,
+    finalVisible,
+    destroy
+  };
 }

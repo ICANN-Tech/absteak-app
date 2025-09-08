@@ -2,6 +2,7 @@ import type { Sections } from '../../../Types/Guest/Section.type';
 import { sections } from '../../../Const/Guest/Control/Section';
 import { initializeHighlights } from '../../../Stores/Guest/Viewport/Highlight';
 import { hideComponent, ComponentId } from '../../../Stores/Guest/Viewport/Visibility';
+import { initializeComponentVisibility } from './Section';
 
 /**
  * Initialization Logic
@@ -88,7 +89,8 @@ export const initializeSections = async (): Promise<Sections> => {
  * 
  * 1. Initialize highlights
  * 2. Initialize component visibility (hide components before sections render)
- * 3. Load section components
+ * 3. Initialize section-based component visibility
+ * 4. Load section components
  * 
  * @returns Promise that resolves when all initialization is complete
  */
@@ -103,6 +105,9 @@ export const initializeApp = async (): Promise<{
     
     // Hide components that should be initially hidden
     hideComponent([ComponentId.ChatBot, ComponentId.Sidebar]);
+    
+    // Initialize component visibility based on current section
+    initializeComponentVisibility();
     
     return {
       sections: initializedSections,

@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { SectionEnum } from '../../../Enums/Guest/Section';
-import type { ComponentType } from 'svelte';
+import type { Component } from 'svelte';
 
 /**
  * Section State Management System
@@ -28,7 +28,7 @@ export interface SectionConfig {
   /** Display name of the section */
   name: string;
   /** Component associated with this section */
-  component?: ComponentType | null;
+  component?: Component | null;
   /** Whether the section is currently active */
   isActive: boolean;
   /** Whether the section is visible in navigation */
@@ -71,66 +71,90 @@ export interface SectionOptions {
 // INITIAL STATE
 // ============================================================================
 
+// ============================================================================
+// SECTION MAPPINGS
+// ============================================================================
+
 /**
- * Default section configurations
+ * Centralized mapping of section enums to their human-readable display names.
+ * This provides a single source of truth for section naming throughout the application.
+ * 
+ * @example
+ * const heroName = SECTION_NAMES[SectionEnum.Hero]; // Returns 'Hero'
+ */
+const SECTION_NAMES: Record<SectionEnum, string> = {
+  [SectionEnum.Hero]: 'Hero',
+  [SectionEnum.VideoHighlight]: 'Video Highlight',
+  [SectionEnum.Experience]: 'Experience',
+  [SectionEnum.Chef]: 'Chef',
+  [SectionEnum.Menu]: 'Menu',
+  [SectionEnum.Booking]: 'Booking',
+  [SectionEnum.Footer]: 'Footer'
+} as const;
+
+/**
+ * Centralized mapping of section enums to their navigation order indices.
+ * This defines the sequence in which sections appear in the application flow.
+ * Lower indices appear earlier in the navigation order.
+ * 
+ * @example
+ * const heroOrder = SECTION_ORDER[SectionEnum.Hero]; // Returns 0 (first section)
+ */
+const SECTION_ORDER: Record<SectionEnum, number> = {
+  [SectionEnum.Hero]: 0,
+  [SectionEnum.VideoHighlight]: 1,
+  [SectionEnum.Experience]: 2,
+  [SectionEnum.Chef]: 3,
+  [SectionEnum.Menu]: 4,
+  [SectionEnum.Booking]: 5,
+  [SectionEnum.Footer]: 6
+} as const;
+
+/**
+ * Creates a standardized section configuration using enum-driven approach.
+ * This factory function ensures consistent section configuration creation
+ * by automatically resolving display names and order indices from centralized mappings.
+ * 
+ * Benefits:
+ * - Eliminates manual configuration errors
+ * - Ensures consistency across all sections
+ * - Simplifies section creation process
+ * - Centralizes configuration logic
+ * 
+ * @param id - Section identifier
+ * @param overrides - Optional configuration overrides
+ * @returns Complete section configuration object with auto-resolved properties
+ * 
+ * @example
+ * const heroConfig = createSectionConfig(SectionEnum.Hero);
+ * // Returns: { id: SectionEnum.Hero, name: 'Hero', component: null, isActive: true, isVisible: true, metadata: { order: 0 } }
+ */
+function createSectionConfig(
+  id: SectionEnum,
+  overrides: Partial<SectionConfig> = {}
+): SectionConfig {
+  return {
+    id,
+    name: SECTION_NAMES[id],
+    component: null,
+    isActive: id === SectionEnum.Hero, // Only Hero is active by default
+    isVisible: true,
+    metadata: { order: SECTION_ORDER[id] },
+    ...overrides
+  };
+}
+
+/**
+ * Default section configurations using enum-driven approach
  */
 const defaultSections: SectionConfig[] = [
-  {
-    id: SectionEnum.Hero,
-    name: 'Hero',
-    component: null,
-    isActive: true,
-    isVisible: true,
-    metadata: { order: 0 }
-  },
-  {
-    id: SectionEnum.VideoHighlight,
-    name: 'Video Highlight',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 1 }
-  },
-  {
-    id: SectionEnum.Experience,
-    name: 'Experience',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 2 }
-  },
-  {
-    id: SectionEnum.Chef,
-    name: 'Chef',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 3 }
-  },
-  {
-    id: SectionEnum.Menu,
-    name: 'Menu',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 4 }
-  },
-  {
-    id: SectionEnum.Booking,
-    name: 'Booking',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 5 }
-  },
-  {
-    id: SectionEnum.Footer,
-    name: 'Footer',
-    component: null,
-    isActive: false,
-    isVisible: true,
-    metadata: { order: 6 }
-  }
+  createSectionConfig(SectionEnum.Hero),
+  createSectionConfig(SectionEnum.VideoHighlight),
+  createSectionConfig(SectionEnum.Experience),
+  createSectionConfig(SectionEnum.Chef),
+  createSectionConfig(SectionEnum.Menu),
+  createSectionConfig(SectionEnum.Booking),
+  createSectionConfig(SectionEnum.Footer)
 ];
 
 /**
@@ -347,6 +371,38 @@ export function resetSections(): void {
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
+
+/**
+ * Gets the display name for a section using enum mapping.
+ * This function provides a centralized way to retrieve human-readable
+ * section names from the SECTION_NAMES mapping.
+ * 
+ * @param sectionId - Section identifier
+ * @returns Display name of the section
+ * 
+ * @example
+ * const heroName = getSectionName(SectionEnum.Hero); // Returns 'Hero'
+ * const menuName = getSectionName(SectionEnum.Menu); // Returns 'Menu'
+ */
+export function getSectionName(sectionId: SectionEnum): string {
+  return SECTION_NAMES[sectionId];
+}
+
+/**
+ * Gets the order index for a section using enum mapping.
+ * This function provides access to the navigation order index
+ * from the SECTION_ORDER mapping, useful for sorting and positioning.
+ * 
+ * @param sectionId - Section identifier
+ * @returns Order index of the section (0-based)
+ * 
+ * @example
+ * const heroOrder = getSectionOrder(SectionEnum.Hero); // Returns 0 (first section)
+ * const footerOrder = getSectionOrder(SectionEnum.Footer); // Returns 6 (last section)
+ */
+export function getSectionOrder(sectionId: SectionEnum): number {
+  return SECTION_ORDER[sectionId];
+}
 
 /**
  * Gets all section IDs in order

@@ -24,9 +24,17 @@ import {
   nextHighlight,
   previousHighlight
 } from '../../../Stores/Guest/Viewport/Highlight';
-import type { SvelteComponent } from 'svelte';
+import {
+  ComponentId,
+  showComponent,
+  hideComponent
+} from '../../../Stores/Guest/Viewport/Visibility';
 
 // Type for Svelte components that can be dynamically imported
+/**
+ * Type definition for Svelte component constructors
+ * Ensures type safety for dynamically loaded components
+ */
 type ComponentType = any;
 
 /**
@@ -95,6 +103,8 @@ export interface NavigationOptions extends SectionOptions {
   componentConfig?: ComponentLoadConfig;
   /** Scroll behavior configuration */
   scrollConfig?: ScrollConfig;
+  /** Whether to manage component visibility automatically */
+  manageVisibility?: boolean;
   /** Callback function after navigation completes */
   onComplete?: (section: SectionEnum) => void;
   /** Callback function if navigation fails */
@@ -107,53 +117,37 @@ export interface NavigationOptions extends SectionOptions {
 
 /**
  * Lazy load components to avoid circular imports
- * @param componentName - Name of the component to load
+ * @param sectionId - Section enum identifier to load
  * @returns Promise that resolves to the component or null if failed
  */
-const loadComponent = async (componentName: string): Promise<ComponentType | null> => {
+const loadComponent = async (sectionId: SectionEnum): Promise<ComponentType | null> => {
   try {
-    switch (componentName) {
-      case 'HeroSection':
-        return (await import('../../../Modules/Guest/Hero/Index.svelte')).default;
-      case 'VideoHighlightSection':
-        return (await import('../../../Modules/Guest/VideoHighlight/Index.svelte')).default;
-      case 'ExperienceSection':
-        return (await import('../../../Modules/Guest/OurExperience/Index.svelte')).default;
-      case 'ChefSection':
-        return (await import('../../../Modules/Guest/OurChef/Index.svelte')).default;
-      case 'MenuSection':
-        return (await import('../../../Modules/Guest/Menu/Index.svelte')).default;
-      case 'ReservationSection':
-        return (await import('../../../Modules/Guest/Reservation/Index.svelte')).default;
-      case 'FooterSection':
-        return (await import('../../../Modules/Guest/Footer/Index.svelte')).default;
+    switch (sectionId) {
+      case SectionEnum.Hero:
+        return (await import('@Modules/Guest/Hero/Index.svelte')).default;
+      case SectionEnum.VideoHighlight:
+        return (await import('@Modules/Guest/VideoHighlight/Index.svelte')).default;
+      case SectionEnum.Experience:
+        return (await import('@Modules/Guest/OurExperience/Index.svelte')).default;
+      case SectionEnum.Chef:
+        return (await import('@Modules/Guest/OurChef/Index.svelte')).default;
+      case SectionEnum.Menu:
+        return (await import('@Modules/Guest/Menu/Index.svelte')).default;
+      case SectionEnum.Booking:
+        return (await import('@Modules/Guest/Reservation/Index.svelte')).default;
+      case SectionEnum.Footer:
+        return (await import('@Modules/Guest/Footer/Index.svelte')).default;
       default:
+        console.warn(`Unknown section ID: ${sectionId}`);
         return null;
     }
   } catch (error) {
-    console.error(`Failed to load component ${componentName}:`, error);
+    console.error(`Failed to load component for section ${sectionId}:`, error);
     return null;
   }
 };
 
-/**
- * Maps section enum to component name
- * @param sectionId - Section identifier
- * @returns Component name or null
- */
-function getComponentNameForSection(sectionId: SectionEnum): string | null {
-  const componentMap: Record<SectionEnum, string> = {
-    [SectionEnum.Hero]: 'HeroSection',
-    [SectionEnum.VideoHighlight]: 'VideoHighlightSection',
-    [SectionEnum.Experience]: 'ExperienceSection',
-    [SectionEnum.Chef]: 'ChefSection',
-    [SectionEnum.Menu]: 'MenuSection',
-    [SectionEnum.Booking]: 'ReservationSection',
-    [SectionEnum.Footer]: 'FooterSection'
-  };
-  
-  return componentMap[sectionId] || null;
-}
+// Component mapping is now handled directly in loadComponent function
 
 /**
  * Loads a component for a specific section
@@ -182,14 +176,9 @@ export async function loadSectionComponent(
   }
   
   try {
-    const componentName = getComponentNameForSection(sectionId);
-    if (!componentName) {
-      throw new Error(`No component mapping found for section ${sectionId}`);
-    }
-    
     // Load component with timeout
     const component = await Promise.race([
-      loadComponent(componentName),
+      loadComponent(sectionId),
       new Promise<null>((_, reject) => 
         setTimeout(() => reject(new Error('Component load timeout')), loadTimeout)
       )
@@ -335,6 +324,34 @@ export async function scrollToSection(
 }
 
 // ============================================================================
+// VISIBILITY MANAGEMENT
+// ============================================================================
+
+/**
+ * Manages component visibility based on section changes
+ * @param sectionId - Current section
+ */
+function manageComponentVisibility(sectionId: SectionEnum): void {
+  // Show ScrollIndicator only for Hero section
+  if (sectionId === SectionEnum.Hero) {
+    showComponent(ComponentId.ScrollIndicator);
+  } else {
+    hideComponent(ComponentId.ScrollIndicator);
+  }
+  
+  // Add other component visibility rules here as needed
+  // Example: Show/hide navigation, footer, etc. based on section
+}
+
+/**
+ * Initializes component visibility for the current section
+ */
+export function initializeComponentVisibility(): void {
+  const currentSection = getCurrentSection();
+  manageComponentVisibility(currentSection);
+}
+
+// ============================================================================
 // CORE NAVIGATION FUNCTIONS
 // ============================================================================
 
@@ -353,6 +370,7 @@ export async function jumpToSection(
     scrollConfig = {},
     triggerScroll = true,
     loadComponent: shouldLoadComponent = true,
+    manageVisibility = true,
     onComplete,
     onError
   } = options;
@@ -373,6 +391,11 @@ export async function jumpToSection(
     
     // Update section state
     setActiveSection(sectionId, options);
+    
+    // Manage component visibility based on section
+    if (manageVisibility) {
+      manageComponentVisibility(sectionId);
+    }
     
     // Sync with highlight store
     syncWithSectionChange(sectionId, {

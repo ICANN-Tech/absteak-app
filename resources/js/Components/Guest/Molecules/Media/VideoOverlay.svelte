@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Modal from '../../../Global/Atoms/Modal.svelte';
+
 	// Props
 	export let show = false;
 	export let videoUrl: string;
@@ -12,7 +14,11 @@
 	export let closeOnEscape = true;
 	export let preload: 'none' | 'metadata' | 'auto' = 'metadata';
 
-	// Event callback props (Svelte 5 approach)
+	// Animation props
+	export let animationDuration = 300;
+
+	// Event callback props
+	export let onopen: (() => void) | undefined = undefined;
 	export let onclose: (() => void) | undefined = undefined;
 	export let onvideoended: (() => void) | undefined = undefined;
 	export let onvideoplay: (() => void) | undefined = undefined;
@@ -22,26 +28,18 @@
 	let videoElement: HTMLVideoElement;
 
 	// Handle modal close
-	function closeModal() {
-		show = false;
+	function handleModalClose() {
+		// Stop video immediately
 		if (videoElement) {
 			videoElement.pause();
 		}
+		show = false;
 		onclose?.();
 	}
 
-	// Handle backdrop click
-	function handleBackdropClick(event: MouseEvent) {
-		if (closeOnBackdropClick && event.target === event.currentTarget) {
-			closeModal();
-		}
-	}
-
-	// Handle escape key
-	function handleKeydown(event: KeyboardEvent) {
-		if (closeOnEscape && event.key === 'Escape') {
-			closeModal();
-		}
+	// Handle modal open
+	function handleModalOpen() {
+		onopen?.();
 	}
 
 	// Video event handlers
@@ -62,56 +60,107 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
-{#if show}
-	<div 
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-		on:click={handleBackdropClick}
-		on:keydown={handleKeydown}
-		role="dialog"
-		aria-modal="true"
-		aria-label="Video overlay"
-		tabindex="-1"
-	>
-		<div class="relative w-[90vw] max-w-4xl aspect-video">
-			<!-- Close button -->
-			<button
-				class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
-				on:click={closeModal}
-				aria-label="Close video"
-			>
-				<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-				</svg>
-			</button>
-
-			<!-- Video element -->
-			<video
-				bind:this={videoElement}
-				src={videoUrl}
-				class="w-full h-full object-cover rounded-lg shadow-2xl"
-				controls
-				{autoplay}
-				{preload}
-				on:play={handleVideoPlay}
-				on:pause={handleVideoPause}
-				on:ended={handleVideoEnded}
-				on:error={handleVideoError}
-			>
-				{#if captionUrl}
-					<track
-						kind="captions"
-						src={captionUrl}
-						srclang={captionLanguage}
-						label={captionLabel}
-						default
-					/>
-				{:else}
-					<track kind="captions" srclang="en" label="No captions available" />
-				{/if}
-				Your browser does not support the video tag.
-			</video>
-		</div>
+<Modal 
+	bind:show
+	size="video"
+	closeOnBackdropClick={closeOnBackdropClick}
+	closeOnEscape={closeOnEscape}
+	animationDuration={animationDuration}
+	showHeader={false}
+	showCloseButton={true}
+	closeButtonPosition="outside"
+	onopen={handleModalOpen}
+	onclose={handleModalClose}
+	preventScroll={true}
+	trapFocus={false}
+>
+	<!-- Video container -->
+	<div class="video-container relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+		<!-- Video element -->
+		<video
+			bind:this={videoElement}
+			src={videoUrl}
+			class="video-element w-full h-full object-contain"
+			controls
+			{autoplay}
+			{preload}
+			controlsList="nodownload"
+			on:play={handleVideoPlay}
+			on:pause={handleVideoPause}
+			on:ended={handleVideoEnded}
+			on:error={handleVideoError}
+		>
+			{#if captionUrl}
+				<track
+					kind="captions"
+					src={captionUrl}
+					srclang={captionLanguage}
+					label={captionLabel}
+					default
+				/>
+			{:else}
+				<track kind="captions" srclang="en" label="No captions available" />
+			{/if}
+			Your browser does not support the video tag.
+		</video>
 	</div>
-{/if}
+</Modal>
+
+<style>
+	.video-overlay-backdrop {
+		background: rgba(0, 0, 0, 0.85);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+	}
+
+	.video-overlay-content {
+		max-height: 90vh;
+		max-width: 90vw;
+	}
+
+	.video-container {
+		box-shadow: 
+			0 25px 50px -12px rgba(0, 0, 0, 0.5),
+			0 0 0 1px rgba(255, 255, 255, 0.1);
+	}
+
+	.video-element {
+		border-radius: inherit;
+	}
+
+	/* Responsive design */
+	@media (max-width: 768px) {
+		.video-overlay-content {
+			max-width: 95vw;
+			max-height: 85vh;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.video-overlay-backdrop {
+			padding: 1rem;
+		}
+		
+		.video-overlay-content {
+			max-width: 100%;
+			max-height: 80vh;
+		}
+	}
+
+	/* Focus styles for accessibility */
+	.video-overlay-backdrop:focus {
+		outline: 2px solid rgba(59, 130, 246, 0.5);
+		outline-offset: -2px;
+	}
+
+	/* Custom video controls styling */
+	.video-element::-webkit-media-controls-panel {
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+	}
+
+	.video-element::-webkit-media-controls-play-button,
+	.video-element::-webkit-media-controls-volume-slider,
+	.video-element::-webkit-media-controls-timeline {
+		filter: brightness(1.2);
+	}
+</style>

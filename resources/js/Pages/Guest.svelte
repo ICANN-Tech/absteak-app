@@ -1,61 +1,74 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from 'svelte';
     import { sections } from "@Const/Guest/Control/Section";
     import { 
         currentSectionIndex, 
-        navigationStore 
+        navigationStore
     } from "@Stores/Guest/Viewport/Section";
-    import {
-        createMouseNavigationState,
-        attachMouseNavigation,
-        detachMouseNavigation,
-        type MouseNavigationState,
-    } from "@Utils/Guest/Navigation/Mouse";
-    import {
-        createKeyboardNavigationState,
-        attachKeyboardNavigation,
-        detachKeyboardNavigation,
-        type KeyboardNavigationState,
-    } from "@Utils/Guest/Navigation/Keyboard";
     import { type SectionData } from "@Utils/Guest/Viewport/Section";
+    import { 
+        initializeNavigation,
+        cleanupNavigation,
+        type NavigationState
+    } from "@Utils/Guest/Navigation/Index";
 
+    import GuestLayout from "../Layouts/Guest.svelte";
     import Section from "../Components/Guest/Organisme/Layout/Section.svelte";
     import { Loading } from "../Components/Guest/Atoms/Index";
 
     /**
-     * Component state
+     * Navigation state management
      */
-    let mouseNavigationState: MouseNavigationState;
-    let keyboardNavigationState: KeyboardNavigationState;
-
+    let navigationState: NavigationState;
+    let navigationCleanup: (() => void) | null = null;
+    
     /**
      * Reactive statements for component state management
      */
     $: currentIndex = $currentSectionIndex;
     $: sectionsData = sections as SectionData[];
     $: isLoading = $navigationStore.isLoading;
+    
 
+    
     /**
-     * Initialize component on mount
+     * Setup navigation using existing utilities
      */
     onMount(() => {
-        // Initialize navigation states
-        mouseNavigationState = createMouseNavigationState();
-        keyboardNavigationState = createKeyboardNavigationState();
-
-        // Attach navigation handlers
-        attachMouseNavigation(mouseNavigationState);
-        attachKeyboardNavigation(keyboardNavigationState);
-
-        // Cleanup function
-        return () => {
-            detachMouseNavigation(mouseNavigationState);
-            detachKeyboardNavigation(keyboardNavigationState);
-        };
+        if (typeof window !== 'undefined') {
+            // Initialize navigation system
+            const { state, cleanup } = initializeNavigation();
+            navigationState = state;
+            navigationCleanup = cleanup;
+            
+            // Prevent default scroll behavior on body
+            document.body.style.overflow = 'hidden';
+        }
+    });
+    
+    /**
+     * Cleanup navigation handlers
+     */
+    onDestroy(() => {
+        if (typeof window !== 'undefined') {
+            // Clean up navigation system
+            if (navigationCleanup) {
+                navigationCleanup();
+                navigationCleanup = null;
+            }
+            
+            // Additional cleanup for navigation state
+            if (navigationState) {
+                cleanupNavigation(navigationState);
+            }
+            
+            // Restore default scroll behavior
+            document.body.style.overflow = 'auto';
+        }
     });
 </script>
 
-<main class="bg-primary-700/5 min-h-screen">
+<GuestLayout>
     <!-- Loading State -->
     {#if isLoading}
         <div class="loading-container">
@@ -79,21 +92,13 @@
             <Section section={sectionData} {isActive} {slideOffset} />
         {/each}
     {/if}
-</main>
+</GuestLayout>
 
-<!-- Hide scrollbar globally -->
 <style>
-    :global(html, body) {
-        overflow-x: hidden;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
     /**
-	 * Loading container styles
-	 * Provides full-screen overlay for loading state
-	 */
+     * Loading container styles
+     * Provides full-screen overlay for loading state
+     */
     .loading-container {
         position: fixed;
         top: 0;
@@ -109,14 +114,62 @@
         z-index: 999;
         transition: opacity 0.3s ease-in-out;
     }
-
-    /* Hide scrollbars but allow scrolling */
-    :global(*) {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* Internet Explorer 10+ */
+    
+    /**
+     * Global scroll behavior enhancements
+     */
+    :global(html) {
+        scroll-behavior: smooth;
+        overflow: hidden;
     }
-
-    :global(*::-webkit-scrollbar) {
-        display: none; /* WebKit */
+    
+    :global(body) {
+        overflow: hidden;
+        height: 100vh;
+        position: relative;
+    }
+    
+    /**
+     * Section transition styles
+     */
+    :global(.section-transition) {
+        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                   opacity 0.6s ease-in-out;
+        will-change: transform, opacity;
+    }
+    
+    /**
+     * Scroll indicator enhancements
+     */
+    :global(.scroll-indicator) {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        will-change: opacity, transform;
+    }
+    
+    /**
+     * Performance optimizations
+     */
+    :global(.section-container) {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+    
+    /**
+     * Mobile touch improvements
+     */
+    :global(body) {
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /**
+     * Prevent text selection during scroll transitions
+     */
+    :global(.scrolling) {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
     }
 </style>
