@@ -343,15 +343,34 @@ function handleSectionActivation(event: SectionActivationEvent): void {
     logMessage(`Section transition: ${previousSectionName} → ${activeSectionName}`);
   }
   
-  // Manage ScrollIndicator visibility based on active section
-  if (event.activeSection === SectionEnum.Hero) {
-    showComponent(ComponentId.ScrollIndicator);
-    showComponent(ComponentId.Locale);
-    logMessage('ScrollIndicator and Locale visibility set to true (Hero section active)');
-  } else {
-    hideComponent(ComponentId.ScrollIndicator);
-    hideComponent(ComponentId.Locale);
-    logMessage('ScrollIndicator and Locale visibility set to false (non-Hero section active)');
+  // Manage component visibility based on active section
+  switch (event.activeSection) {
+    case SectionEnum.Hero:
+      // Hero section: Show scroll indicator, locale, compact navbar
+      // Hide BackToTop and Highlight components
+      showComponent(ComponentId.ScrollIndicator);
+      showComponent(ComponentId.Locale);
+      showComponent(ComponentId.Navigation); // Show navbar in compact mode
+      hideComponent(ComponentId.BackToTop);
+      hideComponent(ComponentId.Highlight);
+      logMessage('Hero section: ScrollIndicator, Locale, Navigation (compact) visible; BackToTop, Highlight hidden');
+      break;
+
+    case SectionEnum.Footer:
+      // Footer section: Hide navigation, show BackToTop
+      // Hide Highlight component
+      showComponent(ComponentId.BackToTop);
+      hideComponent(ComponentId.Highlight);
+      logMessage('Footer section: BackToTop visible; Navigation, Highlight hidden');
+      break;
+      
+      default:
+      hideComponent(ComponentId.Navigation);
+      hideComponent(ComponentId.ScrollIndicator);
+      showComponent(ComponentId.Highlight);
+      hideComponent(ComponentId.BackToTop);
+      logMessage('Default section: Navigation, Highlight visible; ScrollIndicator, BackToTop hidden');
+      break;
   }
   
   // Log additional section details if available
@@ -469,6 +488,14 @@ function subscribeToNavigationChanges(): () => void {
       };
      
       handleSectionActivation(activationEvent);
+      
+      // Sync highlight with section change for proper highlight indicator
+      import('../../../Stores/Guest/Viewport/Highlight').then(({ syncWithSectionChange }) => {
+        syncWithSectionChange(currentState.currentSection, {
+          triggerNavigation: false,
+          respectLocks: true
+        });
+      }).catch(console.warn);
     }
     
     // Handle other navigation state changes

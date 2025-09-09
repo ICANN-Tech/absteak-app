@@ -16,7 +16,7 @@
 	$: contentContainerClasses = `${CONTAINER_SECTION.videoHighlight.content.base} ${flexDirection}`;
 </script>
 
-<section class={sectionClasses} style={sectionStyle}>
+<section id="video-highlight" class={sectionClasses} style={sectionStyle}>
 	<div class={contentContainerClasses}>
 		<LeftContainer />
 

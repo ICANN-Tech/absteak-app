@@ -13,7 +13,7 @@
 </script>
 
 <!-- TODO: Replace with proper HeroCarousel component -->
-<div class="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+<section id="hero" class="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
 	<!-- Background Image -->
 	{#if IMAGES && IMAGES[0]}
 		<div class="absolute inset-0 bg-cover bg-center opacity-50" style="background-image: url('{IMAGES[0].url}')"></div>
@@ -38,4 +38,4 @@
 			<ButtonGroup />
 		</div>
 	</div>
-</div>
+</section>

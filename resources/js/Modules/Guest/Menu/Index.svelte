@@ -9,6 +9,7 @@
 </script>
 
 <section
+	id="menu"
 	class={`${CONTAINER_SECTION.menu.base} bg-cover bg-center`}
 	style="background-image: url('{$currentBackground}');"
 >

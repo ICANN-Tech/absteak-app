@@ -5,7 +5,7 @@
 	import SocialMedia from './Parts/Container/SocialMedia.svelte';
 </script>
 
-<footer class={CONTAINER_SECTION.footer.base}>
+<footer id="footer" class={CONTAINER_SECTION.footer.base}>
 		<!-- Background decorative elements -->
 		<div class={CONTAINER_SECTION.footer.background.base}>
 			<div class={CONTAINER_SECTION.footer.background.first}></div>

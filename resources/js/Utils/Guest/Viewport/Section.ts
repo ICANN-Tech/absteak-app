@@ -82,6 +82,25 @@ export interface ComponentLoadConfig {
 }
 
 /**
+ * Animation direction for section transitions
+ */
+export type AnimationDirection = 'up' | 'down' | 'none';
+
+/**
+ * Animation configuration for section transitions
+ */
+export interface AnimationConfig {
+  /** Animation direction */
+  direction?: AnimationDirection;
+  /** Animation duration in milliseconds */
+  duration?: number;
+  /** Animation easing function */
+  easing?: string;
+  /** Whether to use slide animation */
+  useSlideAnimation?: boolean;
+}
+
+/**
  * Scroll behavior configuration for section navigation
  */
 export interface ScrollConfig {
@@ -93,6 +112,8 @@ export interface ScrollConfig {
   customOffset?: number;
   /** Duration for smooth scroll animation */
   duration?: number;
+  /** Animation configuration */
+  animation?: AnimationConfig;
 }
 
 /**
@@ -105,6 +126,8 @@ export interface NavigationOptions extends SectionOptions {
   scrollConfig?: ScrollConfig;
   /** Whether to manage component visibility automatically */
   manageVisibility?: boolean;
+  /** Animation direction override */
+  animationDirection?: AnimationDirection;
   /** Callback function after navigation completes */
   onComplete?: (section: SectionEnum) => void;
   /** Callback function if navigation fails */
@@ -246,6 +269,7 @@ export async function preloadAdjacentComponents(currentSectionId: SectionEnum): 
 function getSectionElement(sectionId: SectionEnum): Element | null {
   // Try multiple possible selectors
   const selectors = [
+    `#${sectionId}`,
     `#section-${sectionId.toLowerCase()}`,
     `[data-section="${sectionId}"]`,
     `[data-section-id="${sectionId}"]`,
@@ -263,25 +287,145 @@ function getSectionElement(sectionId: SectionEnum): Element | null {
 }
 
 /**
- * Scrolls to a specific section with smooth animation
+ * Determines animation direction based on section navigation
+ * @param fromSection - Current section
+ * @param toSection - Target section
+ * @returns Animation direction
+ */
+function getAnimationDirection(fromSection: SectionEnum, toSection: SectionEnum): AnimationDirection {
+  const sectionOrder = [
+    SectionEnum.Hero,
+    SectionEnum.VideoHighlight,
+    SectionEnum.Experience,
+    SectionEnum.Chef,
+    SectionEnum.Menu,
+    SectionEnum.Booking,
+    SectionEnum.Footer
+  ];
+  
+  const fromIndex = sectionOrder.indexOf(fromSection);
+  const toIndex = sectionOrder.indexOf(toSection);
+  
+  if (fromIndex === -1 || toIndex === -1) {
+    return 'none';
+  }
+  
+  return toIndex > fromIndex ? 'down' : 'up';
+}
+
+/**
+ * Creates CSS animation styles for section transitions
+ * @param direction - Animation direction
+ * @param config - Animation configuration
+ * @returns CSS animation styles
+ */
+function createAnimationStyles(direction: AnimationDirection, config: AnimationConfig): string {
+  const { duration = 800, easing = 'cubic-bezier(0.4, 0.0, 0.2, 1)' } = config;
+  
+  if (direction === 'none') {
+    return '';
+  }
+  
+  const translateY = direction === 'down' ? '-100vh' : '100vh';
+  
+  return `
+    @keyframes slideSection${direction === 'down' ? 'Down' : 'Up'} {
+      0% {
+        transform: translateY(${direction === 'down' ? '100vh' : '-100vh'});
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .section-slide-${direction} {
+      animation: slideSection${direction === 'down' ? 'Down' : 'Up'} ${duration}ms ${easing} forwards;
+    }
+  `;
+}
+
+/**
+ * Applies animation to section element
+ * @param element - Section element
+ * @param direction - Animation direction
+ * @param config - Animation configuration
+ * @returns Promise that resolves when animation completes
+ */
+function applySectionAnimation(
+  element: Element,
+  direction: AnimationDirection,
+  config: AnimationConfig
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (direction === 'none' || !config.useSlideAnimation) {
+      resolve();
+      return;
+    }
+    
+    const { duration = 800 } = config;
+    
+    // Inject animation styles if not already present
+    const styleId = `section-animation-styles-${direction}`;
+    if (!document.getElementById(styleId)) {
+      const styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      styleElement.textContent = createAnimationStyles(direction, config);
+      document.head.appendChild(styleElement);
+    }
+    
+    // Apply animation class
+    const animationClass = `section-slide-${direction}`;
+    element.classList.add(animationClass);
+    
+    // Remove animation class after completion
+    const cleanup = () => {
+      element.classList.remove(animationClass);
+      resolve();
+    };
+    
+    // Listen for animation end
+    element.addEventListener('animationend', cleanup, { once: true });
+    
+    // Fallback timeout
+    setTimeout(cleanup, duration + 100);
+  });
+}
+
+/**
+ * Scrolls to a specific section with smooth animation and slide transitions
  * @param sectionId - Section to scroll to
  * @param config - Scroll configuration
+ * @param fromSection - Current section for animation direction
  * @returns Promise that resolves when scroll completes
  */
 export async function scrollToSection(
   sectionId: SectionEnum,
-  config: ScrollConfig = {}
+  config: ScrollConfig = {},
+  fromSection?: SectionEnum
 ): Promise<void> {
   const {
     behavior = 'smooth',
     offsetForHeader = true,
     customOffset = 0,
-    duration = 800
+    duration = 600,
+    animation = {
+      useSlideAnimation: true,
+      duration: 600,
+      easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    }
   } = config;
   
   const element = getSectionElement(sectionId);
   if (!element) {
     throw new Error(`Section element not found for ${sectionId}`);
+  }
+  
+  // Determine animation direction
+  let animationDirection: AnimationDirection = 'none';
+  if (fromSection && animation.useSlideAnimation) {
+    animationDirection = config.animation?.direction || getAnimationDirection(fromSection, sectionId);
   }
   
   const rect = element.getBoundingClientRect();
@@ -298,15 +442,44 @@ export async function scrollToSection(
   // Apply custom offset
   targetY += customOffset;
   
-  // Perform scroll
-  if (behavior === 'smooth' && 'scrollBehavior' in document.documentElement.style) {
-    window.scrollTo({
-      top: targetY,
-      behavior: 'smooth'
-    });
+  try {
+     // Apply enhanced scroll animation without blocking
+     if (animation.useSlideAnimation && animationDirection !== 'none') {
+       // Apply subtle transform animation
+       const htmlElement = element as HTMLElement;
+       const translateY = animationDirection === 'down' ? '-20px' : '20px';
+       htmlElement.style.transition = `transform ${animation.duration}ms ${animation.easing}, opacity ${animation.duration}ms ${animation.easing}`;
+       htmlElement.style.transform = `translateY(${translateY})`;
+       htmlElement.style.opacity = '0.8';
+       
+       // Perform smooth scroll
+       window.scrollTo({
+         top: targetY,
+         behavior: 'smooth'
+       });
+       
+       // Reset transform after brief delay
+       setTimeout(() => {
+         htmlElement.style.transform = 'translateY(0)';
+         htmlElement.style.opacity = '1';
+         
+         // Clean up styles after animation
+         setTimeout(() => {
+           htmlElement.style.transition = '';
+           htmlElement.style.transform = '';
+           htmlElement.style.opacity = '';
+         }, animation.duration);
+       }, 100);
+     } else {
+       // Simple smooth scroll
+       window.scrollTo({
+         top: targetY,
+         behavior: 'smooth'
+       });
+     }
     
-    // Wait for scroll to complete
-    return new Promise(resolve => {
+    // Wait for scroll animation to complete
+    await new Promise<void>(resolve => {
       const startTime = Date.now();
       const checkScroll = () => {
         if (Date.now() - startTime >= duration) {
@@ -317,9 +490,13 @@ export async function scrollToSection(
       };
       checkScroll();
     });
-  } else {
-    window.scrollTo(0, targetY);
-    return Promise.resolve();
+  } catch (error) {
+    console.error('Error during section scroll:', error);
+    // Fallback to simple scroll
+    window.scrollTo({
+      top: targetY,
+      behavior: 'smooth'
+    });
   }
 }
 
@@ -356,7 +533,7 @@ export function initializeComponentVisibility(): void {
 // ============================================================================
 
 /**
- * Jumps directly to a specific section
+ * Jumps directly to a specific section with smooth slide animations
  * @param sectionId - Section to jump to
  * @param options - Navigation options
  * @returns Promise that resolves when navigation completes
@@ -367,19 +544,26 @@ export async function jumpToSection(
 ): Promise<void> {
   const {
     componentConfig = {},
-    scrollConfig = {},
+    scrollConfig = {
+      animation: {
+        useSlideAnimation: true,
+        duration: 800,
+        easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)'
+      }
+    },
     triggerScroll = true,
     loadComponent: shouldLoadComponent = true,
     manageVisibility = true,
+    animationDirection,
     onComplete,
     onError
   } = options;
   
   try {
-    // Set navigation loading state
-    setNavigationLoading(true);
+    // Get current section for animation direction
+    const currentSection = getCurrentSection();
     
-    // Load component if needed
+    // Load component if needed (without loading state to avoid UI interference)
     if (shouldLoadComponent) {
       await loadSectionComponent(sectionId, componentConfig);
       
@@ -403,9 +587,14 @@ export async function jumpToSection(
       respectLocks: true
     });
     
-    // Scroll to section if enabled
+    // Apply animation direction override if provided
+    if (animationDirection && scrollConfig.animation) {
+      scrollConfig.animation.direction = animationDirection;
+    }
+    
+    // Scroll to section with animation if enabled
     if (triggerScroll) {
-      await scrollToSection(sectionId, scrollConfig);
+      await scrollToSection(sectionId, scrollConfig, currentSection);
     }
     
     // Call completion callback
@@ -415,14 +604,11 @@ export async function jumpToSection(
     console.error(`Failed to jump to section ${sectionId}:`, navigationError);
     onError?.(navigationError);
     throw navigationError;
-  } finally {
-    // Clear navigation loading state
-    setNavigationLoading(false);
   }
 }
 
 /**
- * Navigates to the next section
+ * Navigates to the next section with slide down animation
  * @param options - Navigation options
  * @returns Promise that resolves when navigation completes
  */
@@ -446,11 +632,27 @@ export async function navigateToNextSection(options: NavigationOptions = {}): Pr
     respectLocks: true
   });
   
-  await jumpToSection(nextSection.id, options);
+  // Force slide down animation for next section navigation
+  const navigationOptions: NavigationOptions = {
+    ...options,
+    animationDirection: 'down',
+    scrollConfig: {
+      ...options.scrollConfig,
+      animation: {
+        useSlideAnimation: true,
+        duration: 800,
+        easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+        direction: 'down',
+        ...options.scrollConfig?.animation
+      }
+    }
+  };
+  
+  await jumpToSection(nextSection.id, navigationOptions);
 }
 
 /**
- * Navigates to the previous section
+ * Navigates to the previous section with slide up animation
  * @param options - Navigation options
  * @returns Promise that resolves when navigation completes
  */
@@ -474,7 +676,23 @@ export async function navigateToPreviousSection(options: NavigationOptions = {})
     respectLocks: true
   });
   
-  await jumpToSection(prevSection.id, options);
+  // Force slide up animation for previous section navigation
+  const navigationOptions: NavigationOptions = {
+    ...options,
+    animationDirection: 'up',
+    scrollConfig: {
+      ...options.scrollConfig,
+      animation: {
+        useSlideAnimation: true,
+        duration: 800,
+        easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+        direction: 'up',
+        ...options.scrollConfig?.animation
+      }
+    }
+  };
+  
+  await jumpToSection(prevSection.id, navigationOptions);
 }
 
 /**

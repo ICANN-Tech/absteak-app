@@ -15,7 +15,7 @@
 	$: contentContainerClasses = `${CONTAINER_SECTION.chef.content.base} ${flexDirection}`;
 </script>
 
-<section class={sectionClasses} style={sectionStyle}>
+<section id="chef" class={sectionClasses} style={sectionStyle}>
 	<div class={contentContainerClasses}>
 		<LeftContainer />
 

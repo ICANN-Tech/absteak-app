@@ -17,7 +17,7 @@
 	$: contentContainerClasses = `${CONTAINER_SECTION.experience.content.base} ${flexDirection}`;
 </script>
 
-<section class={sectionClasses} style={sectionStyle}>
+<section id="experience" class={sectionClasses} style={sectionStyle}>
 	<div class={contentContainerClasses}>
 		<LeftContainer />
 		<RightContainer />
