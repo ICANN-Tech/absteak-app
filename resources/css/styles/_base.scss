@@ -1,0 +1,22 @@
+/* Base styles - minimal setup */
+@use './_variables.scss' as vars;
+
+html, body {
+  margin: 0;
+  padding: 0;
+  /* Apply a default font for the whole app */
+  font-family: vars.$font-sans; 
+  line-height: 1.6;
+  color: #333;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+}
+
+// Global utility class for the Pacifico font
+.font-pacifico {
+  font-family: vars.$font-cursive; /* misalnya 'Pacifico', cursive */
+  font-weight: 400;
+  transform: scaleY(0.95);
+  line-height: 1.4;
+  margin: 0.5em 0;      /* jarak antar paragraf */
+}

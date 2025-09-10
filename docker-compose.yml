@@ -52,7 +52,7 @@ services:
       MONGO_DATABASE: absteak_db
       MONGO_USERNAME: absteak_app
       MONGO_PASSWORD: absteak_app_password_2024
-      FILESYSTEM_DISK: minio
+      FILESYSTEM_DISK: local
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin123
       AWS_DEFAULT_REGION: us-east-1
@@ -77,10 +77,13 @@ services:
   db:
     image: postgres:15-alpine
     container_name: postgres
+    user: "999:999"
     environment:
       POSTGRES_DB: app_db
       POSTGRES_USER: absteak_user
       POSTGRES_PASSWORD: absteak_secure_password_2024
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
@@ -94,6 +97,28 @@ services:
     networks:
       - absteak
     restart: unless-stopped
+    command: [
+      "postgres",
+      "-c", "shared_preload_libraries=pg_stat_statements",
+      "-c", "pg_stat_statements.track=all",
+      "-c", "max_connections=200",
+      "-c", "shared_buffers=256MB",
+      "-c", "effective_cache_size=1GB",
+      "-c", "work_mem=4MB",
+      "-c", "maintenance_work_mem=64MB",
+      "-c", "random_page_cost=1.1",
+      "-c", "temp_file_limit=2GB",
+      "-c", "log_min_duration_statement=1000",
+      "-c", "log_connections=on",
+      "-c", "log_disconnections=on",
+      "-c", "log_lock_waits=on",
+      "-c", "log_statement=mod",
+      "-c", "log_temp_files=0",
+      "-c", "track_counts=on",
+      "-c", "track_io_timing=on",
+      "-c", "track_functions=pl",
+      "-c", "checkpoint_completion_target=0.9"
+    ]
 
   flowise:
     image: flowiseai/flowise:3.0.5

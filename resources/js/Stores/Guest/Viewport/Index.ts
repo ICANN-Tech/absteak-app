@@ -59,7 +59,9 @@ export { visibilityStore } from './Visibility';
 export {
   showComponent,
   hideComponent,
-  toggleComponentVisibility
+  toggleComponentVisibility,
+  hideAllComponents,
+  showAllComponents
 } from './Visibility';
 
 
@@ -113,6 +115,8 @@ import {
   showComponent,
   hideComponent,
   toggleComponentVisibility,
+  hideAllComponents,
+  showAllComponents,
   isComponentVisible,
   resetAllComponents,
   createVisibilityState,
@@ -167,7 +171,9 @@ export default {
   showComponent,
   hideComponent,
   toggleComponentVisibility,
-  
+  hideAllComponents,
+  showAllComponents,
+
   // Utility functions
   isComponentVisible,
   resetAllComponents,

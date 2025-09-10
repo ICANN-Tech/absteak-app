@@ -90,7 +90,7 @@
         class={CONTAINER_PRESETS.positioned.leftCenter}
         transition:fly={{ x: -100, duration: 600 }}
     >
-        <div class={`${CONTAINER_PRESETS.panel.blur} p-2`}>
+        <div class={`${CONTAINER_PRESETS.panel.blur} p-2 opacity-60`}>
             <Selector locale={$localeStore.current} size="xs" />
         </div>
     </div>

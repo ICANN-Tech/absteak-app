@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from '../../../Global/Atoms/Modal.svelte';
+	import { hideAllComponents, showAllComponents } from '@Stores/Guest/Viewport/Index';
 
 	// Props
 	export let show = false;
@@ -33,12 +34,16 @@
 		if (videoElement) {
 			videoElement.pause();
 		}
+		// Restore all components to their previous visibility state
+		showAllComponents();
 		show = false;
 		onclose?.();
 	}
 
 	// Handle modal open
 	function handleModalOpen() {
+		// Hide all components when video overlay opens
+		hideAllComponents();
 		onopen?.();
 	}
 
@@ -75,7 +80,7 @@
 	trapFocus={false}
 >
 	<!-- Video container -->
-	<div class="video-container relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+	<div class="video-container relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
 		<!-- Video element -->
 		<video
 			bind:this={videoElement}

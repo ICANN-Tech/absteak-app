@@ -1,0 +1,14 @@
+/* =============================================================================
+   GLOBAL STYLES
+   =============================================================================
+   Main entry point for all SCSS styles
+   Import order is important - variables first, then base styles, then components */
+
+/* 1. Variables - Must be imported first */
+@import './_variables.scss';
+
+/* 2. Base styles and resets */
+@import './_base.scss';
+
+/* 3. Component styles */
+@import './_scrollbar.scss';

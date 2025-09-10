@@ -4,6 +4,7 @@
 	import { onDestroy } from 'svelte';
 	import Kbd from '@Components/Global/Atoms/Kbd.svelte';
 	import { LeftMouseIcon } from '@Components/Global/Atoms/Icons/Index';
+	import { lockScrolling, unlockScrolling } from '@Utils/Global/ScrollLock';
 
 	// Props
 	export let show = false;
@@ -36,12 +37,18 @@
 	$: {
 		if (show !== previousShowState) {
 			if (show) {
+				// Lock scrolling when modal opens
+				lockScrolling('Modal opened');
+				
 				onopen?.();
 				// Store the currently focused element
 				if (typeof document !== 'undefined') {
 					previousActiveElement = document.activeElement as HTMLElement;
 				}
 			} else {
+				// Unlock scrolling when modal closes
+				unlockScrolling('Modal closed');
+				
 				// Restore focus to previous element
 				if (previousActiveElement && typeof document !== 'undefined') {
 					previousActiveElement.focus();
@@ -123,7 +130,10 @@
 	};
 
 	onDestroy(() => {
-		// Cleanup scroll prevention
+		// Cleanup scroll prevention and unlock scrolling if modal was open
+		if (show) {
+			unlockScrolling('Modal destroyed while open');
+		}
 		if (typeof document !== 'undefined') {
 			document.body.style.overflow = '';
 		}

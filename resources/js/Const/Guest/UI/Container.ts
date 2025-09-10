@@ -112,6 +112,9 @@ export const CONTAINER_RESPONSIVE = {
     base: 'flex flex-col items-center justify-center',
     gap: 'gap-4',
     padding: 'p-4',
+    margin: {
+      bottom: 'mb-4'
+    }
   },
   text: {
       base: 'font-pacifico',
@@ -135,10 +138,10 @@ export const CONTAINER_SECTION = {
       base: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.elegant.title}`,
       title: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.elegant.title} text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight`,
       subtitle: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.elegant.subtitle} text-base md:text-lg mb-4 md:mb-6`,
-      description: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.elegant.description} text-sm md:text-base lg:text-lg mb-6 md:mb-8`
+      description: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.elegant.description} text-xl md:text-2xl lg:text-3xl`
     },
     logo: {
-      base: 'mb-6 md:mb-8'
+      base: 'mb-4 md:mb-6'
     },
     buttons: {
       container: `${CONTAINER_LAYOUTS.flex.col} sm:${CONTAINER_LAYOUTS.flex.row} ${CONTAINER_GAPS.md} justify-center items-center mt-4 md:mt-6`,
@@ -174,7 +177,7 @@ export const CONTAINER_SECTION = {
     backgroundPatternImageUrl: 'https://res.cloudinary.com/gordonramsay/image/upload/c_fill,w_1920,h_640,q_auto,f_auto/Gordon%20Ramsay%20Restaurants%20-%20NA/default-light-bg_dddsi4',
     flex: `flex flex-col h-full justify-center space-y-4 ${UI_LAYOUT.padding.lg} ${CONTAINER_GAPS.md} ${CONTAINER_SIZES.md}`,
     content: {
-      base: `relative z-10 mx-auto flex h-full ${CONTAINER_LAYOUTS.flex.col} md:${CONTAINER_LAYOUTS.flex.row}`,
+      base: `relative z-10 mx-auto pl-10 flex h-full ${CONTAINER_LAYOUTS.flex.col} md:${CONTAINER_LAYOUTS.flex.row}`,
       left: `md:w-1/2 ${CONTAINER_LAYOUTS.flex.col} justify-center ${CONTAINER_SIZES.sm} md:${CONTAINER_SIZES.md} lg:${CONTAINER_SIZES.lg} ${UI_LAYOUT.padding.lg}`,
       right: `md:w-1/2 flex h-full ${CONTAINER_OVERFLOW.hidden}`
     },
@@ -203,9 +206,9 @@ export const CONTAINER_SECTION = {
     },
     text: {
       base: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.title}`,
-      title: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.title} text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight`,
-      subtitle: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.subtitle} text-base md:text-lg mb-4 md:mb-6 italic`,
-      description: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.description} text-sm md:text-base lg:text-lg mb-6 md:mb-8 leading-relaxed`
+      title: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.title} text-2xl md:text-3xl lg:text-4xl font-bold leading-tight`,
+      quote: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.subtitle} text-sm md:text-lg italic`,
+      description: `${CONTAINER_RESPONSIVE.text.base} ${UI_TEXTS.base.description} text-base lg:text-lg leading-relaxed`
     },
     image: {
       base: 'w-full h-full object-cover group-hover:scale-110 transition-all duration-500'

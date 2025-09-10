@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
 	import { CONTAINER_SECTION } from '../../../Const/Guest/UI/Container';
-	import LeftContainer from './Parts/containers/Left.svelte';
-	import RightContainer from './Parts/containers/Right.svelte';
+	import LeftContainer from './Parts/LeftContainer.svelte';
+	import RightContainer from './Parts/RightContainer.svelte';
 </script>
 
 <script lang="ts">

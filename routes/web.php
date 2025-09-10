@@ -8,7 +8,7 @@ use Inertia\Inertia;
 // Broadcasting authentication routes
 Broadcast::routes();
 
-Route::get('/', fn () => Inertia::render('Guest'));
+Route::get('/', [Controllers\Guest\IndexController::class, 'index']);
 
 Route::get('check-reservation-date/{date}', [Controllers\TestController::class, 'check']);
 
@@ -51,5 +51,10 @@ Route::get('/sample-chat', function () {
 Route::get('/simple-chat-cs', function () {
     return view('simple-chat-cs');
 })->name('simple.chat.cs');
+
+// Scroll Lock Test Route
+Route::get('/scroll-lock-test', function () {
+    return view('scroll-lock-test');
+})->name('scroll.lock.test');
 
 // Chat routes moved to routes/api.php

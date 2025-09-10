@@ -6,7 +6,12 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+
+    @vite(['resources/css/app.css', 'resources/css/styles/global.scss', 'resources/js/app.js'])
     @inertiaHead
 </head>
 <body class="antialiased">

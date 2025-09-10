@@ -115,6 +115,7 @@ export default {
           'Cantarell',
           'sans-serif'
         ],
+        pacifico: ['Pacifico', 'cursive'],
       },
     },
   },

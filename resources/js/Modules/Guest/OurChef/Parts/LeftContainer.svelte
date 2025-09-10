@@ -1,11 +1,13 @@
 <script context="module" lang="ts">
+    import { page } from '@inertiajs/svelte';
 	import { CONTAINER_SECTION } from '@Const/Guest/UI/Container';
-
-	const imageUrl: string =
-		'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&h=800&fit=crop&crop=face';
+    import type { Configuration } from '@/Types/Guest/Configuration.type';
 </script>
 
 <script lang="ts">
+	const image: Configuration | null = $page.props.chef.image as Configuration | null;
+	const imageUrl: string = image?.value || '';
+
 	$: imageContainerClasses = `${CONTAINER_SECTION.chef.content.left} group relative overflow-hidden`;
 	$: imageClasses = `${CONTAINER_SECTION.chef.image.base}`;
 </script>

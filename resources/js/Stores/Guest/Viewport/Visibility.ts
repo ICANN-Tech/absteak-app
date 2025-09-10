@@ -99,6 +99,14 @@ const initialState: VisibilityStore = {
 export const visibilityStore: Writable<VisibilityStore> = writable(initialState);
 
 /**
+ * Store to save the previous visibility state before hiding all components
+ * Used to restore components to their last state when showing all components
+ * 
+ * @type {Writable<VisibilityStore | null>}
+ */
+let savedVisibilityState: VisibilityStore | null = null;
+
+/**
  * Helper function to normalize component targets to an array
  * 
  * @param {ComponentTarget} target - Single component ID or array of component IDs
@@ -300,6 +308,76 @@ export function resetAllComponents(): void {
     
     return newStore;
   });
+}
+
+/**
+ * Hides all components and saves their current state for later restoration
+ * Used when VideoOverlay or other full-screen components are opened
+ * 
+ * @example
+ * ```typescript
+ * // Hide all components (e.g., when video overlay opens)
+ * hideAllComponents();
+ * ```
+ */
+export function hideAllComponents(): void {
+  visibilityStore.update(store => {
+    // Save current state before hiding all components
+    savedVisibilityState = { ...store };
+    
+    const newStore = { ...store };
+    const timestamp = Date.now();
+    
+    // Hide all components
+    Object.keys(newStore).forEach(componentId => {
+      newStore[componentId] = {
+        ...newStore[componentId],
+        visible: false,
+        lastUpdated: timestamp
+      };
+    });
+    
+    return newStore;
+  });
+}
+
+/**
+ * Restores all components to their previous visibility state
+ * Used when VideoOverlay or other full-screen components are closed
+ * 
+ * @example
+ * ```typescript
+ * // Restore all components to their previous state (e.g., when video overlay closes)
+ * showAllComponents();
+ * ```
+ */
+export function showAllComponents(): void {
+  if (!savedVisibilityState) {
+    // If no saved state, reset to initial state
+    resetAllComponents();
+    return;
+  }
+  
+  visibilityStore.update(store => {
+    const newStore = { ...store };
+    const timestamp = Date.now();
+    
+    // Restore all components to their saved state
+    Object.keys(newStore).forEach(componentId => {
+      const savedState = savedVisibilityState![componentId];
+      if (savedState) {
+        newStore[componentId] = {
+          ...savedState,
+          lastUpdated: timestamp
+        };
+      }
+    });
+    
+    return newStore;
+  });
+  
+  // Clear saved state after restoration
+  savedVisibilityState = null;
 }
 
 

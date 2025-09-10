@@ -7,4 +7,5 @@ return [
     App\Providers\FlowiseServiceProvider::class,
     App\Providers\NewsletterServiceProvider::class,
     App\Providers\TransactionServiceProvider::class,
+    App\Providers\RepositoryServiceProvider::class,
 ];
