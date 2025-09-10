@@ -1,12 +1,15 @@
+<script context="module" lang="ts">
+    import LanguageSwitch from "@Components/Guest/Organisme/Layout/LanguageSwitch/Index.svelte"
+    import BackToTop from '@/Components/Guest/Organisme/Layout/BackToTop.svelte';
+</script>
+
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { initializeGuestMonitoring } from '@/Utils/Guest/Layout/Monitor';
     import { initializeApp } from '@/Utils/Guest/Viewport/Initialization';
 
     import Navbar from '@/Components/Guest/Organisme/Layout/Navbar.svelte';
-    import LanguageSwitch from '@/Components/Guest/Organisme/Layout/LanguageSwitch.svelte';
     import ScrollIndicator from "@/Components/Guest/Organisme/Layout/ScrollIndicator.svelte";
-    import BackToTop from '@/Components/Guest/Organisme/Layout/BackToTop.svelte';
     import Highlight from '@/Components/Guest/Organisme/Layout/Highlight.svelte';
 
     let cleanup: (() => void) | null = null;

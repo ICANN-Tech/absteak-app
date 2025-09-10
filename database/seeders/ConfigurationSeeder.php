@@ -40,6 +40,23 @@ class ConfigurationSeeder extends Seeder
     {
         $guests = [
             [
+                'key' => 'tagline.general',
+                'group' => 'guest',
+                'type' => \App\Enums\Configuration\Type::Object,
+                'value' => [
+                    'title' => [
+                        'en' => 'ABSTEAK',
+                        'id' => 'ABSTEAK',
+                        'ko' => 'ABSTEAK'
+                    ],
+                    'description' => [
+                        'en' => 'At ABSTEAK, we believe dining is more than a meal – it is an experience to remember. We combine premium quality steak with the bold and refined flavors of modern Korean cuisine. Every dish is crafted with passion, precision, and a dedication to excellence.',
+                        'id' => 'Di ABSTEAK, kami percaya bahwa bersantap bukan sekadar makan – tetapi sebuah pengalaman yang berkesan. Kami memadukan steak premium berkualitas dengan cita rasa berani dan elegan dari kuliner Korea modern. Setiap hidangan disiapkan dengan penuh passion, ketelitian, dan dedikasi pada kesempurnaan.',
+                        'ko' => 'ABSTEAK에서는 식사는 단순한 한 끼가 아니라 기억에 남는 경험이라고 믿습니다. 저희는 프리미엄 스테이크와 현대적인 한국 요리의 대담하고 세련된 풍미를 결합합니다. 모든 요리는 열정과 정성, 그리고 완벽을 향한 헌신으로 만들어집니다.'
+                    ],
+                ],
+            ],
+            [
                 'key' => 'experience.general',
                 'group' => 'guest',
                 'type' => \App\Enums\Configuration\Type::Object,
@@ -223,7 +240,76 @@ class ConfigurationSeeder extends Seeder
                         'ko' => '우리는 열정과 완벽이 만나는 모든 요리에서 잊을 수 없는 다이닝 경험을 제공하기 위해 최선을 다하고 있습니다.',
                     ],
                 ],
-            ]
+            ],
+            [
+                'key' => 'menu.general',
+                'group' => 'guest',
+                'type' => \App\Enums\Configuration\Type::Object,
+                'value' => [
+                    'title' => [
+                        'en' => 'SIGNATURE MENU',
+                        'id' => 'MENU PEMINAT',
+                        'ko' => '시그니처 메뉴',
+                    ],
+                    'subtitle' => [
+                        'en' => 'Experience culinary excellence with our carefully curated selection of dishes, crafted by world-class chefs using the finest ingredients.',
+                        'id' => 'Nikmati pengalaman kuliner istimewa dengan pilihan hidangan yang dipilih dengan teliti oleh chef berpengalaman menggunakan bahan-bahan terbaik.',
+                        'ko' => '우리는 열정과 완벽이 만나는 모든 요리에서 잊을 수 없는 다이닝 경험을 제공하기 위해 최선을 다하고 있습니다.',
+                    ]
+                ]
+            ],
+            [
+                'key' => 'contact.general',
+                'group' => 'guest',
+                'type' => \App\Enums\Configuration\Type::Object,
+                'value' => [
+                    'title' => [
+                        'en' => 'Contact',
+                        'id' => 'Kontak',
+                        'ko' => '연락처',
+                    ],
+                    'subtitle' => [
+                        'en' => 'Contact us for any inquiries or reservations.',
+                        'id' => 'Hubungi kami untuk pertanyaan atau reservasi.',
+                        'ko' => '연락처를 통해 문의나 예약을 하실 수 있습니다.',
+                    ],
+                ],
+            ],
+            [
+                'key'   => 'contact.info',
+                'group' => 'guest',
+                'type'  => \App\Enums\Configuration\Type::Object,
+                'value' => [
+                    'title' => [
+                        'en' => 'visit our restaurant',
+                        'id' => 'Kunjungi restoran kami',
+                        'ko' => '식당을 방문하세요',
+                    ],
+                    'description' => [
+                        'en' => 'Contact us for any inquiries or reservations.',
+                        'id' => 'Hubungi kami untuk pertanyaan atau reservasi.',
+                        'ko' => '연락처를 통해 문의나 예약을 하실 수 있습니다.',
+                    ],
+                    'email'   => 'info@example.com',
+                    'phone'   => '+62 812-3456-7890',
+                    'address' => 'Jl. Merdeka No. 123, Jakarta, Indonesia',
+                    'map'     => [
+                        'latitude'  => '-6.200000',
+                        'longitude' => '106.816666',
+                    ]
+                ],
+            ],
+            [
+                'key'   => 'contact.social',
+                'group' => 'guest',
+                'type'  => \App\Enums\Configuration\Type::Object,
+                'value' => [
+                    'facebook'  => 'https://facebook.com/example',
+                    'twitter'   => 'https://twitter.com/example',
+                    'instagram' => 'https://instagram.com/example',
+                    'youtube'   => 'https://youtube.com/@example',
+                ],
+            ],
         ];
 
         foreach ($guests as $guest) {

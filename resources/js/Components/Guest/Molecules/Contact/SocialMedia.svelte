@@ -1,6 +1,8 @@
-<script lang="ts">
+<script context="module" lang="ts">
 	import { FacebookIcon, InstagramIcon, TwitterIcon, YoutubeIcon } from '@Components/Global/Atoms/Icons/Index';
+</script>
 
+<script lang="ts">
 	export let platform: 'facebook' | 'twitter' | 'instagram' | 'youtube' = 'facebook';
 	export let url = 'https://www.facebook.com/absteak';
 </script>

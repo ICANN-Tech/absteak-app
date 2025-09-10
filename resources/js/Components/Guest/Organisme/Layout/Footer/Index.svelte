@@ -1,7 +1,7 @@
 <script>
-  import Logo from '../../../Global/Atoms/Logo.svelte';
-  import Icon from '../../Atoms/Icon.svelte';
-  import Button from '../../Atoms/Button.svelte';
+  import Logo from '../../../../Global/Atoms/Logo.svelte';
+  import Icon from '../../../Atoms/Icon.svelte';
+  import Button from '../../../Atoms/Button.svelte';
   
   const currentYear = new Date().getFullYear();
   

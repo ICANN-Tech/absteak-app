@@ -72,6 +72,11 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'configurations' => $configData,
+            'tagline' => [
+                'general' => isset($configData['tagline.general']['value'])
+                    ? json_decode($configData['tagline.general']['value'], true)
+                    : null,
+            ],
             'chef' => [
                 'general' => isset($configData['chef.general']['value']) 
                     ? json_decode($configData['chef.general']['value'], true)
@@ -105,6 +110,22 @@ class HandleInertiaRequests extends Middleware
             'experience' => [
                 'general' => isset($configData['experience.general']['value'])
                     ? json_decode($configData['experience.general']['value'], true) // decode ke array
+                    : null, 
+            ],
+            'menu' => [
+                'general' => isset($configData['menu.general']['value'])
+                    ? json_decode($configData['menu.general']['value'], true) // decode ke array
+                    : null, 
+            ],
+            'contact' => [
+                'general' => isset($configData['contact.general']['value'])
+                    ? json_decode($configData['contact.general']['value'], true) // decode ke array
+                    : null, 
+                'info' => isset($configData['contact.info']['value'])
+                    ? json_decode($configData['contact.info']['value'], true) // decode ke array
+                    : null, 
+                'social' => isset($configData['contact.social']['value'])
+                    ? json_decode($configData['contact.social']['value'], true) // decode ke array
                     : null, 
             ]
         ];

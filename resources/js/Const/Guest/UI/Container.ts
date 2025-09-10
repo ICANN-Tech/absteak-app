@@ -271,13 +271,13 @@ export const CONTAINER_SECTION = {
     },
     map: {
       base: 'relative z-10 border-b border-gray-700/50',
-      section: `relative z-10 border-b border-gray-700/50 ${UI_LAYOUT.padding.base} ${UI_LAYOUT.padding.md} ${UI_LAYOUT.padding.lg} ${UI_LAYOUT.padding.xl} py-8 md:py-10`,
+      section: `relative z-10 border-b border-gray-700/50 py-8 md:py-10`,
       content: {
         base: `${CONTAINER_LAYOUTS.grid.cols1} lg:${CONTAINER_LAYOUTS.grid.cols2} gap-8 md:gap-12 items-center`,
         info: {
           base: 'space-y-4 md:space-y-6 mb-4 md:mb-6 flex flex-col gap-3 md:gap-4',
           title: `${CONTAINER_RESPONSIVE.text.base} text-2xl md:text-3xl lg:text-4xl font-bold ${UI_TEXTS.elegant.title} drop-shadow-lg`,
-          description: `${CONTAINER_RESPONSIVE.text.base} text-xs md:text-sm leading-relaxed text-gray-200 drop-shadow-sm`,
+          description: `${CONTAINER_RESPONSIVE.text.base} text-lg md:text-base lg:text-lg leading-relaxed text-gray-200 drop-shadow-sm`,
           location: {
             base: `${CONTAINER_LAYOUTS.flex.col} flex-wrap ${CONTAINER_RADIUS.lg} ${CONTAINER_OVERFLOW.hidden}`,
             address: {

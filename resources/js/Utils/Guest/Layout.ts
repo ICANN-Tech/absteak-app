@@ -80,13 +80,13 @@ export async function initializeLayoutComponents(
 
     if (loadFooter) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Layout/Footer.svelte'));
+      imports.push(import('@/Components/Guest/Organisme/Layout/Footer/Index.svelte'));
       componentKeys.push('Footer');
     }
 
     if (loadLanguageSwitch) {
       // @ts-ignore - Svelte component imports
-      imports.push(import('@Components/Guest/Organisme/Layout/LanguageSwitch.svelte'));
+      imports.push(import('@/Components/Guest/Organisme/Layout/LanguageSwitch/Index.svelte'));
       componentKeys.push('LanguageSwitch');
     }
 
