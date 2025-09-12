@@ -19,6 +19,8 @@
         "prettus/l5-repository": "^2.10",
         "pusher/pusher-php-server": "^7.2",
         "rupadana/filament-api-service": "^4.0",
+        "solution-forest/filament-translate-field": "^2.0",
+        "spatie/laravel-translatable": "^6.11",
         "tomatophp/filament-developer-gate": "^4.0",
         "tomatophp/filament-translations": "^4.0.0"
     },

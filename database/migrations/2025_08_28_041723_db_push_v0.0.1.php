@@ -95,8 +95,8 @@ return new class extends Migration
 
         Schema::create('menus', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
-            $table->text('description')->nullable();
+            $table->json('name');
+            $table->json('description')->nullable();
             $table->string('slug')->unique();
             $table->string('image')->nullable();
             $table->decimal('price', 10, 2);

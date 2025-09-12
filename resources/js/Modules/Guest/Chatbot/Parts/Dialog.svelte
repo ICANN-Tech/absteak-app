@@ -12,14 +12,17 @@
 		from: 'user' | 'bot';
 		message: string;
 		timestamp?: Date;
+		isFromCS?: boolean;
 	}
 
 	// Props
 	export let dialogPositionClasses: string;
 	export let messages: MessageType[] = [];
 	export let showMenuButtons = true;
-	export let customMenuItems: string[] = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
+	export let customMenuItems: ("CS" | "Menu" | "Dine In" | "Dine Out")[] = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
 	export let activeMenu = 'CS';
+	export let csConnectionState = 'idle';
+	export let csAgentName = '';
 	export let loading = false;
 	export let disabled = false;
 	export let error: string | null = null;
@@ -66,6 +69,8 @@
 		<MenuButtons 
 			{customMenuItems} 
 			{activeMenu} 
+			{csConnectionState}
+			{csAgentName}
 			{loading} 
 			{disabled} 
 			{onSelectMenu} 
@@ -89,12 +94,14 @@
 				<div 
 					class="{message.from === 'user' 
 						? 'px-4 py-3 rounded-2xl rounded-tr-md mb-1 max-w-[85%] text-sm bg-white text-gray-800 shadow-lg border border-primary-200 backdrop-blur-sm' 
-						: `px-4 py-3 rounded-2xl rounded-tl-md mb-1 text-sm bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg border border-primary-400 ${error && index === messages.length - 1 ? 'bg-red-500 border-red-400' : ''}`}"
+						: message.isFromCS 
+							? 'px-4 py-3 rounded-2xl rounded-tl-md mb-1 text-sm bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg border border-green-400'
+							: `px-4 py-3 rounded-2xl rounded-tl-md mb-1 text-sm bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg border border-primary-400 ${error && index === messages.length - 1 ? 'bg-red-500 border-red-400' : ''}`}"
 					on:click={() => onMessageClick && onMessageClick(new CustomEvent('messageClick', { detail: message }))}
 					role="button"
 					tabindex="0"
 				>
-					{message.message}
+					{message.isFromCS ? '👨‍💼 ' : ''}{message.message}
 				</div>
 			</div>
 		{/each}

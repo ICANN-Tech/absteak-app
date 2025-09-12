@@ -11,8 +11,12 @@
 
 	// Reactive classes
 	$: inputClasses = `${CSS_CLASSES.INPUT_BASE} ${loading || disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
-	$: sendButtonClasses = `${CSS_CLASSES.SEND_BUTTON} ${loading ? 'animate-pulse' : ''}`;
 	$: actualPlaceholder = loading ? 'Bot is typing...' : placeholder;
+	
+	// Debug reactive statements
+	$: {
+		console.log('🔍 Input.svelte - Loading:', loading, 'Placeholder:', actualPlaceholder);
+	}
 </script>
 
 <div class="border-primary-100 flex items-center gap-3 rounded-b-2xl border-t bg-white px-4 py-4 shadow-inner">

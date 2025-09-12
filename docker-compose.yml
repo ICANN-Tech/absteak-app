@@ -63,6 +63,9 @@ services:
       XENDIT_CALLBACK_TOKEN: ${XENDIT_CALLBACK_TOKEN:-your_callback_token_here}
       XENDIT_IS_PRODUCTION: ${XENDIT_IS_PRODUCTION:-false}
       XENDIT_WEBHOOK_URL: ${XENDIT_WEBHOOK_URL:-http://localhost:8000/webhook/xendit}
+      OLLAMA_HOST: ollama
+      OLLAMA_PORT: 11434
+      OLLAMA_BASE_URL: "http://ollama:11434"
     depends_on:
       db:
         condition: service_healthy
@@ -75,7 +78,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg16
     container_name: postgres
     user: "999:999"
     environment:
@@ -99,8 +102,7 @@ services:
     restart: unless-stopped
     command: [
       "postgres",
-      "-c", "shared_preload_libraries=pg_stat_statements",
-      "-c", "pg_stat_statements.track=all",
+      "-c", "shared_preload_libraries=vector",
       "-c", "max_connections=200",
       "-c", "shared_buffers=256MB",
       "-c", "effective_cache_size=1GB",
@@ -423,7 +425,7 @@ services:
       retries: 3
 
   listmonk_db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: listmonk_postgres
     environment:
       POSTGRES_DB: listmonk_db
@@ -478,6 +480,44 @@ services:
       retries: 5
       start_period: 30s
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: absteak_ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - absteak
+    restart: unless-stopped
+    mem_limit: 4g
+    memswap_limit: 4g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: absteak_ollama_init
+    volumes:
+      - ./docker/ollama/init-ollama.sh:/init-ollama.sh:ro
+      - ollama_data:/root/.ollama
+    networks:
+      - absteak
+    depends_on:
+      ollama:
+        condition: service_healthy
+    command: ["/bin/bash", "/init-ollama.sh"]
+    restart: "no"
+    environment:
+      - OLLAMA_HOST=ollama:11434
+
 volumes:
   db_data:
   redis_data:
@@ -496,6 +536,8 @@ volumes:
   vendor_data:
   node_modules_data:
   weaviate_data:
+  ollama_data:
+    driver: local
   listmonk_data:
     driver: local
   listmonk_uploads:

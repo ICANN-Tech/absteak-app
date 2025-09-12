@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         'chatbot/send',
         'api/chatbot',
         'api/chat/*',
+        'broadcasting/auth',
     ];
 }

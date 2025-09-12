@@ -1,6 +1,7 @@
 <script context="module" lang="ts">
     import LanguageSwitch from "@Components/Guest/Organisme/Layout/LanguageSwitch/Index.svelte"
     import BackToTop from '@/Components/Guest/Organisme/Layout/BackToTop.svelte';
+    import ChatBotFab from '@/Modules/Guest/Chatbot/Index.svelte';
 </script>
 
 <script lang="ts">
@@ -36,7 +37,7 @@
 
 <slot />
 
-<!-- <ChatBotFab /> -->
+<ChatBotFab />
 <ScrollIndicator />
 <BackToTop />
 

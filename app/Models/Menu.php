@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\Menu\{RelationTrait, AttributeTrait, ScopeTrait};
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
+use Spatie\Translatable\HasTranslations;
 
 class Menu extends Model
 {
-    use HasUuids;
+    use HasUuids, HasTranslations;
     use RelationTrait, AttributeTrait, ScopeTrait;
 
     /**
@@ -35,6 +36,18 @@ class Menu extends Model
     ];
 
     /**
+     * The attributes that are translatable.
+     *
+     * @var array<string>
+     */
+    protected $translatable = [
+        'name',
+        'description',
+        'ingredients',
+        'allergens',
+    ];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -46,6 +59,7 @@ class Menu extends Model
         'ingredients' => 'array',
         'allergens' => 'array',
         'calories' => 'integer',
+        'embedding' => 'array',
     ];
 
     /**

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ollama' => [
+        'base_url' => env('OLLAMA_BASE_URL', 'http://ollama:11434'),
+        'embed_model' => env('OLLAMA_EMBED_MODEL', 'hf.co/mixedbread-ai/mxbai-embed-large-v1:F16'),
+        'timeout' => env('OLLAMA_TIMEOUT', 30),
+    ],
+
 ];

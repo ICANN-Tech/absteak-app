@@ -1052,6 +1052,16 @@ class ChatController extends Controller
                 'private-chat-invite',
                 $inviteData
             );
+            
+            // Also broadcast agent-joined event to the private channel
+            $this->broadcastToSoketi(
+                $request->input('channel_name'), // Broadcast to private channel
+                'agent-joined',
+                [
+                    'agent_name' => $request->input('agent_name'),
+                    'timestamp' => now()->toISOString()
+                ]
+            );
 
             Log::info('Private chat invite sent', [
                 'customer_id' => $request->input('customer_id'),

@@ -10,7 +10,7 @@
 	export let open = false;
 	export let position: ChatbotPosition = CHATBOT_CONFIG.DEFAULT_POSITION;
 	export let showMenuButtons = true;
-	export let customMenuItems: string[] = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
+	export let customMenuItems: ("CS" | "Menu" | "Dine In" | "Dine Out")[] = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
 	export let initialMessage = CHATBOT_CONFIG.DEFAULT_INITIAL_MESSAGE;
 	export let placeholder = CHATBOT_CONFIG.DEFAULT_PLACEHOLDER;
 	export let disabled = false;
@@ -21,6 +21,8 @@
 	let activeMenu = 'CS';
 	let loading = false;
 	let error: string | null = null;
+	let csConnectionState = 'idle'; // 'idle', 'connecting', 'waiting', 'connected', 'disconnected'
+	let csAgentName = '';
 
 	// Initialize chat with welcome message
 	onMount(() => {
@@ -28,6 +30,73 @@
 		(async () => {
 			try {
 				await chatbotService.startNewSession();
+				
+				// Set up CS state change callback
+		chatbotService.setCSStateChangeCallback((state: string, agentName?: string) => {
+			console.log('🎯 UI State Update:', state, agentName);
+			console.log('🔍 Loading state before CS update:', loading);
+			csConnectionState = state;
+			console.log('🔍 CS Connection State updated to:', csConnectionState);
+					
+					if (agentName) {
+						csAgentName = agentName;
+						
+						// Add system message when agent joins
+						if (state === 'connected') {
+							const joinMessage: MessageType = {
+								from: 'bot',
+								message: 'CS BERGABUNG',
+								timestamp: new Date(),
+								id: `system_join_${Date.now()}`,
+								isFromCS: true
+							};
+							messages = [...messages, joinMessage];
+						}
+					} else if (state === 'disconnected' && csAgentName) {
+						// Add system message when agent leaves
+						const leaveMessage: MessageType = {
+							from: 'bot',
+							message: 'CS KELUAR',
+							timestamp: new Date(),
+							id: `system_leave_${Date.now()}`,
+							isFromCS: true
+						};
+						messages = [...messages, leaveMessage];
+						csAgentName = '';
+					}
+					
+					// Add connection status messages
+					if (state === 'connecting') {
+						const connectingMessage: MessageType = {
+							from: 'bot',
+							message: 'Connecting to customer service...',
+							timestamp: new Date(),
+							id: `system_connecting_${Date.now()}`
+						};
+						messages = [...messages, connectingMessage];
+					} else if (state === 'waiting') {
+						const waitingMessage: MessageType = {
+							from: 'bot',
+							message: 'Waiting for customer service agent to join...',
+							timestamp: new Date(),
+							id: `system_waiting_${Date.now()}`
+						};
+						messages = [...messages, waitingMessage];
+					}
+				});
+				
+				// Set up message callback for real-time CS messages
+				chatbotService.setMessageCallback((chatMessage) => {
+					const messageType: MessageType = {
+						from: chatMessage.sender,
+						message: chatMessage.content,
+						timestamp: chatMessage.timestamp,
+						id: chatMessage.id,
+						isFromCS: true // Mark as CS message for different styling
+					};
+					messages = [...messages, messageType];
+				});
+				
 				messages = [{ from: 'bot', message: initialMessage, timestamp: new Date() }];
 				
 				const isConnected = await chatbotService.testConnection();
@@ -73,9 +142,45 @@
 	async function selectMenu(menu: string): Promise<void> {
 		if (loading || disabled) return;
 		
-		activeMenu = menu;
-		const menuPrompt = chatbotService.getMenuPrompt(menu);
-		await sendMessage(menuPrompt, false);
+		if (menu === 'CS') {
+			if (csConnectionState === 'idle' || csConnectionState === 'disconnected') {
+				// Start connecting to CS
+				activeMenu = menu;
+				messages = [];
+				
+				try {
+					// Connect to CS through chatbot service - status will be updated via callback
+					await chatbotService.connectToCS();
+					
+				} catch (err) {
+					chatUtils.errors.logError('CS connection', err);
+					
+					const errorMessage: MessageType = {
+						from: 'bot',
+						message: 'Failed to connect to customer service. Please try again.',
+						timestamp: new Date(),
+						id: `error_${Date.now()}`
+					};
+					messages = [...messages, errorMessage];
+				}
+			} else if (csConnectionState === 'connected') {
+				// Disconnect from CS
+				try {
+					await chatbotService.disconnectFromCS();
+					
+					// Switch back to regular chatbot
+					activeMenu = 'General';
+					messages = [{ from: 'bot', message: initialMessage, timestamp: new Date() }];
+				} catch (err) {
+					chatUtils.errors.logError('CS disconnection', err);
+				}
+			}
+		} else {
+			// Regular menu selection
+			activeMenu = menu;
+			const menuPrompt = chatbotService.getMenuPrompt(menu);
+			await sendMessage(menuPrompt, false);
+		}
 	}
 
 	// Send message and get response from bot service
@@ -88,7 +193,7 @@
 	async function sendMessage(messageText: string, clearInput: boolean = true): Promise<void> {
 		if (!ChatUtils.validateMessage(messageText) || loading) return;
 
-		loading = true;
+		console.log('📤 SendMessage called - CS State:', csConnectionState, 'Loading:', loading);
 		error = null;
 
 		try {
@@ -97,7 +202,8 @@
 				from: 'user',
 				message: messageText,
 				timestamp: new Date(),
-				id: ChatUtils.generateMessageId('user')
+				id: ChatUtils.generateMessageId('user'),
+				isFromCS: csConnectionState === 'connected' // Mark as CS message if in CS mode
 			};
 			messages = [...messages, userMessage];
 
@@ -105,24 +211,73 @@
 				input = '';
 			}
 
-			// Send to bot service and get response
-			const botResponse = await chatbotService.sendMessage(messageText);
+			// Handle CS vs Chatbot messaging differently
+			if (csConnectionState === 'connected') {
+				console.log('🎯 Sending to CS - Loading should NOT be set');
+				// Send to CS directly without showing typing indicator
+				// CS will respond via WebSocket, no bot response needed
+				const messageData = {
+					username: `customer_${chatbotService.getCurrentSession()?.id}`,
+					message: messageText,
+					timestamp: new Date().toISOString(),
+					user_type: 'customer',
+					channel: chatbotService.getCurrentSession()?.privateChannelName,
+					customer_id: chatbotService.getCurrentSession()?.id
+				};
 
-			// Add bot response to UI
-			const botMessage: MessageType = {
-				from: 'bot',
-				message: botResponse.content,
-				timestamp: botResponse.timestamp,
-				id: botResponse.id
-			};
-			messages = [...messages, botMessage];
+				console.log('📤 Sending message to CS:', messageData);
+
+				const response = await fetch('/api/chat/private/send', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+					},
+					body: JSON.stringify(messageData)
+				});
+
+				console.log('📡 CS API Response status:', response.status);
+				const responseData = await response.json();
+				console.log('📡 CS API Response data:', responseData);
+
+				if (!response.ok) {
+					throw new Error(`Failed to send message to CS: ${response.status}`);
+				}
+			} else if (csConnectionState === 'idle') {
+				console.log('🤖 Sending to Chatbot - Setting loading = true');
+				// Only show loading indicator when sending to chatbot
+				loading = true;
+				console.log('🔍 Loading set to:', loading);
+				
+				// Send to chatbot and get response
+				const botResponse = await chatbotService.sendMessage(messageText);
+				
+				// Add bot response to UI
+				const botMessage: MessageType = {
+					from: 'bot',
+					message: botResponse.content,
+					timestamp: botResponse.timestamp,
+					id: botResponse.id
+				};
+				messages = [...messages, botMessage];
+			} else {
+				console.log('🚫 CS State is waiting/connecting - message queued, no chatbot call');
+				// Don't send to chatbot when CS is connecting or waiting
+			}
 
 		} catch (err) {
 			chatUtils.errors.logError('sendMessage', err);
 			error = chatUtils.errors.handleError(err);
 			messages = [...messages, chatUtils.errors.createErrorMessage(error)];
 		} finally {
-			loading = false;
+			console.log('🔄 Finally block - CS State:', csConnectionState, 'Current loading:', loading);
+			// Only reset loading if we're not in CS mode (since loading is only set for chatbot)
+			if (csConnectionState !== 'connected') {
+				loading = false;
+				console.log('🔍 Loading reset to false for chatbot mode');
+			} else {
+				console.log('🎯 Loading NOT reset because in CS mode');
+			}
 		}
 	}
 
@@ -167,6 +322,8 @@
 			{showMenuButtons}
 			{customMenuItems}
 			{activeMenu}
+			{csConnectionState}
+			{csAgentName}
 			{loading}
 			{disabled}
 			{error}

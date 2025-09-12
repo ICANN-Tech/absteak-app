@@ -2,10 +2,12 @@
 	import { CHATBOT_CONFIG, CSS_CLASSES } from '../Const/Chatbot.const';
 
 	// Props
-	export let customMenuItems: string[] = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
-	export let activeMenu = 'CS';
-	export let loading = false;
-	export let disabled = false;
+	export let customMenuItems = [...CHATBOT_CONFIG.DEFAULT_MENU_ITEMS];
+  export let activeMenu = 'CS';
+  export let csConnectionState = 'idle';
+  export let csAgentName = '';
+  export let loading = false;
+  export let disabled = false;
 	export let onSelectMenu: (menu: string) => void;
 
 	// Reactive classes
@@ -14,11 +16,36 @@
 	// Get button classes for each menu item
 	function getButtonClasses(menuItem: string): string {
 		const isActive = activeMenu === menuItem;
+		
+		if (menuItem === 'CS') {
+			if (csConnectionState === 'connecting') {
+				return `${baseClasses} bg-yellow-500 text-white shadow-md animate-pulse`;
+			} else if (csConnectionState === 'waiting') {
+				return `${baseClasses} bg-blue-500 text-white shadow-md animate-pulse`;
+			} else if (csConnectionState === 'connected') {
+				return `${baseClasses} bg-red-600 text-white shadow-md`;
+			}
+		}
+		
 		return `${baseClasses} ${
 			isActive
 				? 'bg-primary-500 text-white shadow-md'
 				: 'bg-white text-primary-600 border border-primary-200'
 		}`;
+	}
+	
+	function getButtonText(menuItem: string): string {
+		if (menuItem === 'CS') {
+			if (csConnectionState === 'connecting') {
+				return 'Connecting to CS';
+			} else if (csConnectionState === 'waiting') {
+				return 'CS Join Room';
+			} else if (csConnectionState === 'connected') {
+				return csAgentName ? `Connected to ${csAgentName}` : 'Connected to CS';
+			}
+			return 'Customer Service';
+		}
+		return menuItem;
 	}
 </script>
 
@@ -32,7 +59,7 @@
 					disabled={loading || disabled}
 					aria-pressed={activeMenu === menuItem}
 				>
-					{menuItem}
+					{getButtonText(menuItem)}
 				</button>
 			{/each}
 		</div>

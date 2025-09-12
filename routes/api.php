@@ -105,3 +105,12 @@ Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
     // Common chat operations
     Route::post('/end-session', [ChatController::class, 'endChatSession']);
 });
+
+
+Route::get('/sample', function () {
+    // Ambil semua data dine out sources
+    $dineOutSources = \App\Models\DineOutSource::all();
+
+    // Kembalikan dalam format JSON
+    return response()->json($dineOutSources);
+});

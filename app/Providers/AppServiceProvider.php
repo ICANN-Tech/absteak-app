@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\DineOutSource;
+use App\Observers\DineOutSourceObserver;
+use App\Services\Ollama;
 use App\Services\Redis;
 use App\Services\Vault;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(Vault::class, function ($app) {
             return new Vault();
         });
+
+        // Register Ollama service as singleton
+        $this->app->singleton(Ollama::class, function ($app) {
+            return new Ollama();
+        });
     }
 
     /**
@@ -29,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+       \SolutionForest\FilamentTranslateField\Facades\FilamentTranslateField::defaultLocales(['en', 'id', 'ko']);
+       
+       // Register model observers
+       DineOutSource::observe(DineOutSourceObserver::class);
     }
 }

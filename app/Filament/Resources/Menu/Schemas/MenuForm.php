@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use App\Models\Category;
 use Illuminate\Support\Str;
+use SolutionForest\FilamentTranslateField\Forms\Component\Translate;
 
 class MenuForm
 {
@@ -21,28 +22,20 @@ class MenuForm
     {
         return $schema
             ->components([
-                Section::make('Basic Information')
+                Translate::make()
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn (string $context, $state, callable $set) => $context === 'create' ? $set('slug', Str::slug($state)) : null),
-                                
-                                TextInput::make('slug')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->unique(ignoreRecord: true)
-                                    ->rules(['alpha_dash']),
-                            ]),
-                        
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn(string $context, $state, callable $set) => $context === 'create' ? $set('slug', Str::slug($state)) : null),
+
                         Textarea::make('description')
                             ->maxLength(1000)
                             ->rows(3)
                             ->columnSpanFull(),
-                        
+
+
                         RichEditor::make('ingredients')
                             ->label('Ingredients & Details')
                             ->columnSpanFull()
@@ -58,7 +51,18 @@ class MenuForm
                                 'undo',
                             ]),
                     ]),
-                
+                Section::make('Basic Information')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('slug')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->unique(ignoreRecord: true)
+                                    ->rules(['alpha_dash']),
+                            ]),
+                    ]),
+
                 Section::make('Category & Pricing')
                     ->schema([
                         Grid::make(3)
@@ -68,14 +72,14 @@ class MenuForm
                                     ->options(Category::pluck('name', 'id'))
                                     ->searchable()
                                     ->required(),
-                                
+
                                 TextInput::make('price')
                                     ->numeric()
                                     ->prefix('$')
                                     ->step(0.01)
                                     ->minValue(0)
                                     ->required(),
-                                
+
                                 TextInput::make('preparation_time')
                                     ->label('Prep Time (minutes)')
                                     ->numeric()
@@ -83,7 +87,7 @@ class MenuForm
                                     ->suffix('min'),
                             ]),
                     ]),
-                
+
                 Section::make('Images')
                     ->schema([
                         FileUpload::make('image')
@@ -97,7 +101,7 @@ class MenuForm
                             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->columnSpanFull(),
                     ]),
-                
+
                 Section::make('Additional Information')
                     ->schema([
                         Grid::make(2)
@@ -106,21 +110,21 @@ class MenuForm
                                     ->separator(',')
                                     ->placeholder('Add allergens (e.g., nuts, dairy, gluten)')
                                     ->helperText('Press Enter or comma to add each allergen'),
-                                
+
                                 TagsInput::make('dietary_tags')
                                     ->label('Dietary Tags')
                                     ->separator(',')
                                     ->placeholder('Add dietary tags (e.g., vegan, keto, gluten-free)')
                                     ->helperText('Press Enter or comma to add each tag'),
                             ]),
-                        
+
                         TextInput::make('calories')
                             ->numeric()
                             ->minValue(0)
                             ->suffix('cal')
                             ->helperText('Optional calorie information'),
                     ]),
-                
+
                 Section::make('Status & Availability')
                     ->schema([
                         Grid::make(3)
@@ -129,18 +133,18 @@ class MenuForm
                                     ->label('Active')
                                     ->default(true)
                                     ->helperText('Whether this menu item is currently available'),
-                                
+
                                 Toggle::make('is_featured')
                                     ->label('Featured Item')
                                     ->default(false)
                                     ->helperText('Display this item prominently'),
-                                
+
                                 Toggle::make('is_available')
                                     ->label('Available Today')
                                     ->default(true)
                                     ->helperText('Whether this item is available today'),
                             ]),
-                        
+
                         TextInput::make('display_order')
                             ->label('Display Order')
                             ->numeric()

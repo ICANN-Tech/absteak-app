@@ -6,6 +6,7 @@ export interface MessageType {
   message: string;
   timestamp: Date;
   id?: string;
+  isFromCS?: boolean; // Flag to indicate if message is from customer service
 }
 
 // Utility functions for chat operations
@@ -13,12 +14,13 @@ export class ChatUtils {
   /**
    * Convert ChatMessage to MessageType for UI display
    */
-  static convertToMessageType(chatMessage: ChatMessage): MessageType {
+  static convertToMessageType(chatMessage: ChatMessage, isFromCS: boolean = false): MessageType {
     return {
       from: chatMessage.sender,
       message: chatMessage.content,
       timestamp: chatMessage.timestamp,
-      id: chatMessage.id
+      id: chatMessage.id,
+      isFromCS
     };
   }
 
