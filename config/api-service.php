@@ -37,6 +37,16 @@ return [
     'use-spatie-permission-middleware' => true,
     'flowise' => [
         'base_url' => env('FLOWISE_BASE_URL', 'http://localhost:3000'),
-        'timeout' => env('FLOWISE_TIMEOUT', 30),
+        'timeout' => env('FLOWISE_TIMEOUT', 60), // Increased from 30 to 60 seconds
+        'chatflows' => [
+            'general' => env('FLOWISE_GENERAL_CHATFLOW_ID', ''),
+            'customer_service' => env('FLOWISE_CUSTOMER_SERVICE_CHATFLOW_ID', ''),
+            'reservation' => env('FLOWISE_RESERVATION_CHATFLOW_ID', ''),
+        ],
+        'chat_ids' => [
+            'general' => env('FLOWISE_GENERAL_CHAT_ID', ''),
+            'customer_service' => env('FLOWISE_CUSTOMER_SERVICE_CHAT_ID', ''),
+            'reservation' => env('FLOWISE_RESERVATION_CHAT_ID', ''),
+        ],
     ],
 ];

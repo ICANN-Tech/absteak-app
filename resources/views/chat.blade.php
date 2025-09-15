@@ -260,8 +260,34 @@
 
             async endChat() {
                 if (confirm('Are you sure you want to end this chat session?')) {
+                    console.log('🔚 [CUSTOMER DEBUG] Starting endChat process');
+                    console.log('📝 [CUSTOMER DEBUG] Chat data:', {
+                        userId: this.chatData.user_id,
+                        guestId: this.chatData.guest_id,
+                        sessionId: this.chatData.guest_id
+                    });
+                    
                     try {
-                        await fetch('/api/chat/end-session', {
+                        console.log('📤 [CUSTOMER DEBUG] Sending trigger to CS...');
+                        // Send trigger to CS first
+                        const triggerResponse = await fetch('/api/trigger-end', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                customer_id: this.chatData.user_id || this.chatData.guest_id,
+                                session_id: this.chatData.guest_id,
+                                trigger_source: 'customer'
+                            })
+                        });
+                        
+                        console.log('✅ [CUSTOMER DEBUG] Trigger sent successfully:', triggerResponse.status);
+                        
+                        console.log('📤 [CUSTOMER DEBUG] Ending session normally...');
+                        // Then end the session normally
+                        const endResponse = await fetch('/api/chat/end-session', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -269,17 +295,22 @@
                             },
                             body: JSON.stringify({
                                 session_id: this.chatData.guest_id,
-                                type: 'guest'
+                                type: 'guest',
+                                customer_id: this.chatData.user_id || this.chatData.guest_id
                             })
                         });
                         
+                        console.log('✅ [CUSTOMER DEBUG] Session ended successfully:', endResponse.status);
+                        
                         if (this.connection) {
+                            console.log('🔌 [CUSTOMER DEBUG] Disconnecting XMPP connection');
                             this.connection.disconnect();
                         }
                         
+                        console.log('🏁 [CUSTOMER DEBUG] Showing start form');
                         this.showStartForm();
                     } catch (error) {
-                        console.error('Error ending chat:', error);
+                        console.error('❌ [CUSTOMER DEBUG] Error ending chat:', error);
                     }
                 }
             }

@@ -276,6 +276,48 @@
                             }
                         });
 
+                        // Handle force end chat trigger from customer
+                        generalChannel.bind('force-end-chat', (triggerData) => {
+                            console.log('🔚 [CS DEBUG] Force end chat trigger received from customer:', triggerData);
+                            console.log('🔍 [CS DEBUG] Current CS state:', {
+                                currentCustomer: this.currentCustomer,
+                                isConnected: this.isConnected,
+                                activeCustomers: this.activeCustomers.length
+                            });
+                            
+                            if (triggerData.trigger_source === 'customer' && 
+                                this.currentCustomer && 
+                                this.currentCustomer.user_id === triggerData.customer_id) {
+                                
+                                console.log('🔄 [CS DEBUG] Customer triggered force end - auto ending chat');
+                                console.log('📝 [CS DEBUG] Trigger data details:', {
+                                    source: triggerData.trigger_source,
+                                    message: triggerData.message,
+                                    sessionId: triggerData.session_id,
+                                    customerId: triggerData.customer_id,
+                                    currentCustomerId: this.currentCustomer.user_id
+                                });
+                                
+                                // Display system message
+                                this.displaySystemMessage(triggerData.message || 'Customer has ended the chat session');
+                                
+                                console.log('⏰ [CS DEBUG] Starting auto-end countdown (1 second)');
+                                // Auto end the chat session after a short delay
+                                setTimeout(() => {
+                                    console.log('🏁 [CS DEBUG] Executing auto-end chat');
+                                    this.endCurrentChat();
+                                }, 1000);
+                            } else {
+                                console.log('❌ [CS DEBUG] Trigger condition not met:', {
+                                    triggerSource: triggerData.trigger_source,
+                                    hasCurrentCustomer: !!this.currentCustomer,
+                                    customerIdMatch: this.currentCustomer?.user_id === triggerData.customer_id,
+                                    expectedCustomerId: triggerData.customer_id,
+                                    actualCustomerId: this.currentCustomer?.user_id
+                                });
+                            }
+                        });
+
                     } catch (error) {
                         reject(error);
                     }
@@ -293,10 +335,15 @@
                 this.activeCustomers.delete(userId);
                 this.updateCustomerList();
                 
-                // If current chat customer left, end the chat
+                // If current chat customer left, end the chat completely
                 if (this.currentCustomer && this.currentCustomer.user_id === userId) {
-                    this.endCurrentChat();
-                    this.displaySystemMessage(`${this.currentCustomer.username} has left the chat`);
+                    // Display system message before ending chat
+                    this.displaySystemMessage(`${this.currentCustomer.username} has left the chat. Chat session ended.`);
+                    
+                    // End the chat completely - this will also remove customer from active list
+                    setTimeout(() => {
+                        this.endCurrentChat();
+                    }, 1000); // Small delay to show the message
                 }
             }
 
@@ -373,11 +420,43 @@
                     }
                 });
                 
+                // Listen for force-end-chat from customer on private channel
+                this.currentChatChannel.bind('force-end-chat', (triggerData) => {
+                    console.log('🔚 [CS DEBUG] Force end chat trigger received on private channel:', triggerData);
+                    console.log('📊 [CS DEBUG] Current CS state:', {
+                        currentCustomer: this.currentCustomer?.user_id,
+                        channelName: this.currentChatChannel?.name,
+                        agentName: this.agentName,
+                        triggerSource: triggerData.trigger_source,
+                        triggerCustomerId: triggerData.customer_id
+                    });
+                    
+                    if (triggerData.trigger_source === 'customer') {
+                        console.log('🔄 [CS DEBUG] Customer triggered force end on private channel - auto ending chat');
+                        console.log('✅ [CS DEBUG] Trigger source matches customer, proceeding with end chat');
+                        
+                        // Display system message
+                        this.displaySystemMessage(triggerData.message || 'Customer has ended the chat session');
+                        
+                        console.log('⏰ [CS DEBUG] Starting auto-end countdown (1 second)');
+                        setTimeout(() => {
+                            console.log('🏁 [CS DEBUG] Executing auto-end chat from private channel');
+                            this.endCurrentChat();
+                        }, 1000);
+                    } else {
+                        console.log('❌ [CS DEBUG] Trigger source mismatch, ignoring:', {
+                            expected: 'customer',
+                            received: triggerData.trigger_source
+                        });
+                    }
+                });
+                
                 // Update UI
                 this.elements.chatTitle.textContent = `Chat with ${customer.username}`;
                 this.elements.chatSubtitle.textContent = `Private conversation - Room: ${customer.room || 'general'}`;
                 this.elements.messageInput.disabled = false;
                 this.elements.sendBtn.disabled = false;
+                this.elements.messageInput.placeholder = 'Type your message...'; // Reset placeholder
                 this.elements.endChatBtn.classList.remove('hidden');
                 this.elements.messageInput.focus();
                 
@@ -412,13 +491,103 @@
             }
 
             endCurrentChat() {
-                if (this.currentChatChannel) {
-                    this.pusher.unsubscribe(this.currentChatChannel.name);
-                    this.currentChatChannel = null;
+                console.log('🔚 [CS DEBUG] Starting endCurrentChat process');
+                console.log('📝 [CS DEBUG] Current state:', {
+                    hasChannel: !!this.currentChatChannel,
+                    hasCustomer: !!this.currentCustomer,
+                    channelName: this.currentChatChannel?.name,
+                    customerId: this.currentCustomer?.user_id,
+                    agentName: this.agentName
+                });
+                
+                if (this.currentChatChannel && this.currentCustomer) {
+                    // Store references before cleanup to prevent race conditions
+                    const customerRef = this.currentCustomer;
+                    const channelRef = this.currentChatChannel;
+                    const agentRef = this.agentName;
+                    
+                    console.log('💾 [CS DEBUG] Stored references:', {
+                        customerId: customerRef.user_id,
+                        channelName: channelRef.name,
+                        agentName: agentRef
+                    });
+                    
+                    console.log('📤 [CS DEBUG] Sending agent-left notification...');
+                    // Send agent-left notification to customer before disconnecting
+                    fetch('/api/chat/private/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            channel: channelRef.name,
+                            message: 'Agent has ended the chat session',
+                            user_type: 'agent',
+                            username: 'System',
+                            customer_id: customerRef.user_id
+                        })
+                    }).then(response => {
+                        console.log('✅ [CS DEBUG] Agent-left notification sent:', response.status);
+                    }).catch(error => {
+                        console.error('❌ [CS DEBUG] Failed to send end chat notification:', error);
+                    });
+
+                    console.log('📤 [CS DEBUG] Sending end chat message...');
+                    // Send simple "end chat" message to trigger customer side cleanup
+                    fetch('/api/chat/private/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            channel: channelRef.name,
+                            message: 'end chat',
+                            user_type: 'agent',
+                            username: 'System',
+                            customer_id: customerRef.user_id
+                        })
+                    }).then(response => {
+                        console.log('✅ [CS DEBUG] End chat message sent:', response.status);
+                        console.log('⏰ [CS DEBUG] Waiting 500ms before unsubscribing...');
+                        // Wait a moment for the event to be processed before unsubscribing
+                        setTimeout(() => {
+                            console.log('🔌 [CS DEBUG] Unsubscribing from channel and cleaning up');
+                            this.pusher.unsubscribe(channelRef.name);
+                            this.currentChatChannel = null;
+                        }, 500);
+                    }).catch(error => {
+                        console.error('❌ [CS DEBUG] Failed to send agent-left event or trigger:', error);
+                        console.log('🔌 [CS DEBUG] Still unsubscribing due to error...');
+                        // Still unsubscribe even if notification fails
+                        this.pusher.unsubscribe(channelRef.name);
+                        this.currentChatChannel = null;
+                    });
+                } else {
+                    console.log('⚠️ [CS DEBUG] No current channel or customer found');
+                    if (this.currentChatChannel) {
+                        console.log('🔌 [CS DEBUG] Unsubscribing from channel without customer');
+                        this.pusher.unsubscribe(this.currentChatChannel.name);
+                        this.currentChatChannel = null;
+                    }
+                }
+                
+                console.log('🧹 [CS DEBUG] Cleaning up customer state...');
+                // Remove customer from active list to prevent reconnection
+                if (this.currentCustomer) {
+                    console.log('🗑️ [CS DEBUG] Removing customer from active list:', this.currentCustomer.user_id);
+                    this.activeCustomers.delete(this.currentCustomer.user_id);
+                }
+                // Also remove using stored reference if available
+                if (typeof customerRef !== 'undefined' && customerRef) {
+                    console.log('🗑️ [CS DEBUG] Also removing customer using stored reference:', customerRef.user_id);
+                    this.activeCustomers.delete(customerRef.user_id);
                 }
                 
                 this.currentCustomer = null;
                 
+                console.log('🎨 [CS DEBUG] Updating UI to default state...');
                 // Update UI
                 this.elements.chatTitle.textContent = 'Select a Customer';
                 this.elements.chatSubtitle.textContent = 'Choose a customer from the list to start chatting';
@@ -433,13 +602,21 @@
                     </div>
                 `;
                 
+                console.log('📋 [CS DEBUG] Updating customer list...');
                 // Update customer list
                 this.updateCustomerList();
+                console.log('✅ [CS DEBUG] endCurrentChat process completed');
             }
 
             sendMessage() {
                 const message = this.elements.messageInput.value.trim();
                 if (!message || !this.currentCustomer || !this.currentChatChannel) return;
+                
+                // Check if customer is still active
+                if (!this.activeCustomers.has(this.currentCustomer.user_id)) {
+                    this.showError('Cannot send message: Customer has left the chat');
+                    return;
+                }
 
                 const messageData = {
                     username: this.agentName,
@@ -589,7 +766,8 @@
             }
 
             generateAgentId() {
-                return btoa(this.agentName + '_agent_' + Date.now()).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
+                // Generate consistent agent ID based on agent name only (no timestamp)
+                return btoa(this.agentName + '_agent').replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
             }
         }
 

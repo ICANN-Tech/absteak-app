@@ -17,7 +17,7 @@ class Flowise
     public function __construct()
     {
         $this->baseUrl = config('api-service.flowise.base_url', 'http://localhost:3000');
-        $this->timeout = config('api-service.flowise.timeout', 30);
+        $this->timeout = config('api-service.flowise.timeout', 90); // Increased from 30 to 60 seconds
         $this->defaultHeaders = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -45,9 +45,30 @@ class Flowise
         ], $additionalData);
 
         try {
+            // Log request details for debugging
+            Log::info('Flowise: Sending request', [
+                'chat_id' => $chatId,
+                'question_length' => strlen($question),
+                'url' => $url,
+                'timeout' => $this->timeout,
+                'timestamp' => now()->toISOString()
+            ]);
+            
+            $startTime = microtime(true);
+            
             $response = Http::withHeaders($this->defaultHeaders)
                 ->timeout($this->timeout)
+                ->retry(2, 1000) // Retry 2 times with 1 second delay
                 ->post($url, $payload);
+            
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2); // in milliseconds
+            
+            Log::info('Flowise: Request completed', [
+                'chat_id' => $chatId,
+                'response_time_ms' => $responseTime,
+                'status_code' => $response->status(),
+                'response_size' => strlen($response->body())
+            ]);
 
             if ($response->failed()) {
                 throw new Exception(
@@ -75,12 +96,24 @@ class Flowise
             ]);
 
             return $answer;
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('Flowise: Connection timeout or network error', [
+                'chat_id' => $chatId,
+                'question' => $question,
+                'error' => $e->getMessage(),
+                'url' => $url,
+                'timeout' => $this->timeout
+            ]);
+            
+            // Return a fallback response for timeout errors
+            return 'Maaf, sistem sedang mengalami keterlambatan. Silakan coba lagi dalam beberapa saat atau hubungi customer service kami untuk bantuan lebih lanjut.';
         } catch (Exception $e) {
             Log::error('Flowise chat request failed', [
                 'chat_id' => $chatId,
                 'question' => $question,
                 'error' => $e->getMessage(),
                 'url' => $url,
+                'error_type' => get_class($e)
             ]);
             
             throw $e;

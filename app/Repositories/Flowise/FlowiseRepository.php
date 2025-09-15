@@ -587,6 +587,18 @@ class FlowiseRepository implements FlowiseRepositoryInterface
             throw new InvalidArgumentException('Chatbot type cannot be empty');
         }
 
+        $requestId = uniqid('flowise_req_');
+        $startTime = microtime(true);
+        
+        Log::info('FlowiseRepository: Starting message request', [
+            'request_id' => $requestId,
+            'message_length' => strlen($message),
+            'message_preview' => substr($message, 0, 100) . (strlen($message) > 100 ? '...' : ''),
+            'chatbot_type' => $chatbotType,
+            'chatflow_id' => $chatflowId,
+            'timestamp' => now()->toISOString()
+        ]);
+
         try {
             // Get Flowise service instance
             $flowiseService = app(\App\Services\Flowise::class);
@@ -600,21 +612,31 @@ class FlowiseRepository implements FlowiseRepositoryInterface
                 $response = $flowiseService->chatWithAssistant($message);
             }
 
-            Log::info('Message sent to Flowise', [
-                'message_length' => strlen($message),
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::info('FlowiseRepository: Message request completed successfully', [
+                'request_id' => $requestId,
+                'processing_time_ms' => $processingTime,
+                'response_length' => strlen($response),
+                'response_preview' => substr($response, 0, 100) . (strlen($response) > 100 ? '...' : ''),
                 'chatbot_type' => $chatbotType,
-                'chatflow_id' => $chatflowId,
-                'response_length' => strlen($response)
+                'chatflow_id' => $chatflowId
             ]);
 
             return $response;
         } catch (Exception $e) {
-            Log::error('Failed to send message to Flowise', [
-                'message' => $message,
+            $processingTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            Log::error('FlowiseRepository: Failed to send message', [
+                'request_id' => $requestId,
+                'message_length' => strlen($message),
+                'message_preview' => substr($message, 0, 100) . (strlen($message) > 100 ? '...' : ''),
                 'chatbot_type' => $chatbotType,
                 'chatflow_id' => $chatflowId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error_type' => get_class($e),
+                'processing_time_ms' => $processingTime,
+                'stack_trace' => $e->getTraceAsString()
             ]);
 
             throw new RuntimeException('Failed to send message to chatbot: ' . $e->getMessage(), 0, $e);

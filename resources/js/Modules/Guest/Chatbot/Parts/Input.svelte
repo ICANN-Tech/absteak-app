@@ -8,6 +8,7 @@
 	export let disabled = false;
 	export let onSend: () => void;
 	export let onKeyDown: (e: KeyboardEvent) => void;
+	export let onEndChat: (() => void) | null = null;
 
 	// Reactive classes
 	$: inputClasses = `${CSS_CLASSES.INPUT_BASE} ${loading || disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
@@ -19,24 +20,26 @@
 	}
 </script>
 
-<div class="border-primary-100 flex items-center gap-3 rounded-b-2xl border-t bg-white px-4 py-4 shadow-inner">
-	<input
-		type="text"
-		class={inputClasses}
-		placeholder={actualPlaceholder}
-		bind:value={input}
-		on:keydown={onKeyDown}
-		disabled={loading || disabled}
-		aria-label="Type your message"
-	/>
-	
-	<button
-		type="button"
-		class="bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 transition-all duration-200 transform hover:scale-105 shadow-lg rounded-full w-12 h-12 flex items-center justify-center {loading ? 'animate-pulse' : ''}"
-		on:click={onSend}
-		disabled={!input.trim() || loading || disabled}
-		aria-label="Send message"
-	>
+<div class="border-primary-100 flex flex-col gap-3 rounded-b-2xl border-t bg-white px-4 py-4 shadow-inner">
+	<!-- Input and Send Button Row -->
+	<div class="flex items-center gap-3">
+		<input
+			type="text"
+			class={inputClasses}
+			placeholder={actualPlaceholder}
+			bind:value={input}
+			on:keydown={onKeyDown}
+			disabled={loading || disabled}
+			aria-label="Type your message"
+		/>
+		
+		<button
+			type="button"
+			class="bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 transition-all duration-200 transform hover:scale-105 shadow-lg rounded-full w-12 h-12 flex items-center justify-center {loading ? 'animate-pulse' : ''}"
+			on:click={onSend}
+			disabled={!input.trim() || loading || disabled}
+			aria-label="Send message"
+		>
 		{#if loading}
 			<svg class="h-5 w-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
 				<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -53,7 +56,20 @@
 				<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
 			</svg>
 		{/if}
-	</button>
+		</button>
+	</div>
+	
+	<!-- End Chat Button -->
+	{#if onEndChat}
+		<button
+			type="button"
+			class="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md text-sm font-medium"
+			on:click={onEndChat}
+			aria-label="End chat session"
+		>
+			🔚 Tutup Chat
+		</button>
+	{/if}
 </div>
 
 <style>

@@ -49,6 +49,14 @@ Route::prefix('chat')->group(function () {
     Route::get('/active-tickets', [ChatController::class, 'getActiveTickets'])
         ->name('chat.active-tickets');
     
+    // Trigger end chat from customer
+    Route::post('/trigger-customer-end-chat', [ChatController::class, 'triggerCustomerEndChat'])
+        ->name('chat.trigger-customer-end-chat');
+    
+    // Trigger end chat from CS
+    Route::post('/trigger-end-chat', [ChatController::class, 'triggerEndChat'])
+        ->name('chat.trigger-end-chat');
+    
     // Customer Service Routes
     Route::prefix('cs')->group(function () {
         

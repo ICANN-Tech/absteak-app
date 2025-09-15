@@ -41,7 +41,7 @@
   $: resolvedColor = colorMap[variant];
   $: isPill = pill || circle;
   $: circleClasses = circle ? `${circleSizeMap[size]} flex items-center justify-center` : '';
-  $: combinedClassName = `${className} ${circleClasses}`.trim();
+  $: combinedClassName = `bg-primary-900 ${className} ${circleClasses}`.trim();
 </script>
 
 {#if href}

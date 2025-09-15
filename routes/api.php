@@ -34,20 +34,22 @@ Route::prefix('chat/guest')->group(function () {
 
 // Public Customer Service Routes (no authentication required)
 Route::prefix('chat')->group(function () {
-    // Customer Service management - available to all
+    // Public endpoints
     Route::get('/cs/available', [ChatController::class, 'getAvailableCustomerService']);
     
-    // Guest chat endpoints
     Route::post('/initialize', [ChatController::class, 'initialize']);
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
     Route::get('/test-connection', [ChatController::class, 'testConnection']);
     
-    // Soketi real-time chat endpoints
+    // Customer initiated end chat
+    Route::post('/trigger-end-chat', [ChatController::class, 'triggerCustomerEndChat']);
+    
+    // Soketi integration
     Route::post('/send', [ChatController::class, 'sendSoketiMessage']);
     Route::post('/join', [ChatController::class, 'joinSoketiRoom']);
     Route::post('/typing', [ChatController::class, 'handleSoketiTyping']);
     
-    // CS Dashboard endpoints
+    // Customer Service operations
     Route::get('/active-tickets', [ChatController::class, 'getActiveTickets']);
     Route::get('/ticket-messages/{ticketId}', [ChatController::class, 'getTicketMessages']);
     Route::post('/send-cs-reply', [ChatController::class, 'sendCsReply']);
@@ -104,6 +106,7 @@ Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
     
     // Common chat operations
     Route::post('/end-session', [ChatController::class, 'endChatSession']);
+    Route::post('/trigger-end', [RegularChatController::class, 'triggerEndChat']);
 });
 
 

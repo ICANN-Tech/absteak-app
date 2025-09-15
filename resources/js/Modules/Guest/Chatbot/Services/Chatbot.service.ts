@@ -1,4 +1,5 @@
 import { CHATBOT_CONFIG } from '../Const/Chatbot.const';
+import { ChatUtils } from '../Utils/Chat.util';
 
 // Type definitions
 export interface ChatMessage {
@@ -25,6 +26,7 @@ export interface ChatSession {
   isCSSession?: boolean;
   csAgentName?: string;
   privateChannelName?: string;
+  isReadOnly?: boolean;
 }
 
 export interface BotResponse {
@@ -51,6 +53,7 @@ class ChatbotService {
   private csConnectionState: 'idle' | 'connecting' | 'waiting' | 'connected' | 'disconnected' = 'idle';
   private csStateChangeCallback: ((state: string, agentName?: string) => void) | null = null;
   private messageCallback: ((message: ChatMessage) => void) | null = null;
+  private closeChatCallback: (() => void) | null = null;
 
   /**
    * Start a new chat session
@@ -91,7 +94,7 @@ class ChatbotService {
       }
 
       const session: ChatSession = {
-        id: data.data.session_id || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: data.data.session_id || ChatUtils.generateMessageId('session'),
         startTime: new Date(),
         messages: []
       };
@@ -110,7 +113,7 @@ class ChatbotService {
       }
       
       const session: ChatSession = {
-        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: ChatUtils.generateMessageId('session'),
         startTime: new Date(),
         messages: []
       };
@@ -169,10 +172,55 @@ class ChatbotService {
       throw new Error('No active session. Please start a new session first.');
     }
 
+    // Check if session is read-only (disconnected CS session)
+    if (this.currentSession.isReadOnly) {
+      throw new Error('This chat session is read-only. Please start a new conversation.');
+    }
+
+    // Check if trying to send to disconnected CS session
+    if (this.currentSession.isCSSession && this.csConnectionState === 'disconnected') {
+      throw new Error('Customer service is disconnected. Please reconnect to continue chatting.');
+    }
+
+    // Check if customer wants to close chat
+    const lowerMessage = message.toLowerCase().trim();
+    console.log('🔍 [sendMessage] Checking message for end chat keywords:', {
+      originalMessage: message,
+      lowerMessage: lowerMessage,
+      isEndChatKeyword: lowerMessage === 'tutup chat' || lowerMessage === 'close chat' || lowerMessage === 'end chat',
+      currentSessionExists: !!this.currentSession,
+      isCSSession: this.currentSession?.isCSSession,
+      csConnectionState: this.csConnectionState,
+      csAgentName: this.currentSession?.csAgentName,
+      privateChannelName: this.currentSession?.privateChannelName
+    });
+    
+    if (lowerMessage === 'tutup chat' || lowerMessage === 'close chat' || lowerMessage === 'end chat') {
+      console.log('🔚 [sendMessage] Customer requested to close chat with keyword:', lowerMessage);
+      console.log('📊 [sendMessage] Current session state before triggering end chat:', {
+        sessionId: this.currentSession?.id,
+        isCSSession: this.currentSession?.isCSSession,
+        csConnectionState: this.csConnectionState,
+        csAgentName: this.currentSession?.csAgentName,
+        privateChannelName: this.currentSession?.privateChannelName,
+        hasPrivateChannel: !!this.privateChannel
+      });
+      console.log('🔄 [sendMessage] Triggering customer end chat...');
+      await this.triggerCustomerEndChat();
+      
+      console.log('✅ [sendMessage] Customer end chat triggered, returning confirmation');
+      // Return a confirmation response
+      return {
+        id: ChatUtils.generateMessageId('system'),
+        content: 'Chat telah ditutup. Terima kasih!',
+        timestamp: new Date()
+      };
+    }
+
     try {
       // Add user message to session
       const userMessage: ChatMessage = {
-        id: `user_${Date.now()}`,
+        id: ChatUtils.generateMessageId('user'),
         content: message,
         timestamp: new Date(),
         sender: 'user'
@@ -250,13 +298,29 @@ class ChatbotService {
   }
 
   /**
+   * Set close chat callback for when agent leaves
+   */
+  setCloseChatCallback(callback: () => void): void {
+    console.log('🚪 [setCloseChatCallback] Setting close chat callback');
+    this.closeChatCallback = callback;
+  }
+
+  /**
    * Connect to Customer Service
    */
   async connectToCS(): Promise<void> {
     console.log('🎧 [connectToCS] Connecting to Customer Service');
+    
+    // Always create new session for CS connection to ensure new channel ID
+    console.log('🆕 [connectToCS] Creating new session for CS connection (new channel ID)');
+    await this.startNewSession();
+
     if (!this.currentSession) {
-      throw new Error('No active session. Please start a new session first.');
+      throw new Error('Failed to create session for CS connection.');
     }
+    
+    // Mark this as a CS session
+    this.currentSession.isCSSession = true;
 
     try {
       console.log('🔄 Starting CS connection...');
@@ -362,16 +426,19 @@ class ChatbotService {
         this.privateChannel = null;
       }
 
-      // Reset session state
+      // Mark session as read-only and reset CS-specific state
+      this.currentSession.isReadOnly = true;
       this.currentSession.isCSSession = false;
       this.currentSession.csAgentName = undefined;
       this.currentSession.privateChannelName = undefined;
       
       this.updateCSState('disconnected');
       
+      console.log('📖 [disconnectFromCS] Session marked as read-only - no new messages allowed');
+      
       // Add system message
       const systemMessage: ChatMessage = {
-        id: `system_${Date.now()}`,
+        id: ChatUtils.generateMessageId('system'),
         content: 'You have been disconnected from customer service.',
         timestamp: new Date(),
         sender: 'bot'
@@ -427,7 +494,7 @@ class ChatbotService {
     // Don't return a placeholder response - let CS respond via WebSocket (like sample-chat.blade.php)
     // Return empty response to avoid showing 'Message sent...' text
     return {
-      id: `cs_${Date.now()}`,
+      id: ChatUtils.generateMessageId('cs'),
       content: '', // Empty content to avoid showing placeholder message
       timestamp: new Date()
     };
@@ -462,7 +529,7 @@ class ChatbotService {
     }
 
     return {
-      id: data.data.message_id || `bot_${Date.now()}`,
+      id: data.data.message_id || ChatUtils.generateMessageId('bot'),
       content: data.data.response || 'Thank you for your message. Our team will respond shortly.',
       timestamp: new Date(data.data.timestamp || Date.now())
     };
@@ -556,51 +623,17 @@ class ChatbotService {
 
     console.log('📨 Private chat invite received for current session:', data);
     
-    // Display invitation message
-    const inviteMessage: ChatMessage = {
-      id: `system_${Date.now()}`,
-      content: 'CS BERGABUNG',
-      timestamp: new Date(),
-      sender: 'bot',
-      sessionId: this.currentSession.id
-    };
-    this.currentSession.messages.push(inviteMessage);
-    
-    // Notify UI about new message
-    if (this.messageCallback) {
-      this.messageCallback(inviteMessage);
+    // Unsubscribe from existing private channel if any to prevent duplicate listeners
+    if (this.privateChannel) {
+      console.log('🔄 Unsubscribing from existing private channel to prevent duplicates');
+      this.privateChannel.unbind_all();
+      this.pusher.unsubscribe(this.privateChannel.name);
     }
     
     // Subscribe to the private channel (following sample-chat.blade.php pattern)
     this.privateChannel = this.pusher.subscribe(data.channel_name);
     
     // Bind private chat events (like sample-chat.blade.php)
-    this.privateChannel.bind('message', (messageData: any) => {
-      console.log('📨 Received message event:', messageData);
-      console.log('🔍 Current session:', this.currentSession?.id);
-      console.log('🔍 Message user_type:', messageData.user_type);
-      if (this.currentSession && messageData.user_type === 'agent') {
-        console.log('✅ Processing agent message');
-        const message: ChatMessage = {
-          id: messageData.message_id || `agent_${Date.now()}`,
-          content: messageData.message,
-          timestamp: new Date(messageData.timestamp || Date.now()),
-          sender: 'bot',
-          sessionId: this.currentSession.id
-        };
-        this.currentSession.messages.push(message);
-        
-        // Notify UI about new message
-        if (this.messageCallback) {
-          console.log('📢 Calling messageCallback with:', message);
-          this.messageCallback(message);
-        } else {
-          console.log('❌ No messageCallback set');
-        }
-      } else {
-        console.log('❌ Message not processed - session:', !!this.currentSession, 'user_type:', messageData.user_type);
-      }
-    });
     
     this.privateChannel.bind('agent-joined', (agentData: any) => {
       console.log('👨‍💼 Agent joined event:', agentData);
@@ -614,8 +647,8 @@ class ChatbotService {
       console.log('👋 Agent left event:', agentData);
       if (this.currentSession) {
         const systemMessage: ChatMessage = {
-          id: `system_${Date.now()}`,
-          content: 'CS KELUAR',
+          id: ChatUtils.generateMessageId('system'),
+          content: 'Customer Service mengakhiri obrolan. Silakan pilih menu di bawah ini untuk melanjutkan.',
           timestamp: new Date(),
           sender: 'bot',
           sessionId: this.currentSession.id
@@ -627,7 +660,143 @@ class ChatbotService {
           this.messageCallback(systemMessage);
         }
         
-        this.updateCSState('disconnected');
+        // Disconnect from CS and return to bot
+        this.handleAgentLeft();
+      }
+    });
+
+    // Handle force end chat trigger from CS
+    this.privateChannel.bind('force-end-chat', (triggerData: any) => {
+      console.log('🔚 [CUSTOMER DEBUG] Force end chat trigger received from CS:', triggerData);
+      console.log('🔍 [CUSTOMER DEBUG] Current session data:', {
+        sessionId: this.currentSession?.id,
+        customerId: this.currentSession?.contactId,
+        isConnected: this.isConnected,
+        csConnectionState: this.csConnectionState
+      });
+      
+      if (this.currentSession && triggerData.trigger_source === 'cs') {
+        console.log('🔄 [CUSTOMER DEBUG] CS triggered force end - auto ending chat');
+        console.log('📝 [CUSTOMER DEBUG] Trigger data details:', {
+          source: triggerData.trigger_source,
+          message: triggerData.message,
+          sessionId: triggerData.session_id,
+          customerId: triggerData.customer_id
+        });
+        
+        // Add system message
+        const systemMessage: ChatMessage = {
+          id: ChatUtils.generateMessageId('system'),
+          content: 'Customer Service mengakhiri obrolan. Anda dapat melanjutkan dengan menu utama atau memulai chat baru.',
+          timestamp: new Date(),
+          sender: 'bot',
+          sessionId: this.currentSession.id
+        };
+        this.currentSession.messages.push(systemMessage);
+        
+        // Notify UI about new message
+        if (this.messageCallback) {
+          this.messageCallback(systemMessage);
+        }
+        
+        console.log('⏰ [CUSTOMER DEBUG] Starting auto-end countdown (1 second)');
+        // Auto end the chat session
+        setTimeout(() => {
+          console.log('🏁 [CUSTOMER DEBUG] Executing auto-end chat');
+          this.handleAgentLeft();
+          // Trigger UI to show end chat or return to main menu
+          if (typeof window !== 'undefined' && (window as any).chatApp) {
+            (window as any).chatApp.showStartForm();
+          }
+        }, 1000); // Small delay to show the message first
+      } else {
+        console.log('❌ [CUSTOMER DEBUG] Trigger source mismatch or no session, ignoring:', {
+          hasSession: !!this.currentSession,
+          triggerSource: triggerData.trigger_source
+        });
+      }
+    });
+
+    // Handle system events (including agent-left from endCurrentChat)
+    this.privateChannel.bind('message', (messageData: any) => {
+      console.log('📨 Received message event:', messageData);
+      console.log('🔍 Current session:', this.currentSession?.id);
+      console.log('🔍 Message user_type:', messageData.user_type);
+      
+      if (this.currentSession) {
+        if (messageData.user_type === 'agent') {
+          console.log('✅ Processing agent message');
+          
+          // Check if message is "end chat" - just display message, don't auto-close
+          if (messageData.message === 'end chat') {
+            console.log('🏁 [CUSTOMER DEBUG] Received "end chat" message from agent');
+            
+            // Add the end chat message to chat history
+            const endMessage: ChatMessage = {
+              id: messageData.message_id || ChatUtils.generateMessageId('agent'),
+              content: 'Agent has ended the chat session. You can continue chatting or close the dialog using the "Tutup Chat" button.',
+              timestamp: new Date(messageData.timestamp || Date.now()),
+              sender: 'bot',
+              sessionId: this.currentSession.id
+            };
+            this.currentSession.messages.push(endMessage);
+            
+            // Notify UI about the end message
+            if (this.messageCallback) {
+              this.messageCallback(endMessage);
+            }
+            
+            // Reset CS connection state but keep dialog open
+            this.updateCSState('disconnected');
+            
+            return; // Don't process as regular message
+          }
+          
+          const message: ChatMessage = {
+            id: messageData.message_id || ChatUtils.generateMessageId('agent'),
+            content: messageData.message,
+            timestamp: new Date(messageData.timestamp || Date.now()),
+            sender: 'bot',
+            sessionId: this.currentSession.id
+          };
+          this.currentSession.messages.push(message);
+          
+          // Notify UI about new message
+          if (this.messageCallback) {
+            console.log('📢 Calling messageCallback with:', message);
+            this.messageCallback(message);
+          } else {
+            console.log('❌ No messageCallback set');
+          }
+        } else if (messageData.user_type === 'event') {
+          // Handle event messages (like agent-left from endCurrentChat)
+          try {
+            const eventData = JSON.parse(messageData.message);
+            if (eventData.event === 'agent-left') {
+              console.log('👋 Agent left via event message:', eventData);
+              this.handleAgentLeft();
+            }
+          } catch (e) {
+            console.log('Failed to parse event message:', e);
+          }
+        } else if (messageData.user_type === 'system') {
+          // Handle system messages
+          const message: ChatMessage = {
+            id: messageData.message_id || ChatUtils.generateMessageId('system'),
+            content: messageData.message,
+            timestamp: new Date(messageData.timestamp || Date.now()),
+            sender: 'bot',
+            sessionId: this.currentSession.id
+          };
+          this.currentSession.messages.push(message);
+          
+          // Notify UI about new message
+          if (this.messageCallback) {
+            this.messageCallback(message);
+          }
+        } else {
+          console.log('❌ Message not processed - session:', !!this.currentSession, 'user_type:', messageData.user_type);
+        }
       }
     });
     
@@ -638,6 +807,154 @@ class ChatbotService {
     
     // Update state to connected since agent has initiated the chat
     this.updateCSState('connected', data.agent_name);
+  }
+
+  /**
+   * Trigger end chat from customer side
+   */
+  private async triggerCustomerEndChat(): Promise<void> {
+    console.log('🔚 [triggerCustomerEndChat] Customer initiated end chat');
+    console.log('📊 [triggerCustomerEndChat] Session details:', {
+      sessionId: this.currentSession?.id,
+      isCSSession: this.currentSession?.isCSSession,
+      csConnectionState: this.csConnectionState,
+      privateChannelName: this.currentSession?.privateChannelName,
+      csAgentName: this.currentSession?.csAgentName
+    });
+    
+    if (!this.currentSession) {
+      console.log('❌ [triggerCustomerEndChat] No current session');
+      return;
+    }
+
+    try {
+      // If it's a CS session, notify the backend to trigger end chat
+      if (this.currentSession.isCSSession) {
+        const payload = {
+          session_id: this.currentSession.id,
+          trigger_source: 'customer'
+        };
+        
+        console.log('📤 [triggerCustomerEndChat] Notifying backend about customer end chat');
+        console.log('🔗 [triggerCustomerEndChat] Request payload:', payload);
+        console.log('🌐 [triggerCustomerEndChat] Making request to /api/chat/trigger-customer-end-chat');
+        
+        const response = await fetch('/api/chat/trigger-customer-end-chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': this.getCsrfToken(),
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        console.log('📡 [triggerCustomerEndChat] Response received:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          url: response.url,
+          type: response.type
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ [triggerCustomerEndChat] Failed to notify backend:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText: errorText
+          });
+        } else {
+          const responseData = await response.json();
+          console.log('✅ [triggerCustomerEndChat] Backend notified successfully:', responseData);
+          console.log('📋 [triggerCustomerEndChat] Response data details:', {
+            success: responseData.success,
+            message: responseData.message,
+            data: responseData.data
+          });
+        }
+      } else {
+        console.log('ℹ️ [triggerCustomerEndChat] Not a CS session, skipping backend notification');
+      }
+      
+      console.log('🔄 [triggerCustomerEndChat] Calling handleAgentLeft()...');
+      // End the session locally
+      this.handleAgentLeft();
+      
+    } catch (error) {
+      console.error('❌ [triggerCustomerEndChat] Error:', error);
+      console.error('❌ [triggerCustomerEndChat] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace available'
+      });
+      // Still end the session locally even if backend notification fails
+      this.handleAgentLeft();
+    }
+  }
+
+  /**
+   * Handle agent left event - disconnect from CS and return to bot
+   */
+  private handleAgentLeft(): void {
+    console.log('🔌 [handleAgentLeft] Processing agent left event');
+    
+    if (!this.currentSession?.isCSSession) {
+      console.log('❌ [handleAgentLeft] Not in CS session, ignoring');
+      return;
+    }
+
+    // Unsubscribe from private channel
+    if (this.privateChannel) {
+      this.pusher?.unsubscribe(this.privateChannel.name);
+      this.privateChannel = null;
+    }
+
+    // Reset CS-specific state
+    this.currentSession.isCSSession = false;
+    this.currentSession.csAgentName = undefined;
+    this.currentSession.privateChannelName = undefined;
+    this.currentSession.isReadOnly = false;
+    
+    console.log('🔄 [handleAgentLeft] Agent has left - returning to main menu');
+    
+    // Add system message to inform user that agent has left
+    const systemMessage: ChatMessage = {
+      id: ChatUtils.generateMessageId('system'),
+      content: 'Customer Service mengakhiri obrolan. Silakan pilih menu di bawah ini untuk melanjutkan.',
+      sender: 'bot',
+      timestamp: new Date(),
+      sessionId: this.currentSession.id
+    };
+    
+    this.currentSession.messages.push(systemMessage);
+    
+    // Add main menu options back
+    const menuMessage: ChatMessage = {
+      id: ChatUtils.generateMessageId('menu'),
+      content: 'Silakan pilih salah satu opsi:\n\n1. Customer Service\n2. Menu\n3. Dine In\n4. Dine Out',
+      sender: 'bot',
+      timestamp: new Date(),
+      sessionId: this.currentSession.id
+    };
+    
+    this.currentSession.messages.push(menuMessage);
+    
+    // Notify UI about the new messages
+    if (this.messageCallback) {
+      this.messageCallback(systemMessage);
+      this.messageCallback(menuMessage);
+    }
+    
+    // Update state to idle (ready for new interactions)
+    this.updateCSState('idle');
+    
+    // Call close chat callback if set
+    if (this.closeChatCallback) {
+      this.closeChatCallback();
+    }
+    
+    console.log('✅ [handleAgentLeft] Successfully returned to main menu');
   }
 
   /**

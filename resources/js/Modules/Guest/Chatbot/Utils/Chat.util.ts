@@ -1,13 +1,6 @@
 import type { ChatMessage } from '../Services/Chatbot.service';
-
-// Message type for UI components
-export interface MessageType {
-  from: 'user' | 'bot';
-  message: string;
-  timestamp: Date;
-  id?: string;
-  isFromCS?: boolean; // Flag to indicate if message is from customer service
-}
+import type { MessageType } from '../Types/Message.type';
+import { MessageFrom } from '../Types/Message.type';
 
 // Utility functions for chat operations
 export class ChatUtils {
@@ -16,7 +9,7 @@ export class ChatUtils {
    */
   static convertToMessageType(chatMessage: ChatMessage, isFromCS: boolean = false): MessageType {
     return {
-      from: chatMessage.sender,
+      from: chatMessage.sender === 'user' ? MessageFrom.User : MessageFrom.Bot,
       message: chatMessage.content,
       timestamp: chatMessage.timestamp,
       id: chatMessage.id,
@@ -29,10 +22,10 @@ export class ChatUtils {
    */
   static convertToChatMessage(messageType: MessageType): ChatMessage {
     return {
-      id: messageType.id || `msg_${Date.now()}`,
+      id: messageType.id || ChatUtils.generateMessageId('msg'),
       content: messageType.message,
-      sender: messageType.from,
-      timestamp: messageType.timestamp
+      sender: messageType.from === MessageFrom.User ? 'user' : 'bot',
+      timestamp: messageType.timestamp || new Date()
     };
   }
 
@@ -54,14 +47,21 @@ export class ChatUtils {
    * Check if message is from bot
    */
   static isBot(message: MessageType): boolean {
-    return message.from === 'bot';
+    return message.from === MessageFrom.Bot;
   }
 
   /**
    * Check if message is from user
    */
   static isUser(message: MessageType): boolean {
-    return message.from === 'user';
+    return message.from === MessageFrom.User;
+  }
+
+  /**
+   * Check if message is from CS
+   */
+  static isCS(message: MessageType): boolean {
+    return message.from === MessageFrom.CS;
   }
 
   /**
@@ -74,7 +74,7 @@ export class ChatUtils {
   /**
    * Filter messages by sender
    */
-  static getMessagesBySender(messages: MessageType[], sender: 'user' | 'bot'): MessageType[] {
+  static getMessagesBySender(messages: MessageType[], sender: MessageFrom): MessageType[] {
     return messages.filter(msg => msg.from === sender);
   }
 
@@ -174,7 +174,7 @@ export class ChatErrorUtils {
    */
   static createErrorMessage(error: string): MessageType {
     return {
-      from: 'bot',
+      from: MessageFrom.Bot,
       message: error,
       timestamp: new Date(),
       id: ChatUtils.generateMessageId('error')
