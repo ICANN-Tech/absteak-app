@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import {Button} from '@GuestComponents/Atoms';
+	import {Button} from '@GuestComponents/Atoms/Index';
 	import { CHATBOT_CONFIG, CSS_CLASSES } from '../Const/Chatbot.const';
 
 	// Props
